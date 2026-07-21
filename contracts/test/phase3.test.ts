@@ -12,7 +12,8 @@ const HOUSE_PRICES: [bigint, bigint, bigint, bigint, bigint, bigint] = [
   ethers.parseEther("20000"),
 ];
 const UPGRADE_BASE_FEE = ethers.parseEther("50");
-const APR_BPS = 1200; // 12% p.a.
+const APR_BPS = 1200;
+const DEAD = "0x000000000000000000000000000000000000dEaD"; // 12% p.a.
 
 async function deployFixture() {
   const [admin, treasury, player] = await ethers.getSigners();
@@ -57,10 +58,10 @@ describe("Houses", () => {
     const price = HOUSE_PRICES[2];
     await blast.connect(player).approve(await houses.getAddress(), price);
 
-    const supplyBefore = await blast.totalSupply();
+    const deadBefore = await blast.balanceOf(DEAD);
     await houses.connect(player).buyHouse(2);
 
-    expect(await blast.totalSupply()).to.equal(supplyBefore - price / 2n);
+    expect(await blast.balanceOf(DEAD)).to.equal(deadBefore + price / 2n);
     expect(await blast.balanceOf(treasury.address)).to.equal(price / 2n);
     expect(await houses.ownerOf(1)).to.equal(player.address);
 
@@ -87,11 +88,11 @@ describe("HeroUpgrade", () => {
 
     const fee = UPGRADE_BASE_FEE * 2n; // baseFee * level 2
     await blast.connect(player).approve(await upgrade.getAddress(), fee);
-    const supplyBefore = await blast.totalSupply();
+    const deadBefore = await blast.balanceOf(DEAD);
 
     await upgrade.connect(player).fuse(1, 2);
 
-    expect(await blast.totalSupply()).to.equal(supplyBefore - fee); // fee 100% burned
+    expect(await blast.balanceOf(DEAD)).to.equal(deadBefore + fee); // fee 100% burned
     expect((await heroes.attributesOf(1)).level).to.equal(3);
     await expect(heroes.ownerOf(2)).to.be.revertedWithCustomError(heroes, "ERC721NonexistentToken");
   });

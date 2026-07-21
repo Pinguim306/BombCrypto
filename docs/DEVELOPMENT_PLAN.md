@@ -82,14 +82,20 @@ Systems equivalent to the original game's, with our own names and numbers:
 - **Reward claims:** earnings accrue off-chain on the server; the player claims on-chain
   with a server-signed voucher (EIP-712) — cheap, safe, and anti-bot.
 
-### 3.5 Tokenomics (initial sketch — refine with simulation)
-| Allocation | % |
-|---|---|
-| Game rewards (5+ year emission, decaying) | 45% |
-| Treasury / ecosystem | 20% |
-| Team (3-year vesting, 1-year cliff) | 15% |
-| Liquidity (DEX on Robinhood Chain) | 10% |
-| Marketing / partnerships / airdrops | 10% |
+### 3.5 Tokenomics (launchpad model — DECIDED)
+- **$BLAST is issued by a launchpad (ponsfamily.com)** with a fixed supply of
+  **1 billion**; the game contracts never mint it.
+- The project **buys a share of the supply** and deposits it into the
+  pre-funded **RewardVault**; **launchpad creator fees** keep topping the
+  vault up over time.
+- All in-game "burns" (gacha, houses, upgrade fees, marketplace fee share)
+  transfer to the dead address `0x…dEaD`, so they work with any ERC-20.
+- **Withdrawal rules** (on-chain, admin-tunable): minimum accumulated amount
+  per claim + per-player cooldown + global daily payout cap. Production
+  recommendation: **10,000 BLAST minimum, 24h cooldown** (testnet beta runs
+  100 / 1h). Raise toward 40,000 as earn rates and price are calibrated.
+- Key health metric: **vault runway** = vault balance / daily payouts —
+  tracked via /admin/metrics and topped up from creator fees.
 
 ---
 
@@ -113,11 +119,11 @@ Systems equivalent to the original game's, with our own names and numbers:
 ### 4.1 Smart contracts (Solidity 0.8.x + Hardhat + OpenZeppelin)
 | Contract | Standard | Role |
 |---|---|---|
-| `BlastToken` | ERC-20 | Game token; minting restricted to `RewardVault`; burnable |
+| `BlastToken` | ERC-20 | Launchpad-issued in production (fixed 1B supply); dev stand-in for testnet |
 | `Heroes` | ERC-721 | Heroes; packed on-chain attribute struct; minted via `Gacha` |
 | `Houses` | ERC-721 | Stamina-recovery houses |
 | `Gacha` | — | Chest sales; randomness via Chainlink VRF (commit-reveal fallback); public odds |
-| `RewardVault` | — | Reward claims via server-signed EIP-712 vouchers; anti-replay nonce; daily caps |
+| `RewardVault` | — | Pre-funded vault; EIP-712 voucher claims; min claim + cooldown + daily cap |
 | `Marketplace` | — | NFT listing/sales; configurable fee; reentrancy protection |
 | `Staking` | — | Token lock with rewards; in-game multipliers for stakers |
 | `HeroUpgrade` | — | Hero fusion/burn + token to level up |

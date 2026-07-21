@@ -1,6 +1,8 @@
-# Robinhood Chain Testnet Deployment
+# Robinhood Chain Testnet Deployment (v2 — launchpad economy)
 
-Deployed on 2026-07-21 from commit `b63761c`.
+Deployed on 2026-07-21. Supersedes the v1 deployment (which used a mintable
+token); v2 reflects the production economy: BLAST issued externally
+(launchpad), pre-funded reward vault, and dead-address burns.
 
 ## Network
 
@@ -11,45 +13,69 @@ Deployed on 2026-07-21 from commit `b63761c`.
 | Chain ID | `46630` |
 | Currency | ETH |
 
-## Contract addresses
+## Contract addresses (v2)
 
 | Contract | Address |
 |---|---|
-| BlastToken | `0xee85422b82BC024b3FA520f02Ce36fda63e16B65` |
-| Heroes | `0xC12CcC2d6454ad07aAC2F312b6c23893C4fFAe67` |
-| Gacha | `0x59B4d40c9d27169B6F4b55F065f909414357fA2a` |
-| RewardVault | `0xD6E710DA33D927686cC3cdB53387bA4acb795E1b` |
-| Houses | `0x713Bb15aF24BEC45E38E6205e2bFBd0c59087D4E` |
-| HeroUpgrade | `0x7af63224592c084Dcd4961F2b77854822F211A8b` |
-| Staking | `0x990eabfa61C31e494b982da4662b1812d9c2a3d5` |
-| Marketplace | `0x407ea31503a7d7C7eF0E633b499E3d3C828fEfCb` |
+| BlastToken (dev stand-in, 1B fixed) | `0xc18aA7B1e455d7694319F5578844107104619787` |
+| Heroes | `0x3DfF06CAFaD28459c694eEf39Fc5a96d137e6387` |
+| Gacha | `0x74F8f63eA7d330bbb2fcF8437d286DB29647Bb85` |
+| RewardVault (pre-funded) | `0x612B9718efB3e3760e9868b2eaf8F50A2c4F372C` |
+| Houses | `0xd93506b0A2176a08158E5D088F2535adada41364` |
+| HeroUpgrade | `0x3f1209c82f65127F4Cb0Ed998683DE60486d8432` |
+| Staking | `0x83ECE78224b1E20662394C68E17582C4d3aeA586` |
+| Marketplace | `0x812f08AA82D284a7D4353D63089EAC1B4712c268` |
 
 Admin/treasury/signer (test only): `0x35Cd3B0e29a6B8739c065Ec2da668272EFbCd7DE`
 
-## Roles configured
+## Economy model (production = launchpad)
 
-- Gacha has `MINTER_ROLE` on Heroes
-- HeroUpgrade has `UPGRADER_ROLE` on Heroes
-- RewardVault has `MINTER_ROLE` on BlastToken
-- The admin address has `SIGNER_ROLE` on RewardVault (test setup — production uses a
-  dedicated KMS-held key)
+- **BLAST is issued by the launchpad (ponsfamily.com)** with a fixed supply of
+  1 billion. On mainnet, pass its address via `TOKEN_ADDRESS` to the deploy
+  script — no game contract can ever mint it.
+- **RewardVault is pre-funded**: the project buys a share of the supply and
+  deposits it via `vault.fund()`; launchpad **creator fees** keep topping it
+  up. Claims are paid by transfer from this balance. Vault runway =
+  `vaultBalance / daily payouts` — monitor it.
+- **Burns are dead-address transfers** (`0x…dEaD`) so any standard ERC-20
+  works: gacha 50%, house purchases 50%, upgrade fees 100%, half of the 4%
+  marketplace fee.
 
-## Smoke test (passed)
+## Withdrawal (claim) rules
 
-Full on-chain gacha flow executed via `contracts/script/smoke-testnet.ts`:
-approve 100 BLAST → buyChest (50 BLAST burned, 50 to treasury) → wait for the
-reveal block → openChest → **Hero #1 minted** (Common, power 18, speed 15,
-stamina 38, range 1, bombs 2).
+On-chain in the vault and mirrored by the server (`MIN_CLAIM_BLAST`,
+`CLAIM_COOLDOWN_HOURS` — the pairs must match):
+
+| Setting | Testnet beta | Production recommendation |
+|---|---|---|
+| Minimum per withdrawal | 100 BLAST | **10,000 BLAST** |
+| Cooldown between withdrawals | 1 h | **24 h** |
+| Global daily payout cap | 500,000 BLAST | tune from beta data |
+
+Rationale for 10,000 (vs. the 40,000 example): at current earn rates a
+starter team makes roughly 100–150 BLAST/hour of active play, so 10,000 ≈
+3–5 days of engaged play — long enough to deter mercenary farm-and-dump,
+short enough to keep newcomers motivated. 40,000 (~2 weeks for starters) is
+viable later once earn rates and token price are calibrated in beta; it is a
+one-transaction admin change (`setMinClaim`).
+
+## Verified on-chain (v2)
+
+- Gacha flow: chest bought (50 BLAST → `0x…dEaD`, 50 → treasury), Hero #1
+  minted (Common, power 18, speed 18, stamina 36).
+- Vault funded with 45,000,000 BLAST at deploy.
+- Claim of 2.36 BLAST paid **from the vault balance** (no minting):
+  tx `0x1cf6423079edbf3e7d4df8e7e02eb00431ba7a90bbb1fa02b6e9287c9ba78862`;
+  vault balance moved 45,000,000 → 44,999,997.64.
+- Beta limits left active: minClaim 100 BLAST, cooldown 3600s.
 
 ## Arbitrum/Orbit gotcha (important)
 
-Inside contracts, `block.number` and `blockhash()` refer to **L1 block numbers**
-(Arbitrum semantics), while the RPC reports L2 block numbers. Implications:
-
-- The Gacha reveal delay of 2 blocks ≈ 2 L1 blocks (~24s), and the 256-block
-  reveal window ≈ ~51 minutes.
-- Off-chain code must never compare RPC block numbers against contract-stored
-  ones; poll with a static call instead (see `smoke-testnet.ts`).
+Inside contracts, `block.number` and `blockhash()` refer to **L1 block
+numbers**, while the RPC reports L2 block numbers. The Gacha reveal delay of
+2 blocks ≈ ~24s and the 256-block reveal window ≈ ~51 min. Off-chain code
+must poll with a static call instead of comparing RPC block numbers (see
+`contracts/script/smoke-testnet.ts`).
 
 ## Server / client configuration
 
@@ -58,10 +84,12 @@ Server (`server/.env`):
 ```
 CHAIN_ID=46630
 RPC_URL=https://rpc.testnet.chain.robinhood.com/rpc
-VAULT_ADDRESS=0xD6E710DA33D927686cC3cdB53387bA4acb795E1b
-HEROES_ADDRESS=0xC12CcC2d6454ad07aAC2F312b6c23893C4fFAe67
-HOUSES_ADDRESS=0x713Bb15aF24BEC45E38E6205e2bFBd0c59087D4E
+VAULT_ADDRESS=0x612B9718efB3e3760e9868b2eaf8F50A2c4F372C
+HEROES_ADDRESS=0x3DfF06CAFaD28459c694eEf39Fc5a96d137e6387
+HOUSES_ADDRESS=0xd93506b0A2176a08158E5D088F2535adada41364
 SIGNER_KEY=<key with SIGNER_ROLE — never commit>
+MIN_CLAIM_BLAST=100
+CLAIM_COOLDOWN_HOURS=1
 NODE_USE_ENV_PROXY=1   # only needed behind an env proxy
 ```
 
@@ -70,12 +98,12 @@ Client (`client/.env`):
 ```
 VITE_CHAIN_ID=46630
 VITE_RPC_URL=https://rpc.testnet.chain.robinhood.com/rpc
-VITE_TOKEN_ADDRESS=0xee85422b82BC024b3FA520f02Ce36fda63e16B65
-VITE_VAULT_ADDRESS=0xD6E710DA33D927686cC3cdB53387bA4acb795E1b
-VITE_MARKET_ADDRESS=0x407ea31503a7d7C7eF0E633b499E3d3C828fEfCb
-VITE_HEROES_ADDRESS=0xC12CcC2d6454ad07aAC2F312b6c23893C4fFAe67
-VITE_HOUSES_ADDRESS=0x713Bb15aF24BEC45E38E6205e2bFBd0c59087D4E
+VITE_TOKEN_ADDRESS=0xc18aA7B1e455d7694319F5578844107104619787
+VITE_VAULT_ADDRESS=0x612B9718efB3e3760e9868b2eaf8F50A2c4F372C
+VITE_MARKET_ADDRESS=0x812f08AA82D284a7D4353D63089EAC1B4712c268
+VITE_HEROES_ADDRESS=0x3DfF06CAFaD28459c694eEf39Fc5a96d137e6387
+VITE_HOUSES_ADDRESS=0xd93506b0A2176a08158E5D088F2535adada41364
 ```
 
-Indexer (`indexer` env): `RPC_URL`, `VAULT_ADDRESS`, `HEROES_ADDRESS`,
-`MARKET_ADDRESS` as above.
+Indexer env: `RPC_URL`, `VAULT_ADDRESS`, `HEROES_ADDRESS`, `MARKET_ADDRESS`
+as above.

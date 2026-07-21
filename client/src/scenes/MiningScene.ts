@@ -189,10 +189,12 @@ export class MiningScene extends Phaser.Scene {
       });
       return btn;
     });
+    const rules = this.state.claimRules;
     const attempts = this.add.text(
       GRID_X,
       GRID_Y + ROWS * TILE + 62,
-      `adventures today: ${this.state.adventure.attemptsToday}/10`,
+      `adventures today: ${this.state.adventure.attemptsToday}/10   ` +
+        `withdraw: min ${rules.minBlast.toLocaleString("en-US")} BLAST, every ${rules.cooldownHours}h`,
       { fontFamily: "monospace", fontSize: "11px", color: "#90a4ae" }
     );
     this.stageButtons.push(attempts);
@@ -222,6 +224,10 @@ export class MiningScene extends Phaser.Scene {
       const y = 100 + i * 92;
       const c = this.add.container(20, y);
       const body = this.add.image(0, -4, `hero-${h.rarity}`).setOrigin(0).setScale(0.85);
+      if (h.mode === "work") {
+        // subtle mining bob while working
+        this.tweens.add({ targets: body, y: 0, duration: 420, yoyo: true, repeat: -1 });
+      }
       const name = this.add.text(54, 0, `${RARITY_NAMES[h.rarity]}  pwr ${h.power} spd ${h.speed}`, {
         fontFamily: "monospace",
         fontSize: "12px",

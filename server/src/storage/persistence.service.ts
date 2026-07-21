@@ -101,6 +101,14 @@ export class PersistenceService implements OnApplicationShutdown {
     }
   }
 
+  /** Timestamp (ms) of the player's most recent voucher, or null. */
+  lastVoucherAt(player: string): number | null {
+    const row = this.db
+      .prepare("SELECT MAX(created_at) AS t FROM vouchers WHERE player = ?")
+      .get(player.toLowerCase()) as { t: number | null } | undefined;
+    return row?.t ?? null;
+  }
+
   deleteVoucher(player: string, nonce: string): void {
     this.db.prepare("DELETE FROM vouchers WHERE player = ? AND nonce = ?").run(player.toLowerCase(), nonce);
   }

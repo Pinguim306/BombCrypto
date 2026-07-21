@@ -64,6 +64,7 @@ export interface GameStateDto {
   pendingBlast: string;
   mapsCleared: number;
   chainSync: boolean;
+  claimRules: { minBlast: number; cooldownHours: number };
   adventure: { attemptsToday: number; stages: StageDto[] };
   blocks: { hp: number; maxHp: number }[];
   houses: HouseDto[];

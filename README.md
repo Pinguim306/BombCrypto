@@ -54,6 +54,9 @@ Environment variables: see `contracts/.env.example`, `server/.env.example`, and
   with 3 stages and a daily limit, event indexer, adventure UI in the client
 - ✅ Phase 4.5 — Market scene in the client: browse/buy listings, sell on-chain heroes,
   and cancel, straight from the contracts via viem
-- ✅ Original procedural pixel art (code-generated placeholder set, artist-ready texture keys)
+- ✅ Original procedural pixel art v2 (outlined/shaded sprites, artist-ready texture keys)
+- ✅ Launchpad economy: fixed 1B supply token (issued by the launchpad in production),
+  pre-funded RewardVault fed by creator fees, dead-address burns, and withdrawal rules
+  (min claim + cooldown + daily cap) — live on the Robinhood Chain testnet
 - ⏭ Phase 5 — final art (artist), external audit, anti-bot, Robinhood Chain testnet
   deployment, and public beta

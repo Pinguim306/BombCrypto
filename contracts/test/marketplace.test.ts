@@ -4,6 +4,7 @@ import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import type { BlastToken, Heroes, Marketplace } from "../typechain-types";
 
 const PRICE = ethers.parseEther("1000");
+const DEAD = "0x000000000000000000000000000000000000dEaD";
 
 async function deployFixture() {
   const [admin, treasury, seller, buyer] = await ethers.getSigners();
@@ -39,14 +40,14 @@ describe("Marketplace", () => {
     const burn = fee / 2n;
     await blast.connect(buyer).approve(await market.getAddress(), PRICE);
 
-    const supplyBefore = await blast.totalSupply();
+    const deadBefore = await blast.balanceOf(DEAD);
     const sellerBefore = await blast.balanceOf(seller.address);
     const treasuryBefore = await blast.balanceOf(treasury.address);
 
     await market.connect(buyer).buy(1);
 
     expect(await heroes.ownerOf(1)).to.equal(buyer.address);
-    expect(await blast.totalSupply()).to.equal(supplyBefore - burn);
+    expect(await blast.balanceOf(DEAD)).to.equal(deadBefore + burn);
     expect(await blast.balanceOf(treasury.address)).to.equal(treasuryBefore + fee - burn);
     expect(await blast.balanceOf(seller.address)).to.equal(sellerBefore + PRICE - fee);
   });

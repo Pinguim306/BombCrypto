@@ -5,7 +5,6 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import {Heroes} from "./Heroes.sol";
 
 /// @title MinerBlast hero gacha
@@ -16,6 +15,9 @@ import {Heroes} from "./Heroes.sol";
 ///         Per-rarity probabilities are public and fixed at deploy time.
 contract Gacha is AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
+
+    /// @dev launchpad tokens may not be burnable; "burns" go to the dead address
+    address public constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
     struct Chest {
         address buyer;
@@ -54,7 +56,7 @@ contract Gacha is AccessControl, ReentrancyGuard {
     /// @notice Buys a chest. The payment is split between burn and treasury.
     function buyChest(bytes32 salt) external nonReentrant returns (uint256 chestId) {
         uint256 burnAmount = (chestPrice * burnBps) / 10000;
-        ERC20Burnable(address(blast)).burnFrom(msg.sender, burnAmount);
+        blast.safeTransferFrom(msg.sender, BURN_ADDRESS, burnAmount);
         blast.safeTransferFrom(msg.sender, treasury, chestPrice - burnAmount);
 
         chestId = nextChestId++;

@@ -5,6 +5,10 @@ import type { BlastToken, Heroes, Gacha, RewardVault } from "../typechain-types"
 
 const CHEST_PRICE = ethers.parseEther("100");
 const DAILY_CAP = ethers.parseEther("10000");
+const MIN_CLAIM = ethers.parseEther("10");
+const COOLDOWN = 24 * 3600;
+const VAULT_FUNDS = ethers.parseEther("100000");
+const DEAD = "0x000000000000000000000000000000000000dEaD";
 
 async function deployFixture() {
   const [admin, treasury, player, other] = await ethers.getSigners();
@@ -24,12 +28,17 @@ async function deployFixture() {
   const vault = (await ethers.deployContract("RewardVault", [
     await blast.getAddress(),
     DAILY_CAP,
+    MIN_CLAIM,
+    COOLDOWN,
     admin.address,
   ])) as RewardVault;
 
   await heroes.grantRole(await heroes.MINTER_ROLE(), await gacha.getAddress());
-  await blast.grantRole(await blast.MINTER_ROLE(), await vault.getAddress());
   await vault.grantRole(await vault.SIGNER_ROLE(), admin.address);
+
+  // the vault never mints: it is pre-funded (launchpad share + creator fees)
+  await blast.approve(await vault.getAddress(), VAULT_FUNDS);
+  await vault.fund(VAULT_FUNDS);
 
   // fund the player to buy chests
   await blast.transfer(player.address, ethers.parseEther("1000"));
@@ -62,22 +71,14 @@ async function signClaim(
   return signer.signTypedData(domain, types, { player, amount, nonce, deadline });
 }
 
-describe("BlastToken", () => {
-  it("mints the initial allocation (55%) to the admin and locks the rest under the cap", async () => {
+describe("BlastToken (dev stand-in)", () => {
+  it("mints the full fixed supply of 1B to the holder and has no mint function", async () => {
     const { blast, admin } = await loadFixture(deployFixture);
-    expect(await blast.totalSupply()).to.equal(ethers.parseEther("550000000"));
-    expect(await blast.cap()).to.equal(ethers.parseEther("1000000000"));
+    expect(await blast.totalSupply()).to.equal(ethers.parseEther("1000000000"));
     expect(await blast.balanceOf(admin.address)).to.equal(
-      ethers.parseEther("550000000") - ethers.parseEther("1000")
+      ethers.parseEther("1000000000") - VAULT_FUNDS - ethers.parseEther("1000")
     );
-  });
-
-  it("blocks mint without MINTER_ROLE", async () => {
-    const { blast, other } = await loadFixture(deployFixture);
-    await expect(blast.connect(other).mint(other.address, 1n)).to.be.revertedWithCustomError(
-      blast,
-      "AccessControlUnauthorizedAccount"
-    );
+    expect((blast as any).mint).to.equal(undefined);
   });
 });
 
@@ -96,14 +97,14 @@ describe("Heroes", () => {
 });
 
 describe("Gacha", () => {
-  it("buys and opens a chest: burns 50%, pays the treasury and mints a hero with attributes", async () => {
+  it("buys and opens a chest: 50% to the dead address, treasury paid, hero minted", async () => {
     const { blast, heroes, gacha, treasury, player } = await loadFixture(deployFixture);
 
     await blast.connect(player).approve(await gacha.getAddress(), CHEST_PRICE);
-    const supplyBefore = await blast.totalSupply();
+    const deadBefore = await blast.balanceOf(DEAD);
 
     await gacha.connect(player).buyChest(ethers.id("my-salt"));
-    expect(await blast.totalSupply()).to.equal(supplyBefore - CHEST_PRICE / 2n);
+    expect(await blast.balanceOf(DEAD)).to.equal(deadBefore + CHEST_PRICE / 2n);
     expect(await blast.balanceOf(treasury.address)).to.equal(CHEST_PRICE / 2n);
 
     await network.provider.send("hardhat_mine", ["0x3"]);
@@ -146,39 +147,70 @@ describe("Gacha", () => {
   });
 });
 
-describe("RewardVault", () => {
-  it("accepts a valid claim, increments the nonce and rejects replay", async () => {
+describe("RewardVault (pre-funded)", () => {
+  it("pays a valid claim from the funded balance, increments the nonce and rejects replay", async () => {
     const { blast, vault, admin, player } = await loadFixture(deployFixture);
     const amount = ethers.parseEther("50");
-    const deadline = (await ethers.provider.getBlock("latest"))!.timestamp + 3600;
+    const deadline = (await ethers.provider.getBlock("latest"))!.timestamp + 2 * COOLDOWN;
 
     const sig = await signClaim(vault, admin, player.address, amount, 0n, deadline);
     const balBefore = await blast.balanceOf(player.address);
+    const vaultBefore = await vault.vaultBalance();
 
     await vault.connect(player).claim(amount, deadline, sig);
     expect(await blast.balanceOf(player.address)).to.equal(balBefore + amount);
+    expect(await vault.vaultBalance()).to.equal(vaultBefore - amount);
     expect(await vault.nonces(player.address)).to.equal(1n);
 
+    // past the cooldown, replaying the old voucher still fails: nonce moved on
+    await network.provider.send("evm_increaseTime", [COOLDOWN]);
+    await network.provider.send("evm_mine");
     await expect(vault.connect(player).claim(amount, deadline, sig)).to.be.revertedWith(
       "Vault: invalid signature"
     );
   });
 
-  it("rejects a signature from someone without SIGNER_ROLE", async () => {
-    const { vault, player, other } = await loadFixture(deployFixture);
-    const amount = ethers.parseEther("50");
-    const deadline = (await ethers.provider.getBlock("latest"))!.timestamp + 3600;
-    const sig = await signClaim(vault, other, player.address, amount, 0n, deadline);
-    await expect(vault.connect(player).claim(amount, deadline, sig)).to.be.revertedWith(
-      "Vault: invalid signature"
-    );
-  });
-
-  it("rejects an expired voucher", async () => {
+  it("rejects claims below the minimum", async () => {
     const { vault, admin, player } = await loadFixture(deployFixture);
-    const deadline = (await ethers.provider.getBlock("latest"))!.timestamp - 1;
-    const sig = await signClaim(vault, admin, player.address, 1n, 0n, deadline);
-    await expect(vault.connect(player).claim(1n, deadline, sig)).to.be.revertedWith(
+    const amount = MIN_CLAIM - 1n;
+    const deadline = (await ethers.provider.getBlock("latest"))!.timestamp + 3600;
+    const sig = await signClaim(vault, admin, player.address, amount, 0n, deadline);
+    await expect(vault.connect(player).claim(amount, deadline, sig)).to.be.revertedWith(
+      "Vault: below minimum claim"
+    );
+  });
+
+  it("enforces the per-player claim cooldown", async () => {
+    const { vault, admin, player } = await loadFixture(deployFixture);
+    const amount = ethers.parseEther("50");
+    const deadline = (await ethers.provider.getBlock("latest"))!.timestamp + 2 * COOLDOWN;
+
+    const sig0 = await signClaim(vault, admin, player.address, amount, 0n, deadline);
+    await vault.connect(player).claim(amount, deadline, sig0);
+
+    const sig1 = await signClaim(vault, admin, player.address, amount, 1n, deadline);
+    await expect(vault.connect(player).claim(amount, deadline, sig1)).to.be.revertedWith(
+      "Vault: claim cooldown active"
+    );
+
+    await network.provider.send("evm_increaseTime", [COOLDOWN]);
+    await network.provider.send("evm_mine");
+    await vault.connect(player).claim(amount, deadline, sig1);
+    expect(await vault.nonces(player.address)).to.equal(2n);
+  });
+
+  it("rejects a signature from someone without SIGNER_ROLE and expired vouchers", async () => {
+    const { vault, admin, player, other } = await loadFixture(deployFixture);
+    const amount = ethers.parseEther("50");
+    const now = (await ethers.provider.getBlock("latest"))!.timestamp;
+
+    const badSig = await signClaim(vault, other, player.address, amount, 0n, now + 3600);
+    await expect(vault.connect(player).claim(amount, now + 3600, badSig)).to.be.revertedWith(
+      "Vault: invalid signature"
+    );
+
+    const expiredSig = await signClaim(vault, admin, player.address, amount, 0n, now - 1);
+    await expect(vault.connect(player).claim(amount, now - 1, expiredSig)).to.be.revertedWith(
       "Vault: voucher expired"
     );
   });
@@ -190,14 +222,36 @@ describe("RewardVault", () => {
     const sig1 = await signClaim(vault, admin, player.address, DAILY_CAP, 0n, deadline);
     await vault.connect(player).claim(DAILY_CAP, deadline, sig1);
 
-    const sig2 = await signClaim(vault, admin, other.address, 1n, 0n, deadline);
-    await expect(vault.connect(other).claim(1n, deadline, sig2)).to.be.revertedWith(
+    const amount = ethers.parseEther("10");
+    const sig2 = await signClaim(vault, admin, other.address, amount, 0n, deadline);
+    await expect(vault.connect(other).claim(amount, deadline, sig2)).to.be.revertedWith(
       "Vault: daily cap reached"
     );
 
     await network.provider.send("evm_increaseTime", [86400]);
     await network.provider.send("evm_mine");
-    await vault.connect(other).claim(1n, deadline, sig2);
+    await vault.connect(other).claim(amount, deadline, sig2);
     expect(await vault.nonces(other.address)).to.equal(1n);
+  });
+
+  it("reverts when the vault is underfunded and admin can withdraw/refill", async () => {
+    const { blast, vault, admin, player } = await loadFixture(deployFixture);
+    const deadline = (await ethers.provider.getBlock("latest"))!.timestamp + 3600;
+
+    // drain the vault (admin rebalancing)
+    await vault.connect(admin).withdraw(admin.address, await vault.vaultBalance());
+    expect(await vault.vaultBalance()).to.equal(0n);
+
+    const amount = ethers.parseEther("50");
+    const sig = await signClaim(vault, admin, player.address, amount, 0n, deadline);
+    await expect(vault.connect(player).claim(amount, deadline, sig)).to.be.revertedWithCustomError(
+      blast,
+      "ERC20InsufficientBalance"
+    );
+
+    // creator fees top the vault back up and the claim goes through
+    await blast.approve(await vault.getAddress(), amount);
+    await vault.fund(amount);
+    await vault.connect(player).claim(amount, deadline, sig);
   });
 });

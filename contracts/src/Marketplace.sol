@@ -6,7 +6,6 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 /// @title MinerBlast NFT marketplace
 /// @notice Buying and selling heroes and houses in BLAST, with NFT escrow.
@@ -14,6 +13,9 @@ import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 ///         Only collections allowed by the admin are tradable.
 contract Marketplace is AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
+
+    /// @dev launchpad tokens may not be burnable; "burns" go to the dead address
+    address public constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
     struct Listing {
         address seller;
@@ -92,7 +94,7 @@ contract Marketplace is AccessControl, ReentrancyGuard {
         uint256 fee = (l.price * feeBps) / 10000;
         uint256 burnAmount = (fee * feeBurnBps) / 10000;
 
-        ERC20Burnable(address(blast)).burnFrom(msg.sender, burnAmount);
+        blast.safeTransferFrom(msg.sender, BURN_ADDRESS, burnAmount);
         blast.safeTransferFrom(msg.sender, treasury, fee - burnAmount);
         blast.safeTransferFrom(msg.sender, l.seller, l.price - fee);
         IERC721(l.collection).transferFrom(address(this), msg.sender, l.tokenId);

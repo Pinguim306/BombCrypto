@@ -6,7 +6,6 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 /// @title MinerBlast house NFTs
 /// @notice Houses speed up stamina recovery for sheltered heroes.
@@ -15,6 +14,9 @@ import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 ///         deterministic per rarity (capacity and regeneration bonus).
 contract Houses is ERC721, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
+
+    /// @dev launchpad tokens may not be burnable; "burns" go to the dead address
+    address public constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
     struct HouseAttributes {
         uint8 rarity; // 0..5
@@ -49,7 +51,7 @@ contract Houses is ERC721, AccessControl, ReentrancyGuard {
         require(price > 0, "Houses: rarity unavailable");
 
         uint256 burnAmount = (price * burnBps) / 10000;
-        ERC20Burnable(address(blast)).burnFrom(msg.sender, burnAmount);
+        blast.safeTransferFrom(msg.sender, BURN_ADDRESS, burnAmount);
         blast.safeTransferFrom(msg.sender, treasury, price - burnAmount);
 
         tokenId = nextTokenId++;

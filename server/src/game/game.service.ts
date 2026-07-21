@@ -12,6 +12,7 @@ import {
 import { PersistenceService } from "../storage/persistence.service";
 import { ChainService, ChainHouse } from "./chain.service";
 import { AdventureTracker, STAGES, currentDay, runAdventure } from "./adventure";
+import { MIN_CLAIM_BLAST, CLAIM_COOLDOWN_HOURS } from "../config";
 import { randomInt } from "node:crypto";
 
 export interface PlayerState {
@@ -128,6 +129,7 @@ export class GameService {
       pendingBlast: (m.pendingMicroBlast / 1_000_000).toFixed(6),
       mapsCleared: m.mapsCleared,
       chainSync: this.chain.enabled,
+      claimRules: { minBlast: MIN_CLAIM_BLAST, cooldownHours: CLAIM_COOLDOWN_HOURS },
       adventure: {
         attemptsToday: player.adventure.day === currentDay(now) ? player.adventure.attemptsToday : 0,
         stages: STAGES.map((s) => ({

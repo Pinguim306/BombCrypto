@@ -3,10 +3,10 @@ import { JsonRpcProvider, Wallet, Contract } from "ethers";
 import { GameService } from "../game/game.service";
 import { PersistenceService } from "../storage/persistence.service";
 
+import { MIN_CLAIM_MICRO, MIN_CLAIM_BLAST, CLAIM_COOLDOWN_MS } from "../config";
+
 const VAULT_ABI = ["function nonces(address player) view returns (uint256)"];
 
-/** Minimum claim: 1 BLAST (avoids spam of tiny claims). */
-const MIN_CLAIM_MICRO = 1_000_000;
 const VOUCHER_TTL_S = 3600;
 
 export interface ClaimVoucher {
@@ -68,10 +68,20 @@ export class RewardsService {
       };
     }
 
+    // claim cooldown: measured from the last issued voucher (re-presenting a
+    // still-valid pending voucher above does not count as a new claim)
+    const lastIssuedAt = this.persistence.lastVoucherAt(player);
+    if (lastIssuedAt && Date.now() - lastIssuedAt < CLAIM_COOLDOWN_MS) {
+      const remainingMin = Math.ceil((CLAIM_COOLDOWN_MS - (Date.now() - lastIssuedAt)) / 60_000);
+      throw new BadRequestException(`claim cooldown active — try again in ~${remainingMin} min`);
+    }
+
     const micro = await this.game.debitPending(player);
     if (micro < MIN_CLAIM_MICRO) {
       await this.game.refundPending(player, micro);
-      throw new BadRequestException("minimum claim is 1 BLAST");
+      throw new BadRequestException(
+        `minimum claim is ${MIN_CLAIM_BLAST.toLocaleString("en-US")} BLAST`
+      );
     }
 
     try {

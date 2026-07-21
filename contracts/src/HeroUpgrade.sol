@@ -2,7 +2,8 @@
 pragma solidity 0.8.28;
 
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Heroes} from "./Heroes.sol";
 
 /// @title MinerBlast hero fusion/upgrade
@@ -11,8 +12,13 @@ import {Heroes} from "./Heroes.sol";
 ///         Max level grows with rarity. Requires UPGRADER_ROLE on the
 ///         Heroes contract.
 contract HeroUpgrade is ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
+    /// @dev launchpad tokens may not be burnable; "burns" go to the dead address
+    address public constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
+
     Heroes public immutable heroes;
-    ERC20Burnable public immutable blast;
+    IERC20 public immutable blast;
 
     /// @dev base fee; cost = baseFee * target hero's current level
     uint256 public immutable baseFee;
@@ -21,7 +27,7 @@ contract HeroUpgrade is ReentrancyGuard {
         address indexed owner, uint256 indexed targetId, uint256 burnedId, uint8 newLevel, uint256 fee
     );
 
-    constructor(Heroes heroes_, ERC20Burnable blast_, uint256 baseFee_) {
+    constructor(Heroes heroes_, IERC20 blast_, uint256 baseFee_) {
         heroes = heroes_;
         blast = blast_;
         baseFee = baseFee_;
@@ -43,7 +49,7 @@ contract HeroUpgrade is ReentrancyGuard {
         require(target.level < maxLevel(target.rarity), "Upgrade: max level");
 
         uint256 fee = baseFee * target.level;
-        blast.burnFrom(msg.sender, fee);
+        blast.safeTransferFrom(msg.sender, BURN_ADDRESS, fee);
         heroes.burn(sacrificeId);
         heroes.levelUp(targetId);
 
