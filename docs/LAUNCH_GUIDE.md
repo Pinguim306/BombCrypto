@@ -160,6 +160,15 @@ npx hardhat run script/deploy.ts --network robinhoodMainnet
 
 # 5. point server + client envs at mainnet addresses; fresh database
 #    (testnet progress does not migrate — announce this in advance)
+#    Client on Vercel: root dir client/, build "pnpm build", output dist/;
+#    set env vars and REDEPLOY (they are baked into the build):
+#      VITE_NETWORK_NAME="Robinhood Chain Mainnet"
+#      VITE_CHAIN_ID / VITE_RPC_URL = mainnet params
+#      VITE_BLAST_CA = official launchpad $BLAST address
+#      VITE_TOKEN/VAULT/GACHA/HEROES/HOUSES/MARKET_ADDRESS = mainnet deploy
+#      VITE_SERVER_URL = https://api.<domain>
+#    Server env: MIN_CLAIM_BLAST=60000, CLAIM_COOLDOWN_HOURS=24 (mirror the
+#    vault), SIGNER_KEY from the secret manager, fresh JWT_SECRET/ADMIN_KEY
 
 # 6. dry run with the team: buy chest -> mine -> adventure -> claim ->
 #    marketplace list/buy, all with real transactions, before announcing
