@@ -51,5 +51,7 @@ Variáveis de ambiente: ver `contracts/.env.example` e `server/.env.example`.
   casas acelerando regeneração, reconciliação de vouchers, sync on-chain de heróis e métricas admin
 - ✅ Fase 4 — Marketplace on-chain com escrow e taxa (4%, metade queimada), modo Aventura
   com 3 estágios e limite diário, indexer de eventos e UI de aventura no cliente
+- ✅ Fase 4.5 — cena de Mercado no cliente: navegar/comprar listagens, vender heróis
+  on-chain e cancelar, direto dos contratos via viem
 - ⏭ Fase 5 — arte original (artista), auditoria externa, anti-bot, deploy na testnet da
   Robinhood Chain e beta público

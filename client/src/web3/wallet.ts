@@ -17,6 +17,10 @@ export function connectedAddress(): Address | null {
   return account;
 }
 
+export function walletClient(): WalletClient | null {
+  return client;
+}
+
 export async function connectWallet(): Promise<Address> {
   if (!window.ethereum) {
     throw new Error("Nenhuma carteira encontrada. Instale uma carteira EVM (ex.: Rabby/MetaMask).");

@@ -53,6 +53,17 @@ export class MiningScene extends Phaser.Scene {
       color: "#a5d6a7",
     });
 
+    const market = this.add
+      .text(GRID_X + 300, 50, "[ Mercado ]", {
+        fontFamily: "monospace",
+        fontSize: "16px",
+        color: "#ffcc80",
+        backgroundColor: "#1c2333",
+        padding: { x: 10, y: 6 },
+      })
+      .setInteractive({ useHandCursor: true });
+    market.on("pointerdown", () => this.scene.start("market"));
+
     const claim = this.add
       .text(GRID_X + 420, 50, "[ Sacar BLAST ]", {
         fontFamily: "monospace",
