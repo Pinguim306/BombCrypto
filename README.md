@@ -47,4 +47,6 @@ Variáveis de ambiente: ver `contracts/.env.example` e `server/.env.example`.
 
 - ✅ Fase 0/1 — plano, monorepo e contratos core (BLAST, Heroes, Gacha, RewardVault) com testes
 - ✅ Fase 2 — loop principal jogável: motor de mineração server-side, auth SIWE, vouchers EIP-712 e cliente Phaser
-- ⏭ Fase 3 — persistência (PostgreSQL/Redis), heróis sincronizados do contrato via indexer, casas e upgrades
+- ✅ Fase 3 — economia completa: contratos Houses/HeroUpgrade/Staking, persistência SQLite,
+  casas acelerando regeneração, reconciliação de vouchers, sync on-chain de heróis e métricas admin
+- ⏭ Fase 4 — marketplace on-chain, modo Aventura, indexer de eventos e arte original

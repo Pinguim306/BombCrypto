@@ -1,0 +1,69 @@
+import Phaser from "phaser";
+import { connectWallet, signIn } from "../web3/wallet";
+import { hasToken } from "../net/api";
+
+/** Tela inicial: conectar carteira e assinar o login SIWE. */
+export class ConnectScene extends Phaser.Scene {
+  constructor() {
+    super("connect");
+  }
+
+  create() {
+    const { width, height } = this.scale;
+
+    this.add
+      .text(width / 2, height * 0.3, "MINERBLAST", {
+        fontFamily: "monospace",
+        fontSize: "56px",
+        color: "#ffb74d",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+
+    this.add
+      .text(width / 2, height * 0.3 + 46, "mineração explosiva na Robinhood Chain", {
+        fontFamily: "monospace",
+        fontSize: "16px",
+        color: "#90a4ae",
+      })
+      .setOrigin(0.5);
+
+    if (hasToken()) {
+      this.scene.start("mining");
+      return;
+    }
+
+    const button = this.add
+      .text(width / 2, height * 0.55, "[ Conectar carteira ]", {
+        fontFamily: "monospace",
+        fontSize: "24px",
+        color: "#4fc3f7",
+        backgroundColor: "#1c2333",
+        padding: { x: 18, y: 12 },
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+
+    const status = this.add
+      .text(width / 2, height * 0.68, "", {
+        fontFamily: "monospace",
+        fontSize: "14px",
+        color: "#ef9a9a",
+        wordWrap: { width: width * 0.8 },
+        align: "center",
+      })
+      .setOrigin(0.5);
+
+    button.on("pointerdown", async () => {
+      try {
+        status.setColor("#90a4ae").setText("conectando...");
+        await connectWallet();
+        status.setText("assine a mensagem de login na carteira...");
+        await signIn();
+        this.scene.start("mining");
+      } catch (err) {
+        status.setColor("#ef9a9a").setText((err as Error).message);
+      }
+    });
+  }
+}

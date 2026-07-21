@@ -1,0 +1,19 @@
+{
+  "name": "@minerblast/client",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "phaser": "^3.87.0",
+    "siwe": "^2.3.2",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.0",
+    "vite": "^5.4.0"
+  }
+}

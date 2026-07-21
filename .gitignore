@@ -10,3 +10,4 @@ typechain-types/
 !.env.example
 *.log
 .DS_Store
+*.db
