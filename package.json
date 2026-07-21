@@ -1,0 +1,11 @@
+{
+  "name": "minerblast",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MinerBlast - jogo P2E estilo bomber mining para Robinhood Chain",
+  "scripts": {
+    "test": "pnpm -r test",
+    "build": "pnpm -r build"
+  },
+  "packageManager": "pnpm@10.0.0"
+}

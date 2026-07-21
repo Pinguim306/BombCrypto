@@ -201,10 +201,13 @@ na camada de lógica (Gacha/Vault) se necessário.
 
 ---
 
-## 7. Questões em aberto (decidir antes da Fase 1)
+## 7. Decisões e questões em aberto
 
-1. Nome definitivo e identidade visual (contratar artista para o media kit próprio).
-2. Um token ou dois (recompensa + governança)? Recomendação inicial: **um só**, simplifica economia.
+**Decidido:**
+1. ✅ Nome: **MinerBlast** (pendente apenas verificação formal de marca antes do lançamento).
+2. ✅ Economia de **um único token**: $BLAST.
+
+**Em aberto:**
 3. Progresso do beta testnet: reset total, airdrop proporcional, ou migração 1:1?
 4. Orçamento para auditoria (referência: US$ 15–40k para o escopo listado).
 5. Participar dos buildathons Arbitrum Open House 2026 (inscrição, prazos).
