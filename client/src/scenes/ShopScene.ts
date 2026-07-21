@@ -58,7 +58,11 @@ export class ShopScene extends Phaser.Scene {
       return;
     }
 
+    const loading = this.add.text(300, 170, "Loading prices...", {
+      fontFamily: "monospace", fontSize: "13px", color: "#90a4ae",
+    });
     gachaPrices().then((p) => {
+      loading.destroy();
       const single = makeButton(this, 420, 165, `Buy 1 Chest — ${formatEther(p.chestWei)} ETH`, {
         width: 300, height: 46, color: 0x2e7d32, icon: "eth", fontSize: "14px",
       });
@@ -69,9 +73,7 @@ export class ShopScene extends Phaser.Scene {
       });
       pack.onClick(() => this.onBuyChest(p.packWei, true));
     }).catch(() => {
-      this.add.text(300, 170, "Shop unavailable.", {
-        fontFamily: "monospace", fontSize: "13px", color: "#ef9a9a",
-      });
+      loading.setColor("#ef9a9a").setText("Shop unavailable.");
     });
   }
 
@@ -127,10 +129,14 @@ export class ShopScene extends Phaser.Scene {
     }
 
     this.refreshBalance();
-    housePrices().then((prices) => this.renderHouseCards(prices)).catch(() => {
-      this.add.text(44, 350, "Could not load house prices.", {
-        fontFamily: "monospace", fontSize: "13px", color: "#ef9a9a",
-      });
+    const loading = this.add.text(44, 350, "Loading house prices...", {
+      fontFamily: "monospace", fontSize: "13px", color: "#90a4ae",
+    });
+    housePrices().then((prices) => {
+      loading.destroy();
+      this.renderHouseCards(prices);
+    }).catch(() => {
+      loading.setColor("#ef9a9a").setText("Could not load house prices.");
     });
   }
 

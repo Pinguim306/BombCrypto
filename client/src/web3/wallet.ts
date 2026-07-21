@@ -28,6 +28,8 @@ export async function connectWallet(): Promise<Address> {
   client = createWalletClient({ transport: custom(window.ethereum) });
   const [addr] = await client.requestAddresses();
   account = addr;
+  // update the site header's wallet chip
+  window.dispatchEvent(new CustomEvent("mb-wallet", { detail: addr }));
   return addr;
 }
 

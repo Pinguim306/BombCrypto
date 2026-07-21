@@ -3,14 +3,149 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MinerBlast</title>
+    <title>MinerBlast — explosive mining on Robinhood Chain</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='9' y='1' width='2' height='2' fill='%23ffa726'/%3E%3Crect x='8' y='3' width='2' height='2' fill='%23ff7043'/%3E%3Crect x='4' y='5' width='8' height='8' fill='%23212121'/%3E%3Crect x='3' y='6' width='10' height='6' fill='%23212121'/%3E%3Crect x='5' y='6' width='2' height='2' fill='%23607d8b'/%3E%3C/svg%3E" />
     <style>
-      html, body { margin: 0; padding: 0; background: #10141f; }
-      #game { display: flex; justify-content: center; padding-top: 12px; }
+      :root {
+        --bg-0: #0b0f1a;
+        --bg-1: #131a2b;
+        --panel: #161d2e;
+        --border: #2a3550;
+        --orange: #e8952f;
+        --orange-lt: #ffb74d;
+        --text: #eceff1;
+        --muted: #90a4ae;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; padding: 0; min-height: 100%;
+        font-family: "Courier New", monospace;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 18% 12%, rgba(232,149,47,.07), transparent 42%),
+          radial-gradient(circle at 84% 78%, rgba(63,81,181,.10), transparent 46%),
+          radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+          linear-gradient(160deg, var(--bg-1) 0%, var(--bg-0) 60%, #080b13 100%);
+        background-size: auto, auto, 26px 26px, auto;
+      }
+
+      /* ---------- header ---------- */
+      header {
+        display: flex; align-items: center; gap: 18px;
+        padding: 10px 22px;
+        background: linear-gradient(180deg, #1a2336, var(--panel));
+        border-bottom: 2px solid var(--border);
+        box-shadow: 0 4px 18px rgba(0,0,0,.45);
+        flex-wrap: wrap;
+      }
+      .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+      .logo svg { image-rendering: pixelated; }
+      .wordmark {
+        font-size: 22px; font-weight: bold; letter-spacing: 1px;
+        color: var(--orange-lt);
+        text-shadow: 0 2px 0 #7a4a00, 0 4px 10px rgba(0,0,0,.6);
+      }
+      .wordmark span { color: #4fc3f7; }
+      nav { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+      nav a, nav button {
+        font-family: inherit; font-size: 13px; font-weight: bold;
+        color: var(--text); background: transparent;
+        border: 2px solid transparent; border-radius: 8px;
+        padding: 8px 12px; cursor: pointer; text-decoration: none;
+        letter-spacing: .5px;
+      }
+      nav a:hover, nav button:hover { border-color: var(--border); background: rgba(255,255,255,.05); }
+      .btn-play {
+        background: linear-gradient(180deg, #ffb74d, var(--orange)) !important;
+        color: #221400 !important; border: 2px solid #7a4a00 !important;
+        font-size: 15px !important; padding: 8px 26px !important;
+        box-shadow: 0 3px 0 #7a4a00;
+      }
+      .btn-play:active { transform: translateY(2px); box-shadow: 0 1px 0 #7a4a00; }
+      #wallet-chip {
+        border: 2px solid var(--border); background: #101624;
+        color: var(--muted); border-radius: 20px; padding: 8px 14px;
+      }
+      #wallet-chip.connected { color: #a5d6a7; border-color: #2e7d32; }
+
+      /* ---------- stage ---------- */
+      main { display: flex; justify-content: center; padding: 26px 14px 40px; }
+      #frame {
+        width: min(96vw, 980px);
+        padding: 10px;
+        background: var(--panel);
+        border: 2px solid var(--border);
+        border-radius: 14px;
+        box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 14px 44px rgba(0,0,0,.55), 0 0 60px rgba(232,149,47,.05);
+      }
+      #game { width: 100%; aspect-ratio: 4 / 3; }
+      #game canvas { border-radius: 8px; }
+
+      footer {
+        text-align: center; color: var(--muted); font-size: 12px;
+        padding: 0 14px 26px;
+      }
+      footer b { color: var(--orange-lt); }
     </style>
   </head>
   <body>
-    <div id="game"></div>
+    <header>
+      <a class="logo" href="/" aria-label="MinerBlast">
+        <!-- Original MinerBlast logo: pixel bomb + crossed pickaxe -->
+        <svg width="44" height="44" viewBox="0 0 22 22" shape-rendering="crispEdges">
+          <!-- pickaxe behind -->
+          <rect x="15" y="2" width="3" height="2" fill="#cfd8dc"/>
+          <rect x="17" y="4" width="2" height="3" fill="#cfd8dc"/>
+          <rect x="14" y="4" width="2" height="2" fill="#eceff1"/>
+          <rect x="12" y="6" width="2" height="2" fill="#8d6e63"/>
+          <rect x="10" y="8" width="2" height="2" fill="#8d6e63"/>
+          <rect x="8" y="10" width="2" height="2" fill="#6d4c41"/>
+          <!-- fuse + spark -->
+          <rect x="13" y="1" width="2" height="2" fill="#ffee58"/>
+          <rect x="12" y="3" width="2" height="2" fill="#ffa726"/>
+          <rect x="11" y="5" width="1" height="2" fill="#ff7043"/>
+          <!-- bomb body -->
+          <rect x="5" y="7" width="8" height="2" fill="#263238"/>
+          <rect x="3" y="9" width="12" height="8" fill="#263238"/>
+          <rect x="5" y="17" width="8" height="2" fill="#263238"/>
+          <rect x="4" y="9" width="10" height="7" fill="#212121"/>
+          <!-- highlight -->
+          <rect x="5" y="10" width="3" height="2" fill="#607d8b"/>
+          <rect x="5" y="12" width="2" height="1" fill="#455a64"/>
+        </svg>
+        <span class="wordmark">MINER<span>BLAST</span></span>
+      </a>
+      <nav>
+        <a href="https://github.com/Pinguim306/BombCrypto/blob/claude/bombcrypto-robinhood-chain-b3bal2/docs/DEVELOPMENT_PLAN.md" target="_blank" rel="noopener">WHITEPAPER</a>
+        <a href="https://github.com/Pinguim306/BombCrypto/blob/claude/bombcrypto-robinhood-chain-b3bal2/docs/LAUNCH_GUIDE.md" target="_blank" rel="noopener">GUIDE</a>
+        <button data-nav="market">MARKET</button>
+        <button data-nav="shop">SHOP</button>
+        <button id="wallet-chip" type="button">WALLET</button>
+        <button class="btn-play" data-nav="play" type="button">PLAY</button>
+      </nav>
+    </header>
+
+    <main>
+      <div id="frame"><div id="game"></div></div>
+    </main>
+
+    <footer>
+      <b>MinerBlast</b> — built on Robinhood Chain Testnet · rewards and NFTs are test assets with no real value
+    </footer>
+
+    <script>
+      // header -> game navigation (handled in src/main.ts)
+      const nav = (t) => window.dispatchEvent(new CustomEvent("mb-nav", { detail: t }));
+      document.querySelectorAll("[data-nav]").forEach((b) =>
+        b.addEventListener("click", () => nav(b.dataset.nav))
+      );
+      window.addEventListener("mb-wallet", (e) => {
+        const chip = document.getElementById("wallet-chip");
+        const a = e.detail;
+        chip.textContent = a.slice(0, 6) + "…" + a.slice(-4);
+        chip.classList.add("connected");
+      });
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

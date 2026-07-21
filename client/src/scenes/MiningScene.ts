@@ -60,7 +60,8 @@ export class MiningScene extends Phaser.Scene {
     drawPanel(this, 12, 424, 216, 120); // houses
     drawPanel(this, 12, 550, 792, 40); // status bar
 
-    this.add.text(GRID_X, 22, "MINERBLAST — Treasure Mining", {
+    // section title (the MinerBlast logo lives in the site header)
+    this.add.text(GRID_X, 26, "TREASURE MINING", {
       fontFamily: "monospace",
       fontSize: "20px",
       color: "#ffb74d",
@@ -68,26 +69,16 @@ export class MiningScene extends Phaser.Scene {
     });
 
     // pending BLAST with a coin icon
-    this.add.image(GRID_X + 8, 58, "coin").setScale(0.7);
-    this.pendingText = this.add.text(GRID_X + 24, 50, "loading...", {
+    this.add.image(GRID_X + 10, 62, "coin").setScale(0.7);
+    this.pendingText = this.add.text(GRID_X + 26, 54, "loading...", {
       fontFamily: "monospace",
       fontSize: "15px",
       color: "#ffca28",
     });
 
-    // top-right action buttons (visual, with icons)
-    const shopBtn = makeButton(this, GRID_X + 300, 58, "Shop", {
-      width: 90, height: 34, color: 0x2e7d32, icon: "chest", iconScale: 0.42,
-    });
-    shopBtn.onClick(() => this.scene.start("shop"));
-
-    const marketBtn = makeButton(this, GRID_X + 398, 58, "Market", {
-      width: 96, height: 34, color: 0xef6c00, icon: "coin", iconScale: 0.5,
-    });
-    marketBtn.onClick(() => this.scene.start("market"));
-
-    this.claimBtn = makeButton(this, GRID_X + 502, 58, "Claim", {
-      width: 100, height: 34, color: 0x3949ab, icon: "coin", iconScale: 0.5,
+    // Shop/Market moved to the site header; only Claim stays in-game
+    this.claimBtn = makeButton(this, 722, 48, "Claim", {
+      width: 124, height: 40, color: 0x3949ab, icon: "coin", iconScale: 0.55,
     });
     this.claimBtn.onClick(() => this.onClaim());
 
@@ -125,8 +116,9 @@ export class MiningScene extends Phaser.Scene {
 
     this.housesText = this.add.text(20, 430, "", {
       fontFamily: "monospace",
-      fontSize: "12px",
+      fontSize: "11px",
       color: "#b0bec5",
+      wordWrap: { width: 196 },
     });
 
 
