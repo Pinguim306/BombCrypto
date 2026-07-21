@@ -12,16 +12,39 @@ construído do zero para a **Robinhood Chain** (L2 EVM baseada em Arbitrum Orbit
 
 - [Plano de Desenvolvimento](docs/PLANO_DESENVOLVIMENTO.md) — visão completa: mecânicas, arquitetura, contratos, tokenomics, fases e riscos.
 
-## Estrutura planejada do monorepo
+## Estrutura do monorepo
 
 ```
-contracts/   # Smart contracts Solidity (Foundry)
+contracts/   # Smart contracts Solidity (Hardhat + OpenZeppelin)
 client/      # Cliente do jogo (Phaser 3 + TypeScript + Vite)
-server/      # Backend autoritativo (NestJS + PostgreSQL + Redis)
-indexer/     # Indexação de eventos on-chain
+server/      # Backend autoritativo (NestJS, simulação server-side)
+indexer/     # Indexação de eventos on-chain (Fase 3)
 docs/        # Documentação e game design
 ```
 
+## Como rodar (dev)
+
+```bash
+pnpm install
+
+# contratos: compilar e testar
+pnpm --filter @minerblast/contracts test
+
+# servidor (porta 3000)
+pnpm --filter @minerblast/server build && pnpm --filter @minerblast/server start
+
+# cliente (porta 5173)
+pnpm --filter @minerblast/client dev
+```
+
+Fluxo do vertical slice: conectar carteira → login SIWE → heróis de dev mineram
+no servidor (simulação autoritativa) → saldo pendente acumula → "Sacar BLAST"
+emite voucher EIP-712 → transação `claim` no RewardVault minta o token.
+
+Variáveis de ambiente: ver `contracts/.env.example` e `server/.env.example`.
+
 ## Status
 
-📋 Fase de planejamento — ver o plano de desenvolvimento para o roadmap completo.
+- ✅ Fase 0/1 — plano, monorepo e contratos core (BLAST, Heroes, Gacha, RewardVault) com testes
+- ✅ Fase 2 — loop principal jogável: motor de mineração server-side, auth SIWE, vouchers EIP-712 e cliente Phaser
+- ⏭ Fase 3 — persistência (PostgreSQL/Redis), heróis sincronizados do contrato via indexer, casas e upgrades
