@@ -28,7 +28,7 @@ async function deployFixture() {
 }
 
 describe("Marketplace", () => {
-  it("lista com escrow, vende com taxa 4% (metade queimada) e entrega o NFT", async () => {
+  it("lists with escrow, sells with a 4% fee (half burned) and delivers the NFT", async () => {
     const { blast, heroes, market, treasury, seller, buyer } = await loadFixture(deployFixture);
 
     await heroes.connect(seller).approve(await market.getAddress(), 1);
@@ -51,30 +51,30 @@ describe("Marketplace", () => {
     expect(await blast.balanceOf(seller.address)).to.equal(sellerBefore + PRICE - fee);
   });
 
-  it("vendedor cancela e recupera o NFT; terceiros não podem cancelar", async () => {
+  it("seller cancels and recovers the NFT; third parties cannot cancel", async () => {
     const { heroes, market, seller, buyer } = await loadFixture(deployFixture);
     await heroes.connect(seller).approve(await market.getAddress(), 1);
     await market.connect(seller).list(await heroes.getAddress(), 1, PRICE);
 
-    await expect(market.connect(buyer).cancel(1)).to.be.revertedWith("Market: nao e o vendedor");
+    await expect(market.connect(buyer).cancel(1)).to.be.revertedWith("Market: not the seller");
     await market.connect(seller).cancel(1);
     expect(await heroes.ownerOf(1)).to.equal(seller.address);
 
-    await expect(market.connect(buyer).buy(1)).to.be.revertedWith("Market: listagem inativa");
+    await expect(market.connect(buyer).buy(1)).to.be.revertedWith("Market: listing inactive");
   });
 
-  it("rejeita coleção não permitida e compra da própria listagem", async () => {
+  it("rejects a disallowed collection and buying one's own listing", async () => {
     const { blast, heroes, market, admin, seller } = await loadFixture(deployFixture);
 
     await market.connect(admin).setCollectionAllowed(await heroes.getAddress(), false);
     await heroes.connect(seller).approve(await market.getAddress(), 1);
     await expect(
       market.connect(seller).list(await heroes.getAddress(), 1, PRICE)
-    ).to.be.revertedWith("Market: colecao nao permitida");
+    ).to.be.revertedWith("Market: collection not allowed");
 
     await market.connect(admin).setCollectionAllowed(await heroes.getAddress(), true);
     await market.connect(seller).list(await heroes.getAddress(), 1, PRICE);
     await blast.connect(seller).approve(await market.getAddress(), PRICE);
-    await expect(market.connect(seller).buy(1)).to.be.revertedWith("Market: comprar de si mesmo");
+    await expect(market.connect(seller).buy(1)).to.be.revertedWith("Market: cannot buy own listing");
   });
 });

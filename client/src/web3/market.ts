@@ -98,9 +98,9 @@ const publicClient = MARKET_ENABLED
   ? createPublicClient({ transport: http(RPC_URL) })
   : null;
 
-/** Listagens ativas, varrendo os ids (escala pequena; indexer assume depois). */
+/** Active listings, scanning the ids (small scale; an indexer takes over later). */
 export async function fetchListings(): Promise<MarketListing[]> {
-  if (!publicClient) throw new Error("marketplace requer chain configurada");
+  if (!publicClient) throw new Error("marketplace requires a configured chain");
   const next = (await publicClient.readContract({
     address: MARKET_ADDRESS,
     abi: MARKET_ABI,
@@ -123,11 +123,11 @@ export async function fetchListings(): Promise<MarketListing[]> {
 function requireWallet() {
   const client = walletClient();
   const account = connectedAddress();
-  if (!client || !account) throw new Error("carteira nao conectada");
+  if (!client || !account) throw new Error("wallet not connected");
   return { client, account };
 }
 
-/** Aprova o NFT e cria a listagem (2 transações). */
+/** Approves the NFT and creates the listing (2 transactions). */
 export async function listNft(collection: Address, tokenId: bigint, priceWei: bigint) {
   const { client, account } = requireWallet();
   await client.writeContract({
@@ -148,10 +148,10 @@ export async function listNft(collection: Address, tokenId: bigint, priceWei: bi
   });
 }
 
-/** Garante allowance de BLAST e compra a listagem. */
+/** Ensures BLAST allowance and buys the listing. */
 export async function buyListing(listing: MarketListing) {
   const { client, account } = requireWallet();
-  if (!publicClient) throw new Error("marketplace requer chain configurada");
+  if (!publicClient) throw new Error("marketplace requires a configured chain");
 
   const allowance = (await publicClient.readContract({
     address: TOKEN_ADDRESS,

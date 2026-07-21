@@ -6,16 +6,16 @@ import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC2
 import {ERC20Capped} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-/// @title BLAST — token de utilidade do MinerBlast
-/// @notice Supply máximo fixo de 1 bilhão. A emissão de recompensas de jogo é
-///         feita exclusivamente pelo RewardVault (MINTER_ROLE); alocações de
-///         tesouraria/equipe/liquidez são mintadas no deploy para o cofre admin.
+/// @title BLAST — MinerBlast utility token
+/// @notice Fixed max supply of 1 billion. Game reward emission is done
+///         exclusively by the RewardVault (MINTER_ROLE); treasury/team/
+///         liquidity allocations are minted at deploy to the admin vault.
 contract BlastToken is ERC20, ERC20Burnable, ERC20Capped, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     uint256 public constant MAX_SUPPLY = 1_000_000_000e18;
-    /// @dev 55% do supply: tesouraria (20%), equipe (15%), liquidez (10%), marketing (10%).
-    ///      Os 45% restantes só podem nascer via MINTER_ROLE (recompensas de jogo).
+    /// @dev 55% of supply: treasury (20%), team (15%), liquidity (10%), marketing (10%).
+    ///      The remaining 45% can only be created via MINTER_ROLE (game rewards).
     uint256 public constant INITIAL_ALLOCATION = 550_000_000e18;
 
     constructor(address admin) ERC20("MinerBlast", "BLAST") ERC20Capped(MAX_SUPPLY) {

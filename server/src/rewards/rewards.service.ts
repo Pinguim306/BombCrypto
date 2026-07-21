@@ -5,12 +5,12 @@ import { PersistenceService } from "../storage/persistence.service";
 
 const VAULT_ABI = ["function nonces(address player) view returns (uint256)"];
 
-/** Saque mínimo: 1 BLAST (evita spam de claims minúsculos). */
+/** Minimum claim: 1 BLAST (avoids spam of tiny claims). */
 const MIN_CLAIM_MICRO = 1_000_000;
 const VOUCHER_TTL_S = 3600;
 
 export interface ClaimVoucher {
-  amount: string; // em wei (1e18)
+  amount: string; // in wei (1e18)
   nonce: string;
   deadline: number;
   signature: string;
@@ -19,12 +19,12 @@ export interface ClaimVoucher {
 }
 
 /**
- * Emite vouchers EIP-712 aceitos pelo RewardVault e os persiste para
- * reconciliação:
- *  - voucher pendente e não expirado é reapresentado (não debita de novo);
- *  - voucher expirado sem claim tem o valor estornado ao saldo pendente;
- *  - com RPC, o nonce on-chain marca como sacados os vouchers antigos.
- * A chave assinante deve ter SIGNER_ROLE no contrato (KMS/HSM em produção).
+ * Issues EIP-712 vouchers accepted by the RewardVault and persists them for
+ * reconciliation:
+ *  - a pending, non-expired voucher is re-presented (not debited again);
+ *  - an expired voucher without a claim has its value refunded to the pending balance;
+ *  - with RPC, the on-chain nonce marks older vouchers as claimed.
+ * The signing key must have SIGNER_ROLE on the contract (KMS/HSM in production).
  */
 @Injectable()
 export class RewardsService {
@@ -38,7 +38,7 @@ export class RewardsService {
     private readonly game: GameService,
     private readonly persistence: PersistenceService
   ) {
-    // chave de dev nº 0 do Hardhat — NUNCA usar fora de desenvolvimento
+    // Hardhat dev key #0 — NEVER use outside development
     const key =
       process.env.SIGNER_KEY ??
       "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
@@ -48,14 +48,14 @@ export class RewardsService {
     if (process.env.RPC_URL) {
       this.provider = new JsonRpcProvider(process.env.RPC_URL);
     } else {
-      this.logger.warn("RPC_URL ausente — usando nonces locais (somente dev)");
+      this.logger.warn("RPC_URL missing — using local nonces (dev only)");
     }
   }
 
   async issueVoucher(player: string): Promise<ClaimVoucher> {
     await this.reconcile(player);
 
-    // voucher pendente ainda válido? reapresenta em vez de emitir outro
+    // pending voucher still valid? re-present it instead of issuing another
     const pending = this.persistence.unclaimedVoucher(player);
     if (pending && pending.deadline > Math.floor(Date.now() / 1000)) {
       return {
@@ -71,7 +71,7 @@ export class RewardsService {
     const micro = await this.game.debitPending(player);
     if (micro < MIN_CLAIM_MICRO) {
       await this.game.refundPending(player, micro);
-      throw new BadRequestException("saldo minimo de 1 BLAST para sacar");
+      throw new BadRequestException("minimum claim is 1 BLAST");
     }
 
     try {
@@ -123,8 +123,8 @@ export class RewardsService {
   }
 
   /**
-   * Reconciliação: marca como sacados os vouchers abaixo do nonce on-chain e
-   * estorna vouchers expirados que nunca foram sacados.
+   * Reconciliation: marks vouchers below the on-chain nonce as claimed and
+   * refunds expired vouchers that were never claimed.
    */
   private async reconcile(player: string): Promise<void> {
     if (this.provider) {
@@ -134,16 +134,16 @@ export class RewardsService {
         this.persistence.markClaimedBelow(player, chainNonce);
         this.persistence.setLocalNonce(player, chainNonce);
       } catch (err) {
-        this.logger.warn(`reconcile falhou para ${player}: ${(err as Error).message}`);
+        this.logger.warn(`reconcile failed for ${player}: ${(err as Error).message}`);
       }
     }
 
     const pending = this.persistence.unclaimedVoucher(player);
     if (pending && pending.deadline <= Math.floor(Date.now() / 1000)) {
-      // expirou sem claim: estorna o valor e descarta o voucher
+      // expired without a claim: refund the value and discard the voucher
       this.persistence.deleteVoucher(player, pending.nonce);
       await this.game.refundPending(player, Number(BigInt(pending.amountWei) / 10n ** 12n));
-      this.logger.log(`voucher expirado estornado: ${player} nonce ${pending.nonce}`);
+      this.logger.log(`expired voucher refunded: ${player} nonce ${pending.nonce}`);
     }
   }
 

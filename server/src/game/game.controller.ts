@@ -15,7 +15,7 @@ export class GameController {
   @Post("heroes/:id/mode")
   setMode(@Req() req: AuthedRequest, @Param("id") id: string, @Body() body: { mode?: string }) {
     if (body?.mode !== "work" && body?.mode !== "rest") {
-      throw new BadRequestException("mode deve ser work ou rest");
+      throw new BadRequestException("mode must be work or rest");
     }
     return this.game.setMode(req.player!, id, body.mode);
   }
@@ -27,7 +27,7 @@ export class GameController {
     @Body() body: { stageId?: number }
   ) {
     if (typeof body?.stageId !== "number") {
-      throw new BadRequestException("stageId numerico e obrigatorio");
+      throw new BadRequestException("numeric stageId is required");
     }
     return this.game.goAdventure(req.player!, id, body.stageId);
   }
@@ -39,7 +39,7 @@ export class GameController {
     @Body() body: { houseId?: string | null }
   ) {
     if (body === undefined || body.houseId === undefined) {
-      throw new BadRequestException("houseId (string ou null) e obrigatorio");
+      throw new BadRequestException("houseId (string or null) is required");
     }
     return this.game.setHouse(req.player!, id, body.houseId);
   }

@@ -8,7 +8,7 @@ export class AuthController {
   @Post("nonce")
   nonce(@Body() body: { address?: string }) {
     if (!body?.address || !/^0x[0-9a-fA-F]{40}$/.test(body.address)) {
-      throw new BadRequestException("endereco invalido");
+      throw new BadRequestException("invalid address");
     }
     return { nonce: this.auth.issueNonce(body.address) };
   }
@@ -16,7 +16,7 @@ export class AuthController {
   @Post("verify")
   async verify(@Body() body: { message?: string; signature?: string }) {
     if (!body?.message || !body?.signature) {
-      throw new BadRequestException("message e signature sao obrigatorios");
+      throw new BadRequestException("message and signature are required");
     }
     return this.auth.verify(body.message, body.signature);
   }

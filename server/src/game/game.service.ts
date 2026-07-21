@@ -19,13 +19,13 @@ export interface PlayerState {
   mining: MiningState;
   houses: ChainHouse[];
   adventure: AdventureTracker;
-  /** última sincronização on-chain (ms) */
+  /** last on-chain sync (ms) */
   syncedAt: number;
 }
 
 const CHAIN_SYNC_INTERVAL_MS = 60_000;
 
-/** Casa básica de dev quando não há chain configurada. */
+/** Basic dev house when no chain is configured. */
 const DEV_HOUSE: ChainHouse = { id: "dev-house", rarity: 0, capacity: 2, regenBoostBps: 2000 };
 
 @Injectable()
@@ -46,7 +46,7 @@ export class GameService {
       const saved = this.persistence.loadPlayerState(key);
       if (saved) {
         player = JSON.parse(saved) as PlayerState;
-        // migração de estados salvos antes do modo Aventura
+        // migration for states saved before Adventure mode
         player.adventure ??= { day: currentDay(Date.now()), attemptsToday: 0 };
       } else {
         const seed = this.seedCounter++;
@@ -70,7 +70,7 @@ export class GameService {
     return player;
   }
 
-  /** Mescla heróis/casas on-chain preservando stamina e modo dos já conhecidos. */
+  /** Merges on-chain heroes/houses, preserving stamina and mode of known ones. */
   private async syncFromChain(player: PlayerState): Promise<void> {
     const now = Date.now();
     const [chainHeroes, chainHouses] = await Promise.all([
@@ -82,7 +82,7 @@ export class GameService {
     player.mining.heroes = chainHeroes.map((fresh) => {
       const existing = known.get(fresh.id);
       if (!existing) return fresh;
-      // atributos vêm da chain (upgrades refletem); progresso local é preservado
+      // attributes come from the chain (upgrades are reflected); local progress is preserved
       return {
         ...fresh,
         stamina: Math.min(existing.stamina, fresh.staminaMax),
@@ -97,7 +97,7 @@ export class GameService {
     player.syncedAt = now;
   }
 
-  /** Remove abrigo de heróis cuja casa sumiu ou excedeu a capacidade. */
+  /** Unhouses heroes whose house disappeared or exceeded capacity. */
   private reconcileHousing(player: PlayerState): void {
     const capacity = new Map(player.houses.map((h) => [h.id, h.capacity]));
     const used = new Map<string, number>();
@@ -118,7 +118,7 @@ export class GameService {
     this.persistence.savePlayerState(player.address, JSON.stringify(player));
   }
 
-  /** Estado avançado até agora, em formato serializável para o cliente. */
+  /** State advanced up to now, in a serializable format for the client. */
   async state(address: string, now = Date.now()) {
     const player = await this.getOrCreate(address);
     advance(player.mining, now);
@@ -162,31 +162,31 @@ export class GameService {
     try {
       setHeroMode(player.mining, heroId, mode, Date.now());
     } catch (err) {
-      if ((err as Error).message === "heroi nao encontrado") throw new NotFoundException();
+      if ((err as Error).message === "hero not found") throw new NotFoundException();
       throw new BadRequestException((err as Error).message);
     }
     this.persist(player);
     return this.state(address);
   }
 
-  /** Abriga (ou desabriga com houseId=null) um herói numa casa do jogador. */
+  /** Houses (or unhouses with houseId=null) a hero in one of the player's houses. */
   async setHouse(address: string, heroId: string, houseId: string | null) {
     const player = await this.getOrCreate(address);
     advance(player.mining, Date.now());
 
     const hero = player.mining.heroes.find((h) => h.id === heroId);
-    if (!hero) throw new NotFoundException("heroi nao encontrado");
+    if (!hero) throw new NotFoundException("hero not found");
 
     if (houseId === null) {
       hero.houseId = null;
       hero.regenBoostBps = 0;
     } else {
       const house = player.houses.find((h) => h.id === houseId);
-      if (!house) throw new NotFoundException("casa nao encontrada");
+      if (!house) throw new NotFoundException("house not found");
       const occupants = player.mining.heroes.filter(
         (h) => h.houseId === houseId && h.id !== heroId
       ).length;
-      if (occupants >= house.capacity) throw new BadRequestException("casa lotada");
+      if (occupants >= house.capacity) throw new BadRequestException("house is full");
       hero.houseId = houseId;
       hero.regenBoostBps = house.regenBoostBps;
     }
@@ -194,19 +194,19 @@ export class GameService {
     return this.state(address);
   }
 
-  /** Envia um herói a um estágio de aventura; resolução 100% server-side. */
+  /** Sends a hero to an adventure stage; resolution is 100% server-side. */
   async goAdventure(address: string, heroId: string, stageId: number) {
     const player = await this.getOrCreate(address);
     const now = Date.now();
     advance(player.mining, now);
 
     const hero = player.mining.heroes.find((h) => h.id === heroId);
-    if (!hero) throw new NotFoundException("heroi nao encontrado");
+    if (!hero) throw new NotFoundException("hero not found");
     const stage = STAGES.find((s) => s.id === stageId);
-    if (!stage) throw new NotFoundException("estagio nao encontrado");
+    if (!stage) throw new NotFoundException("stage not found");
 
     try {
-      // randomInt de node:crypto — aleatoriedade não previsível pelo cliente
+      // randomInt from node:crypto — randomness not predictable by the client
       const rand = randomInt(1_000_000) / 1_000_000;
       const result = runAdventure(hero, stage, player.adventure, rand, now);
       player.mining.pendingMicroBlast += result.rewardMicro;
@@ -217,7 +217,7 @@ export class GameService {
     }
   }
 
-  /** Debita o saldo pendente ao emitir um voucher. Retorna micro-BLAST debitados. */
+  /** Debits the pending balance when issuing a voucher. Returns the debited micro-BLAST. */
   async debitPending(address: string): Promise<number> {
     const player = await this.getOrCreate(address);
     advance(player.mining, Date.now());
@@ -227,7 +227,7 @@ export class GameService {
     return amount;
   }
 
-  /** Estorna um débito caso a emissão do voucher falhe. */
+  /** Refunds a debit in case voucher issuance fails. */
   async refundPending(address: string, microBlast: number): Promise<void> {
     const player = await this.getOrCreate(address);
     player.mining.pendingMicroBlast += microBlast;
@@ -240,7 +240,7 @@ export class GameService {
     return total;
   }
 
-  /** Três heróis de desenvolvimento com atributos variados por conta. */
+  /** Three development heroes with attributes varying per account. */
   private devHeroes(seed: number): EngineHero[] {
     const rand = rng(seed);
     const rarities = [0, 1, 2 + Math.floor(rand() * 2)];

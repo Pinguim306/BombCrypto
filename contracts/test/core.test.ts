@@ -31,7 +31,7 @@ async function deployFixture() {
   await blast.grantRole(await blast.MINTER_ROLE(), await vault.getAddress());
   await vault.grantRole(await vault.SIGNER_ROLE(), admin.address);
 
-  // financia o jogador para comprar baús
+  // fund the player to buy chests
   await blast.transfer(player.address, ethers.parseEther("1000"));
 
   return { blast, heroes, gacha, vault, admin, treasury, player, other };
@@ -63,7 +63,7 @@ async function signClaim(
 }
 
 describe("BlastToken", () => {
-  it("minta a alocação inicial (55%) para o admin e trava o resto no cap", async () => {
+  it("mints the initial allocation (55%) to the admin and locks the rest under the cap", async () => {
     const { blast, admin } = await loadFixture(deployFixture);
     expect(await blast.totalSupply()).to.equal(ethers.parseEther("550000000"));
     expect(await blast.cap()).to.equal(ethers.parseEther("1000000000"));
@@ -72,7 +72,7 @@ describe("BlastToken", () => {
     );
   });
 
-  it("bloqueia mint sem MINTER_ROLE", async () => {
+  it("blocks mint without MINTER_ROLE", async () => {
     const { blast, other } = await loadFixture(deployFixture);
     await expect(blast.connect(other).mint(other.address, 1n)).to.be.revertedWithCustomError(
       blast,
@@ -82,7 +82,7 @@ describe("BlastToken", () => {
 });
 
 describe("Heroes", () => {
-  it("bloqueia mint direto sem MINTER_ROLE", async () => {
+  it("blocks direct mint without MINTER_ROLE", async () => {
     const { heroes, other } = await loadFixture(deployFixture);
     const attrs = {
       rarity: 0, level: 1, power: 10, speed: 10, stamina: 20,
@@ -96,13 +96,13 @@ describe("Heroes", () => {
 });
 
 describe("Gacha", () => {
-  it("compra e abre um baú: queima 50%, paga tesouraria e minta herói com atributos", async () => {
+  it("buys and opens a chest: burns 50%, pays the treasury and mints a hero with attributes", async () => {
     const { blast, heroes, gacha, treasury, player } = await loadFixture(deployFixture);
 
     await blast.connect(player).approve(await gacha.getAddress(), CHEST_PRICE);
     const supplyBefore = await blast.totalSupply();
 
-    await gacha.connect(player).buyChest(ethers.id("meu-sal"));
+    await gacha.connect(player).buyChest(ethers.id("my-salt"));
     expect(await blast.totalSupply()).to.equal(supplyBefore - CHEST_PRICE / 2n);
     expect(await blast.balanceOf(treasury.address)).to.equal(CHEST_PRICE / 2n);
 
@@ -116,28 +116,28 @@ describe("Gacha", () => {
     expect(attrs.power).to.be.greaterThan(0);
   });
 
-  it("impede abrir antes do bloco de reveal e por quem não comprou", async () => {
+  it("prevents opening before the reveal block and by anyone other than the buyer", async () => {
     const { blast, gacha, player, other } = await loadFixture(deployFixture);
     await blast.connect(player).approve(await gacha.getAddress(), CHEST_PRICE);
-    await gacha.connect(player).buyChest(ethers.id("sal"));
+    await gacha.connect(player).buyChest(ethers.id("salt"));
 
     await expect(gacha.connect(player).openChest(1)).to.be.revertedWith(
-      "Gacha: aguarde o bloco de reveal"
+      "Gacha: wait for reveal block"
     );
     await network.provider.send("hardhat_mine", ["0x3"]);
     await expect(gacha.connect(other).openChest(1)).to.be.revertedWith(
-      "Gacha: nao e o comprador"
+      "Gacha: not the buyer"
     );
   });
 
-  it("permite reroll após o blockhash expirar (>256 blocos)", async () => {
+  it("allows reroll after the blockhash expires (>256 blocks)", async () => {
     const { blast, gacha, heroes, player } = await loadFixture(deployFixture);
     await blast.connect(player).approve(await gacha.getAddress(), CHEST_PRICE);
-    await gacha.connect(player).buyChest(ethers.id("sal"));
+    await gacha.connect(player).buyChest(ethers.id("salt"));
 
-    await network.provider.send("hardhat_mine", ["0x105"]); // 261 blocos
+    await network.provider.send("hardhat_mine", ["0x105"]); // 261 blocks
     await expect(gacha.connect(player).openChest(1)).to.be.revertedWith(
-      "Gacha: reveal expirado, use reroll"
+      "Gacha: reveal expired, use reroll"
     );
     await gacha.connect(player).reroll(1);
     await network.provider.send("hardhat_mine", ["0x3"]);
@@ -147,7 +147,7 @@ describe("Gacha", () => {
 });
 
 describe("RewardVault", () => {
-  it("aceita claim válido, incrementa nonce e rejeita replay", async () => {
+  it("accepts a valid claim, increments the nonce and rejects replay", async () => {
     const { blast, vault, admin, player } = await loadFixture(deployFixture);
     const amount = ethers.parseEther("50");
     const deadline = (await ethers.provider.getBlock("latest"))!.timestamp + 3600;
@@ -160,30 +160,30 @@ describe("RewardVault", () => {
     expect(await vault.nonces(player.address)).to.equal(1n);
 
     await expect(vault.connect(player).claim(amount, deadline, sig)).to.be.revertedWith(
-      "Vault: assinatura invalida"
+      "Vault: invalid signature"
     );
   });
 
-  it("rejeita assinatura de quem não tem SIGNER_ROLE", async () => {
+  it("rejects a signature from someone without SIGNER_ROLE", async () => {
     const { vault, player, other } = await loadFixture(deployFixture);
     const amount = ethers.parseEther("50");
     const deadline = (await ethers.provider.getBlock("latest"))!.timestamp + 3600;
     const sig = await signClaim(vault, other, player.address, amount, 0n, deadline);
     await expect(vault.connect(player).claim(amount, deadline, sig)).to.be.revertedWith(
-      "Vault: assinatura invalida"
+      "Vault: invalid signature"
     );
   });
 
-  it("rejeita voucher expirado", async () => {
+  it("rejects an expired voucher", async () => {
     const { vault, admin, player } = await loadFixture(deployFixture);
     const deadline = (await ethers.provider.getBlock("latest"))!.timestamp - 1;
     const sig = await signClaim(vault, admin, player.address, 1n, 0n, deadline);
     await expect(vault.connect(player).claim(1n, deadline, sig)).to.be.revertedWith(
-      "Vault: voucher expirado"
+      "Vault: voucher expired"
     );
   });
 
-  it("aplica o teto diário e reseta no dia seguinte", async () => {
+  it("enforces the daily cap and resets it the next day", async () => {
     const { vault, admin, player, other } = await loadFixture(deployFixture);
     const deadline = (await ethers.provider.getBlock("latest"))!.timestamp + 90000;
 
@@ -192,7 +192,7 @@ describe("RewardVault", () => {
 
     const sig2 = await signClaim(vault, admin, other.address, 1n, 0n, deadline);
     await expect(vault.connect(other).claim(1n, deadline, sig2)).to.be.revertedWith(
-      "Vault: teto diario atingido"
+      "Vault: daily cap reached"
     );
 
     await network.provider.send("evm_increaseTime", [86400]);

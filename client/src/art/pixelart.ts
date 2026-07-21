@@ -1,17 +1,16 @@
 import Phaser from "phaser";
 
 /**
- * Arte procedural original do MinerBlast.
+ * Original procedural art for MinerBlast.
  *
- * Todos os sprites são desenhados pixel a pixel a partir de mapas de
- * caracteres definidos aqui (nenhum asset externo). A arte final de um
- * artista substituirá estas texturas sem mudanças de código: basta manter
- * as mesmas chaves de textura.
+ * All sprites are drawn pixel by pixel from character maps defined here
+ * (no external assets). Final art from an artist will replace these
+ * textures without code changes: just keep the same texture keys.
  */
 
 type Palette = Record<string, number>;
 
-/** Desenha um mapa de pixels e registra como textura `key`. */
+/** Draws a pixel map and registers it as texture `key`. */
 function makeTexture(
   scene: Phaser.Scene,
   key: string,
@@ -24,7 +23,7 @@ function makeTexture(
   rows.forEach((row, y) => {
     [...row].forEach((ch, x) => {
       const color = palette[ch];
-      if (color === undefined) return; // '.' e desconhecidos = transparente
+      if (color === undefined) return; // '.' and unknowns = transparent
       g.fillStyle(color, 1);
       g.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
     });
@@ -42,7 +41,7 @@ function shade(color: number, factor: number): number {
 
 export const RARITY_COLORS = [0x9e9e9e, 0x66bb6a, 0x42a5f5, 0xab47bc, 0xffa726, 0xef5350];
 
-/** Minerador com capacete e visor — 14x16, cores por raridade. */
+/** Miner with helmet and visor — 14x16, colors by rarity. */
 const HERO_MAP = [
   "......LL......",
   "......LL......",
@@ -62,7 +61,7 @@ const HERO_MAP = [
   "..............",
 ];
 
-/** Bloco de minério — 16x16; O = veio de minério colorido por dureza. */
+/** Ore block — 16x16; O = ore vein colored by hardness. */
 const BLOCK_MAP = [
   "DDDDDDDDDDDDDDDD",
   "DSSSSSSSSSSSSSSD",
@@ -82,7 +81,7 @@ const BLOCK_MAP = [
   "DDDDDDDDDDDDDDDD",
 ];
 
-/** Bloco esgotado — rachaduras sobre pedra escura. */
+/** Depleted block — cracks over dark stone. */
 const DEAD_BLOCK_MAP = [
   "DDDDDDDDDDDDDDDD",
   "DKKKKKKKKKKKKKKD",
@@ -102,7 +101,7 @@ const DEAD_BLOCK_MAP = [
   "DDDDDDDDDDDDDDDD",
 ];
 
-/** Bomba redonda com pavio. */
+/** Round bomb with fuse. */
 const BOMB_MAP = [
   "......FF....",
   ".....FF.....",
@@ -118,7 +117,7 @@ const BOMB_MAP = [
   "............",
 ];
 
-/** Casinha de descanso — telhado, parede e porta. */
+/** Rest house — roof, wall and door. */
 const HOUSE_MAP = [
   "......RR......",
   ".....RRRR.....",
@@ -134,7 +133,7 @@ const HOUSE_MAP = [
   "..............",
 ];
 
-/** Estrela de brilho para explosões/recompensas. */
+/** Sparkle star for explosions/rewards. */
 const SPARK_MAP = [
   "....Y....",
   "....Y....",
@@ -147,21 +146,21 @@ const SPARK_MAP = [
   "....Y....",
 ];
 
-/** Dureza do bloco (0 macio, 1 médio, 2 duro) a partir do HP máximo. */
+/** Block hardness (0 soft, 1 medium, 2 hard) from max HP. */
 export function blockTier(maxHp: number): number {
   return maxHp >= 90 ? 2 : maxHp >= 50 ? 1 : 0;
 }
 
-const ORE_BY_TIER = [0xffca28, 0x4fc3f7, 0xef5350]; // ouro, gelo, magma
+const ORE_BY_TIER = [0xffca28, 0x4fc3f7, 0xef5350]; // gold, ice, magma
 
-/** Gera todas as texturas do jogo (idempotente por cena/jogo). */
+/** Generates all game textures (idempotent per scene/game). */
 export function registerPixelArt(scene: Phaser.Scene): void {
-  const P = 4; // escala do pixel
+  const P = 4; // pixel scale
 
   for (let rarity = 0; rarity < 6; rarity++) {
     const c = RARITY_COLORS[rarity];
     makeTexture(scene, `hero-${rarity}`, HERO_MAP, {
-      L: 0xffee58, // luz do capacete
+      L: 0xffee58, // helmet lamp
       H: c,
       V: 0x263238,
       E: 0x80deea,

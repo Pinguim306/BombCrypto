@@ -6,11 +6,11 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-/// @title Staking de BLAST do MinerBlast
-/// @notice Lock de 30 dias com recompensa linear paga de um pool pré-fundado
-///         pela tesouraria (`fundRewards`) — o staking NUNCA minta token novo.
-///         Se o pool esgotar, a recompensa é limitada ao que o pool cobre;
-///         o principal está sempre garantido.
+/// @title MinerBlast BLAST staking
+/// @notice 30-day lock with linear reward paid from a pool pre-funded by the
+///         treasury (`fundRewards`) — staking NEVER mints new tokens.
+///         If the pool runs out, the reward is limited to what the pool
+///         covers; the principal is always guaranteed.
 contract Staking is AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -23,7 +23,7 @@ contract Staking is AccessControl, ReentrancyGuard {
 
     IERC20 public immutable blast;
     uint64 public constant LOCK_DURATION = 30 days;
-    /// @dev recompensa anual em bps sobre o principal (ex.: 1200 = 12% a.a.)
+    /// @dev annual reward in bps on the principal (e.g. 1200 = 12% p.a.)
     uint16 public aprBps;
 
     uint256 public rewardPool;
@@ -41,7 +41,7 @@ contract Staking is AccessControl, ReentrancyGuard {
     }
 
     function stake(uint256 amount) external nonReentrant returns (uint256 index) {
-        require(amount > 0, "Staking: valor zero");
+        require(amount > 0, "Staking: zero amount");
         blast.safeTransferFrom(msg.sender, address(this), amount);
         index = positions[msg.sender].length;
         positions[msg.sender].push(
@@ -58,12 +58,12 @@ contract Staking is AccessControl, ReentrancyGuard {
 
     function withdraw(uint256 index) external nonReentrant {
         Position storage p = positions[msg.sender][index];
-        require(!p.withdrawn, "Staking: ja sacado");
-        require(block.timestamp >= p.unlockAt, "Staking: em lock");
+        require(!p.withdrawn, "Staking: already withdrawn");
+        require(block.timestamp >= p.unlockAt, "Staking: still locked");
 
         p.withdrawn = true;
         uint256 reward = _rewardOf(p);
-        if (reward > rewardPool) reward = rewardPool; // pool esgotado limita a recompensa
+        if (reward > rewardPool) reward = rewardPool; // depleted pool limits the reward
         rewardPool -= reward;
         totalStaked -= p.amount;
 
@@ -82,7 +82,7 @@ contract Staking is AccessControl, ReentrancyGuard {
         return positions[staker].length;
     }
 
-    /// @dev recompensa linear do stake até o unlock (não acumula após o lock)
+    /// @dev linear stake reward up to the unlock (does not accrue after the lock)
     function _rewardOf(Position storage p) private view returns (uint256) {
         uint256 elapsed = block.timestamp < p.unlockAt
             ? block.timestamp - p.stakedAt
@@ -97,7 +97,7 @@ contract Staking is AccessControl, ReentrancyGuard {
     }
 
     function setAprBps(uint16 bps) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(bps <= 10000, "Staking: apr invalido");
+        require(bps <= 10000, "Staking: invalid apr");
         aprBps = bps;
     }
 }

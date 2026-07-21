@@ -3,8 +3,8 @@ import { GameService } from "../game/game.service";
 import { PersistenceService } from "../storage/persistence.service";
 
 /**
- * Métricas econômicas internas (Fase 3). Protegido por chave estática
- * ADMIN_KEY; a Fase 5 troca por auth de operador de verdade.
+ * Internal economic metrics (Phase 3). Protected by a static ADMIN_KEY;
+ * Phase 5 replaces it with real operator auth.
  */
 @Controller("admin")
 export class AdminController {

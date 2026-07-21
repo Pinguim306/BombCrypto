@@ -8,10 +8,10 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
-/// @title Marketplace de NFTs do MinerBlast
-/// @notice Compra e venda de heróis e casas em BLAST, com escrow do NFT.
-///         Taxa sobre a venda (padrão 4%): metade queimada, metade para a
-///         tesouraria. Apenas coleções permitidas pelo admin são negociáveis.
+/// @title MinerBlast NFT marketplace
+/// @notice Buying and selling heroes and houses in BLAST, with NFT escrow.
+///         Sale fee (default 4%): half burned, half to the treasury.
+///         Only collections allowed by the admin are tradable.
 contract Marketplace is AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -19,15 +19,15 @@ contract Marketplace is AccessControl, ReentrancyGuard {
         address seller;
         address collection;
         uint256 tokenId;
-        uint256 price; // em BLAST
+        uint256 price; // in BLAST
         bool active;
     }
 
     IERC20 public immutable blast;
     address public treasury;
-    /// @dev taxa total sobre a venda, em bps (400 = 4%)
+    /// @dev total sale fee, in bps (400 = 4%)
     uint16 public feeBps = 400;
-    /// @dev fração da taxa que é queimada, em bps (5000 = 50% da taxa)
+    /// @dev fraction of the fee that is burned, in bps (5000 = 50% of the fee)
     uint16 public feeBurnBps = 5000;
 
     mapping(address collection => bool) public allowedCollections;
@@ -56,8 +56,8 @@ contract Marketplace is AccessControl, ReentrancyGuard {
         nonReentrant
         returns (uint256 listingId)
     {
-        require(allowedCollections[collection], "Market: colecao nao permitida");
-        require(price > 0, "Market: preco zero");
+        require(allowedCollections[collection], "Market: collection not allowed");
+        require(price > 0, "Market: zero price");
 
         IERC721(collection).transferFrom(msg.sender, address(this), tokenId);
 
@@ -74,8 +74,8 @@ contract Marketplace is AccessControl, ReentrancyGuard {
 
     function cancel(uint256 listingId) external nonReentrant {
         Listing storage l = listings[listingId];
-        require(l.active, "Market: listagem inativa");
-        require(l.seller == msg.sender, "Market: nao e o vendedor");
+        require(l.active, "Market: listing inactive");
+        require(l.seller == msg.sender, "Market: not the seller");
 
         l.active = false;
         IERC721(l.collection).transferFrom(address(this), msg.sender, l.tokenId);
@@ -84,8 +84,8 @@ contract Marketplace is AccessControl, ReentrancyGuard {
 
     function buy(uint256 listingId) external nonReentrant {
         Listing storage l = listings[listingId];
-        require(l.active, "Market: listagem inativa");
-        require(l.seller != msg.sender, "Market: comprar de si mesmo");
+        require(l.active, "Market: listing inactive");
+        require(l.seller != msg.sender, "Market: cannot buy own listing");
 
         l.active = false;
 
@@ -100,7 +100,7 @@ contract Marketplace is AccessControl, ReentrancyGuard {
         emit Sold(listingId, msg.sender, l.price, fee);
     }
 
-    // ---- administração (multisig + timelock em produção) ----
+    // ---- administration (multisig + timelock in production) ----
 
     function setCollectionAllowed(address collection, bool allowed)
         external
@@ -111,14 +111,14 @@ contract Marketplace is AccessControl, ReentrancyGuard {
     }
 
     function setFees(uint16 feeBps_, uint16 feeBurnBps_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(feeBps_ <= 1000, "Market: taxa maxima 10%");
-        require(feeBurnBps_ <= 10000, "Market: burn bps invalido");
+        require(feeBps_ <= 1000, "Market: max fee 10%");
+        require(feeBurnBps_ <= 10000, "Market: invalid burn bps");
         feeBps = feeBps_;
         feeBurnBps = feeBurnBps_;
     }
 
     function setTreasury(address treasury_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(treasury_ != address(0), "Market: tesouraria zero");
+        require(treasury_ != address(0), "Market: zero treasury");
         treasury = treasury_;
     }
 }

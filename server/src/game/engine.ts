@@ -1,9 +1,9 @@
 /**
- * Motor de mineração do MinerBlast — roda exclusivamente no servidor.
+ * MinerBlast mining engine — runs exclusively on the server.
  *
- * A simulação é "lazy": nada roda em intervalos; `advance(state, now)` avança
- * o estado até `now` de forma determinística. Isso torna o motor barato
- * (só simula quando alguém observa) e totalmente testável.
+ * The simulation is "lazy": nothing runs on intervals; `advance(state, now)`
+ * advances the state up to `now` deterministically. This makes the engine cheap
+ * (it only simulates when someone observes) and fully testable.
  */
 
 export type HeroMode = "work" | "rest";
@@ -11,16 +11,16 @@ export type HeroMode = "work" | "rest";
 export interface EngineHero {
   id: string;
   rarity: number; // 0..5
-  power: number; // dano por bomba
-  speed: number; // reduz o intervalo entre bombas
+  power: number; // damage per bomb
+  speed: number; // reduces the interval between bombs
   staminaMax: number;
-  stamina: number; // fracionária durante o descanso
+  stamina: number; // fractional while resting
   mode: HeroMode;
-  /** timestamp (ms) até onde este herói já foi simulado */
+  /** timestamp (ms) up to which this hero has been simulated */
   simulatedTo: number;
-  /** id da casa que abriga o herói (null = ao relento) */
+  /** id of the house sheltering the hero (null = out in the open) */
   houseId?: string | null;
-  /** bônus de regeneração da casa (bps; 10000 = +100%) */
+  /** house regeneration bonus (bps; 10000 = +100%) */
   regenBoostBps?: number;
 }
 
@@ -34,18 +34,18 @@ export interface MiningState {
   blocks: EngineBlock[];
   mapSeed: number;
   mapsCleared: number;
-  /** BLAST acumulado ainda não sacado (unidades inteiras * 1e6 p/ precisão) */
+  /** accumulated BLAST not yet claimed (integer units * 1e6 for precision) */
   pendingMicroBlast: number;
 }
 
-// ---- parâmetros de balanceamento (virão do GDD; ajustáveis) ----
-export const BOMB_BASE_INTERVAL_MS = 4_000; // intervalo base entre bombas
-export const REST_FULL_MS = 20 * 60_000; // descanso completo em 20 min
+// ---- balancing parameters (will come from the GDD; tunable) ----
+export const BOMB_BASE_INTERVAL_MS = 4_000; // base interval between bombs
+export const REST_FULL_MS = 20 * 60_000; // full rest in 20 min
 export const MAP_COLS = 8;
 export const MAP_ROWS = 5;
-export const REWARD_MICRO_PER_HP = 20_000; // 0.02 BLAST por ponto de HP minerado
+export const REWARD_MICRO_PER_HP = 20_000; // 0.02 BLAST per mined HP point
 
-/** PRNG determinístico (mulberry32) para geração de mapas reproduzível. */
+/** Deterministic PRNG (mulberry32) for reproducible map generation. */
 export function rng(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
@@ -61,7 +61,7 @@ export function generateMap(seed: number): EngineBlock[] {
   const rand = rng(seed);
   const blocks: EngineBlock[] = [];
   for (let i = 0; i < MAP_COLS * MAP_ROWS; i++) {
-    // HP entre 20 e 120, com blocos mais duros mais raros
+    // HP between 20 and 120, with harder blocks being rarer
     const roll = rand();
     const maxHp =
       roll < 0.6
@@ -83,8 +83,8 @@ function firstAliveBlock(blocks: EngineBlock[]): number {
 }
 
 /**
- * Avança um herói até `now`, aplicando dano ao mapa e acumulando recompensa.
- * Retorna os micro-BLAST ganhos no período.
+ * Advances a hero up to `now`, applying damage to the map and accruing reward.
+ * Returns the micro-BLAST earned in the period.
  */
 function advanceHero(hero: EngineHero, state: MiningState, now: number): number {
   let earned = 0;
@@ -119,16 +119,16 @@ function advanceHero(hero: EngineHero, state: MiningState, now: number): number 
   }
 
   if (hero.stamina < 1) {
-    // sem stamina: entra em descanso automaticamente
+    // out of stamina: automatically switches to rest
     hero.mode = "rest";
   }
   hero.simulatedTo = now;
   return earned;
 }
 
-/** Avança o estado inteiro até `now`. Idempotente para o mesmo `now`. */
+/** Advances the whole state up to `now`. Idempotent for the same `now`. */
 export function advance(state: MiningState, now: number): MiningState {
-  // ordem estável (por id) para determinismo independente da origem da lista
+  // stable order (by id) for determinism regardless of the list's origin
   const heroes = [...state.heroes].sort((a, b) => a.id.localeCompare(b.id));
   for (const hero of heroes) {
     if (hero.simulatedTo < now) {
@@ -141,8 +141,8 @@ export function advance(state: MiningState, now: number): MiningState {
 export function setHeroMode(state: MiningState, heroId: string, mode: HeroMode, now: number): void {
   advance(state, now);
   const hero = state.heroes.find((h) => h.id === heroId);
-  if (!hero) throw new Error("heroi nao encontrado");
-  if (mode === "work" && hero.stamina < 1) throw new Error("stamina insuficiente");
+  if (!hero) throw new Error("hero not found");
+  if (mode === "work" && hero.stamina < 1) throw new Error("insufficient stamina");
   hero.mode = mode;
   hero.simulatedTo = now;
 }

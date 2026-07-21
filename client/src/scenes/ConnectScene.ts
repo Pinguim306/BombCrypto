@@ -3,7 +3,7 @@ import { connectWallet, signIn } from "../web3/wallet";
 import { hasToken } from "../net/api";
 import { registerPixelArt } from "../art/pixelart";
 
-/** Tela inicial: conectar carteira e assinar o login SIWE. */
+/** Initial screen: connect the wallet and sign the SIWE login. */
 export class ConnectScene extends Phaser.Scene {
   constructor() {
     super("connect");
@@ -13,7 +13,7 @@ export class ConnectScene extends Phaser.Scene {
     const { width, height } = this.scale;
     registerPixelArt(this);
 
-    // vitrine de heróis das 6 raridades sob o título
+    // showcase of heroes of the 6 rarities under the title
     for (let r = 0; r < 6; r++) {
       this.add.image(width / 2 + (r - 2.5) * 70, height * 0.44, `hero-${r}`);
     }
@@ -30,7 +30,7 @@ export class ConnectScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height * 0.3 + 46, "mineração explosiva na Robinhood Chain", {
+      .text(width / 2, height * 0.3 + 46, "explosive mining on Robinhood Chain", {
         fontFamily: "monospace",
         fontSize: "16px",
         color: "#90a4ae",
@@ -43,7 +43,7 @@ export class ConnectScene extends Phaser.Scene {
     }
 
     const button = this.add
-      .text(width / 2, height * 0.55, "[ Conectar carteira ]", {
+      .text(width / 2, height * 0.55, "[ Connect wallet ]", {
         fontFamily: "monospace",
         fontSize: "24px",
         color: "#4fc3f7",
@@ -65,9 +65,9 @@ export class ConnectScene extends Phaser.Scene {
 
     button.on("pointerdown", async () => {
       try {
-        status.setColor("#90a4ae").setText("conectando...");
+        status.setColor("#90a4ae").setText("connecting...");
         await connectWallet();
-        status.setText("assine a mensagem de login na carteira...");
+        status.setText("sign the login message in your wallet...");
         await signIn();
         this.scene.start("mining");
       } catch (err) {

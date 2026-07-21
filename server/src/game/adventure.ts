@@ -1,30 +1,30 @@
 /**
- * Modo Aventura do MinerBlast — resolução server-side de expedições.
+ * MinerBlast Adventure Mode — server-side resolution of expeditions.
  *
- * O jogador envia um herói a um estágio; o resultado é sorteado no servidor
- * (o cliente nunca decide). A chance de sucesso cresce com o poder efetivo
- * do herói contra a dificuldade do estágio, e há um limite diário de
- * tentativas por jogador para conter farming.
+ * The player sends a hero to a stage; the outcome is rolled on the server
+ * (the client never decides). The success chance grows with the hero's
+ * effective power against the stage difficulty, and there is a daily limit
+ * of attempts per player to curb farming.
  */
 import { EngineHero } from "./engine";
 
 export interface AdventureStage {
   id: number;
   name: string;
-  difficulty: number; // comparado ao poder efetivo do herói
+  difficulty: number; // compared against the hero's effective power
   staminaCost: number;
-  rewardMicro: number; // recompensa base em micro-BLAST
-  minRarity: number; // raridade mínima do herói
+  rewardMicro: number; // base reward in micro-BLAST
+  minRarity: number; // minimum hero rarity
 }
 
 export const STAGES: AdventureStage[] = [
-  { id: 0, name: "Caverna Rasa", difficulty: 25, staminaCost: 8, rewardMicro: 2_500_000, minRarity: 0 },
-  { id: 1, name: "Mina Profunda", difficulty: 60, staminaCost: 14, rewardMicro: 7_000_000, minRarity: 1 },
-  { id: 2, name: "Núcleo Vulcânico", difficulty: 120, staminaCost: 22, rewardMicro: 18_000_000, minRarity: 3 },
+  { id: 0, name: "Shallow Cavern", difficulty: 25, staminaCost: 8, rewardMicro: 2_500_000, minRarity: 0 },
+  { id: 1, name: "Deep Mine", difficulty: 60, staminaCost: 14, rewardMicro: 7_000_000, minRarity: 1 },
+  { id: 2, name: "Volcanic Core", difficulty: 120, staminaCost: 22, rewardMicro: 18_000_000, minRarity: 3 },
 ];
 
 export const DAILY_ATTEMPT_LIMIT = 10;
-/** Em caso de derrota, devolve-se metade do custo de stamina. */
+/** On defeat, half of the stamina cost is refunded. */
 const DEFEAT_STAMINA_REFUND = 0.5;
 
 export interface AdventureTracker {
@@ -38,7 +38,7 @@ export interface AdventureResult {
   rewardMicro: number;
   staminaSpent: number;
   attemptsLeft: number;
-  successChance: number; // % exibida ao jogador (transparência)
+  successChance: number; // % shown to the player (transparency)
 }
 
 export function effectivePower(hero: EngineHero): number {
@@ -55,9 +55,9 @@ export function currentDay(now: number): number {
 }
 
 /**
- * Resolve uma aventura. `rand` é injetado (0..1) para testabilidade;
- * em produção vem de crypto/aleatoriedade do servidor.
- * Lança Error com mensagem amigável quando os requisitos falham.
+ * Resolves an adventure. `rand` is injected (0..1) for testability;
+ * in production it comes from crypto/server-side randomness.
+ * Throws Error with a friendly message when requirements are not met.
  */
 export function runAdventure(
   hero: EngineHero,
@@ -72,13 +72,13 @@ export function runAdventure(
     tracker.attemptsToday = 0;
   }
   if (tracker.attemptsToday >= DAILY_ATTEMPT_LIMIT) {
-    throw new Error("limite diario de aventuras atingido");
+    throw new Error("daily adventure limit reached");
   }
   if (hero.rarity < stage.minRarity) {
-    throw new Error(`estagio exige raridade ${stage.minRarity}+`);
+    throw new Error(`stage requires rarity ${stage.minRarity}+`);
   }
   if (hero.stamina < stage.staminaCost) {
-    throw new Error("stamina insuficiente para a aventura");
+    throw new Error("insufficient stamina for the adventure");
   }
 
   tracker.attemptsToday += 1;
@@ -91,7 +91,7 @@ export function runAdventure(
   hero.stamina -= staminaSpent;
   if (hero.stamina < 1) hero.mode = "rest";
 
-  // bônus de raridade na recompensa (mesma curva do poder efetivo)
+  // rarity bonus on the reward (same curve as effective power)
   const rewardMicro = success ? Math.round(stage.rewardMicro * (1 + hero.rarity * 0.15)) : 0;
 
   return {

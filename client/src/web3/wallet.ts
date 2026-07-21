@@ -23,7 +23,7 @@ export function walletClient(): WalletClient | null {
 
 export async function connectWallet(): Promise<Address> {
   if (!window.ethereum) {
-    throw new Error("Nenhuma carteira encontrada. Instale uma carteira EVM (ex.: Rabby/MetaMask).");
+    throw new Error("No wallet found. Install an EVM wallet (e.g. Rabby/MetaMask).");
   }
   client = createWalletClient({ transport: custom(window.ethereum) });
   const [addr] = await client.requestAddresses();
@@ -31,14 +31,14 @@ export async function connectWallet(): Promise<Address> {
   return addr;
 }
 
-/** Login SIWE: pega nonce no servidor, assina a mensagem e troca por JWT. */
+/** SIWE login: gets a nonce from the server, signs the message and exchanges it for a JWT. */
 export async function signIn(): Promise<void> {
-  if (!client || !account) throw new Error("carteira nao conectada");
+  if (!client || !account) throw new Error("wallet not connected");
   const { nonce } = await api.nonce(account);
   const message = new SiweMessage({
     domain: window.location.host,
     address: account,
-    statement: "Entrar no MinerBlast",
+    statement: "Sign in to MinerBlast",
     uri: window.location.origin,
     version: "1",
     chainId: CHAIN_ID,
@@ -63,9 +63,9 @@ const VAULT_ABI = [
   },
 ] as const;
 
-/** Envia a transação de claim do voucher para o RewardVault. */
+/** Sends the voucher claim transaction to the RewardVault. */
 export async function claimVoucher(voucher: VoucherDto): Promise<`0x${string}`> {
-  if (!client || !account) throw new Error("carteira nao conectada");
+  if (!client || !account) throw new Error("wallet not connected");
   return client.writeContract({
     address: (voucher.vault as Address) ?? VAULT_ADDRESS,
     abi: VAULT_ABI,

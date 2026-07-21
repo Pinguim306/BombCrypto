@@ -5,25 +5,25 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-/// @title Heróis NFT do MinerBlast
-/// @notice Atributos ficam on-chain, empacotados num único slot. O mint é
-///         exclusivo do Gacha (MINTER_ROLE) e upgrades/queimas do HeroUpgrade
-///         (UPGRADER_ROLE). Enumerable permite ao servidor do jogo listar os
-///         heróis de um jogador sem depender de indexer.
+/// @title MinerBlast hero NFTs
+/// @notice Attributes live on-chain, packed into a single slot. Minting is
+///         exclusive to the Gacha (MINTER_ROLE) and upgrades/burns to the
+///         HeroUpgrade (UPGRADER_ROLE). Enumerable lets the game server list
+///         a player's heroes without relying on an indexer.
 contract Heroes is ERC721Enumerable, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
-    /// @dev Raridades: 0=Comum 1=Raro 2=SuperRaro 3=Épico 4=Lendário 5=Mítico
+    /// @dev Rarities: 0=Common 1=Rare 2=SuperRare 3=Epic 4=Legendary 5=Mythic
     struct HeroAttributes {
         uint8 rarity;
-        uint8 level; // 1..max por raridade
-        uint16 power; // dano de mineração por bomba
-        uint16 speed; // reduz intervalo entre bombas
-        uint16 stamina; // energia máxima
-        uint8 blastRange; // alcance da explosão
-        uint8 bombCount; // bombas simultâneas
-        uint16 abilities; // bitmap de habilidades especiais
+        uint8 level; // 1..max per rarity
+        uint16 power; // mining damage per bomb
+        uint16 speed; // reduces interval between bombs
+        uint16 stamina; // maximum energy
+        uint8 blastRange; // explosion range
+        uint8 bombCount; // simultaneous bombs
+        uint16 abilities; // bitmap of special abilities
     }
 
     uint256 public nextTokenId = 1;
@@ -43,8 +43,8 @@ contract Heroes is ERC721Enumerable, AccessControl {
         onlyRole(MINTER_ROLE)
         returns (uint256 tokenId)
     {
-        require(attrs.rarity <= 5, "Heroes: raridade invalida");
-        require(attrs.level >= 1, "Heroes: level invalido");
+        require(attrs.rarity <= 5, "Heroes: invalid rarity");
+        require(attrs.level >= 1, "Heroes: invalid level");
         tokenId = nextTokenId++;
         _attributes[tokenId] = attrs;
         _safeMint(to, tokenId);

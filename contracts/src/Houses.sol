@@ -8,25 +8,25 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
-/// @title Casas NFT do MinerBlast
-/// @notice Casas aceleram a recuperação de stamina dos heróis abrigados.
-///         Compra direta em BLAST com preço por raridade; metade do valor é
-///         queimada e metade vai para a tesouraria. Atributos são
-///         determinísticos por raridade (capacidade e bônus de regeneração).
+/// @title MinerBlast house NFTs
+/// @notice Houses speed up stamina recovery for sheltered heroes.
+///         Direct purchase in BLAST with a price per rarity; half the value
+///         is burned and half goes to the treasury. Attributes are
+///         deterministic per rarity (capacity and regeneration bonus).
 contract Houses is ERC721, AccessControl, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     struct HouseAttributes {
         uint8 rarity; // 0..5
-        uint8 capacity; // heróis abrigados simultaneamente
-        uint16 regenBoostBps; // bônus na velocidade de regeneração (10000 = +100%)
+        uint8 capacity; // heroes sheltered simultaneously
+        uint16 regenBoostBps; // regeneration speed bonus (10000 = +100%)
     }
 
     IERC20 public immutable blast;
     address public treasury;
     uint16 public burnBps = 5000;
 
-    /// @dev preço em BLAST por raridade; 0 = raridade indisponível para venda direta
+    /// @dev price in BLAST per rarity; 0 = rarity unavailable for direct sale
     uint256[6] public prices;
 
     uint256 public nextTokenId = 1;
@@ -44,9 +44,9 @@ contract Houses is ERC721, AccessControl, ReentrancyGuard {
     }
 
     function buyHouse(uint8 rarity) external nonReentrant returns (uint256 tokenId) {
-        require(rarity <= 5, "Houses: raridade invalida");
+        require(rarity <= 5, "Houses: invalid rarity");
         uint256 price = prices[rarity];
-        require(price > 0, "Houses: raridade indisponivel");
+        require(price > 0, "Houses: rarity unavailable");
 
         uint256 burnAmount = (price * burnBps) / 10000;
         ERC20Burnable(address(blast)).burnFrom(msg.sender, burnAmount);
@@ -68,12 +68,12 @@ contract Houses is ERC721, AccessControl, ReentrancyGuard {
     }
 
     function setPrice(uint8 rarity, uint256 price) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(rarity <= 5, "Houses: raridade invalida");
+        require(rarity <= 5, "Houses: invalid rarity");
         prices[rarity] = price;
     }
 
     function setTreasury(address treasury_) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(treasury_ != address(0), "Houses: tesouraria zero");
+        require(treasury_ != address(0), "Houses: zero treasury");
         treasury = treasury_;
     }
 

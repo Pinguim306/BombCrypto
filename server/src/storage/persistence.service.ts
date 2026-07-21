@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnApplicationShutdown } from "@nestjs/common";
-// node:sqlite é embutido no Node 22+ (experimental, estável o bastante p/ dev;
-// em produção a Fase 5 avalia migrar para PostgreSQL — a interface já isola isso)
+// node:sqlite is built into Node 22+ (experimental, stable enough for dev;
+// in production Phase 5 evaluates migrating to PostgreSQL — the interface already isolates this)
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { DatabaseSync } = require("node:sqlite");
 
@@ -15,8 +15,8 @@ export interface VoucherRecord {
 }
 
 /**
- * Persistência em SQLite (arquivo local). Guarda o estado de mineração por
- * jogador como JSON, os vouchers emitidos e os nonces locais de dev.
+ * SQLite persistence (local file). Stores per-player mining state as JSON,
+ * the issued vouchers, and the local dev nonces.
  */
 @Injectable()
 export class PersistenceService implements OnApplicationShutdown {
@@ -47,7 +47,7 @@ export class PersistenceService implements OnApplicationShutdown {
         next_nonce TEXT NOT NULL
       );
     `);
-    this.logger.log(`SQLite aberto em ${path}`);
+    this.logger.log(`SQLite opened at ${path}`);
   }
 
   loadPlayerState(address: string): string | null {
@@ -91,7 +91,7 @@ export class PersistenceService implements OnApplicationShutdown {
   }
 
   markClaimedBelow(player: string, nonceExclusive: bigint): void {
-    // nonces são sequenciais: tudo abaixo do nonce on-chain atual já foi sacado
+    // nonces are sequential: everything below the current on-chain nonce was already claimed
     const rows = this.db
       .prepare("SELECT nonce FROM vouchers WHERE player = ? AND claimed = 0")
       .all(player.toLowerCase()) as { nonce: string }[];

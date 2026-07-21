@@ -10,5 +10,5 @@ export const MARKET_ADDRESS = (import.meta.env.VITE_MARKET_ADDRESS ?? ZERO) as `
 export const HEROES_ADDRESS = (import.meta.env.VITE_HEROES_ADDRESS ?? ZERO) as `0x${string}`;
 export const HOUSES_ADDRESS = (import.meta.env.VITE_HOUSES_ADDRESS ?? ZERO) as `0x${string}`;
 
-/** Marketplace exige chain configurada (RPC + endereços). */
+/** Marketplace requires a configured chain (RPC + addresses). */
 export const MARKET_ENABLED = RPC_URL !== "" && MARKET_ADDRESS !== ZERO && TOKEN_ADDRESS !== ZERO;

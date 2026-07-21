@@ -1,8 +1,8 @@
 import { ethers } from "hardhat";
 
-// Deploy dos contratos core na testnet da Robinhood Chain:
+// Deploys the core contracts on the Robinhood Chain testnet:
 //   npx hardhat run script/deploy.ts --network robinhoodTestnet
-// Requer ROBINHOOD_TESTNET_RPC e DEPLOYER_KEY no ambiente.
+// Requires ROBINHOOD_TESTNET_RPC and DEPLOYER_KEY in the environment.
 async function main() {
   const [deployer] = await ethers.getSigners();
   console.log(`Deployer: ${deployer.address}`);
@@ -77,8 +77,8 @@ async function main() {
   await (await heroes.grantRole(await heroes.MINTER_ROLE(), await gacha.getAddress())).wait();
   await (await heroes.grantRole(await heroes.UPGRADER_ROLE(), await upgrade.getAddress())).wait();
   await (await blast.grantRole(await blast.MINTER_ROLE(), await vault.getAddress())).wait();
-  console.log("Roles: Gacha minta heróis, HeroUpgrade funde/queima, Vault minta BLAST.");
-  console.log("Pendente: grantRole(SIGNER_ROLE) no Vault para a chave do servidor de jogo.");
+  console.log("Roles: Gacha mints heroes, HeroUpgrade fuses/burns, Vault mints BLAST.");
+  console.log("Pending: grantRole(SIGNER_ROLE) on the Vault for the game server key.");
 }
 
 main().catch((err) => {

@@ -23,7 +23,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (res.status === 401) {
     jwt = null;
     sessionStorage.removeItem("mb.jwt");
-    throw new Error("sessao expirada");
+    throw new Error("session expired");
   }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

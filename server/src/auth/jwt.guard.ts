@@ -19,7 +19,7 @@ export class JwtAuthGuard implements CanActivate {
       req.player = payload.sub;
       return true;
     } catch {
-      throw new UnauthorizedException("token invalido ou expirado");
+      throw new UnauthorizedException("invalid or expired token");
     }
   }
 }

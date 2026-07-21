@@ -1,57 +1,59 @@
-# Projeto "MinerBlast" (codinome) — Jogo P2E para Robinhood Chain
+# MinerBlast (codename) — P2E Game for Robinhood Chain
 
-Jogo play-to-earn inspirado nas mecânicas do gênero *bomber mining* (popularizado pelo BombCrypto),
-construído do zero para a **Robinhood Chain** (L2 EVM baseada em Arbitrum Orbit).
+A play-to-earn game inspired by the *bomber mining* genre mechanics (popularized by
+BombCrypto), built from scratch for **Robinhood Chain** (an Arbitrum Orbit-based EVM L2).
 
-> **Aviso de propriedade intelectual:** este projeto replica *mecânicas de jogo* (que não são
-> protegidas por copyright), mas **não** utiliza nome, marca, arte, sprites, sons ou textos do
-> BombCrypto original — todos os assets e a identidade visual serão originais. "MinerBlast" é um
-> codinome de trabalho; o nome final passará por verificação de marca.
+> **Intellectual property notice:** this project replicates *game mechanics* (which are
+> not protected by copyright) but does **not** use the name, brand, art, sprites, sounds,
+> or texts of the original BombCrypto — all assets and visual identity are original.
+> "MinerBlast" is a working codename; the final name will go through trademark clearance.
 
-## Documentação
+## Documentation
 
-- [Plano de Desenvolvimento](docs/PLANO_DESENVOLVIMENTO.md) — visão completa: mecânicas, arquitetura, contratos, tokenomics, fases e riscos.
+- [Development Plan](docs/DEVELOPMENT_PLAN.md) — full picture: mechanics, architecture, contracts, tokenomics, phases, and risks.
 
-## Estrutura do monorepo
+## Monorepo structure
 
 ```
-contracts/   # Smart contracts Solidity (Hardhat + OpenZeppelin)
-client/      # Cliente do jogo (Phaser 3 + TypeScript + Vite)
-server/      # Backend autoritativo (NestJS, simulação server-side)
-indexer/     # Indexação de eventos on-chain (Fase 3)
-docs/        # Documentação e game design
+contracts/   # Solidity smart contracts (Hardhat + OpenZeppelin)
+client/      # Game client (Phaser 3 + TypeScript + Vite)
+server/      # Authoritative backend (NestJS, server-side simulation)
+indexer/     # On-chain event indexing
+docs/        # Documentation and game design
 ```
 
-## Como rodar (dev)
+## Running locally (dev)
 
 ```bash
 pnpm install
 
-# contratos: compilar e testar
+# contracts: compile and test
 pnpm --filter @minerblast/contracts test
 
-# servidor (porta 3000)
+# server (port 3000)
 pnpm --filter @minerblast/server build && pnpm --filter @minerblast/server start
 
-# cliente (porta 5173)
+# client (port 5173)
 pnpm --filter @minerblast/client dev
 ```
 
-Fluxo do vertical slice: conectar carteira → login SIWE → heróis de dev mineram
-no servidor (simulação autoritativa) → saldo pendente acumula → "Sacar BLAST"
-emite voucher EIP-712 → transação `claim` no RewardVault minta o token.
+Vertical-slice flow: connect wallet → SIWE login → dev heroes mine on the server
+(authoritative simulation) → pending balance accrues → "Claim BLAST" issues an
+EIP-712 voucher → the `claim` transaction on the RewardVault mints the token.
 
-Variáveis de ambiente: ver `contracts/.env.example` e `server/.env.example`.
+Environment variables: see `contracts/.env.example`, `server/.env.example`, and
+`client/.env.example`.
 
 ## Status
 
-- ✅ Fase 0/1 — plano, monorepo e contratos core (BLAST, Heroes, Gacha, RewardVault) com testes
-- ✅ Fase 2 — loop principal jogável: motor de mineração server-side, auth SIWE, vouchers EIP-712 e cliente Phaser
-- ✅ Fase 3 — economia completa: contratos Houses/HeroUpgrade/Staking, persistência SQLite,
-  casas acelerando regeneração, reconciliação de vouchers, sync on-chain de heróis e métricas admin
-- ✅ Fase 4 — Marketplace on-chain com escrow e taxa (4%, metade queimada), modo Aventura
-  com 3 estágios e limite diário, indexer de eventos e UI de aventura no cliente
-- ✅ Fase 4.5 — cena de Mercado no cliente: navegar/comprar listagens, vender heróis
-  on-chain e cancelar, direto dos contratos via viem
-- ⏭ Fase 5 — arte original (artista), auditoria externa, anti-bot, deploy na testnet da
-  Robinhood Chain e beta público
+- ✅ Phase 0/1 — plan, monorepo, and core contracts (BLAST, Heroes, Gacha, RewardVault) with tests
+- ✅ Phase 2 — playable core loop: server-side mining engine, SIWE auth, EIP-712 vouchers, Phaser client
+- ✅ Phase 3 — full economy: Houses/HeroUpgrade/Staking contracts, SQLite persistence,
+  houses boosting stamina regen, voucher reconciliation, on-chain hero sync, admin metrics
+- ✅ Phase 4 — on-chain Marketplace with escrow and fee (4%, half burned), Adventure mode
+  with 3 stages and a daily limit, event indexer, adventure UI in the client
+- ✅ Phase 4.5 — Market scene in the client: browse/buy listings, sell on-chain heroes,
+  and cancel, straight from the contracts via viem
+- ✅ Original procedural pixel art (code-generated placeholder set, artist-ready texture keys)
+- ⏭ Phase 5 — final art (artist), external audit, anti-bot, Robinhood Chain testnet
+  deployment, and public beta

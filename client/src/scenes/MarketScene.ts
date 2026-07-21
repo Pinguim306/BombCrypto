@@ -12,10 +12,10 @@ import { api } from "../net/api";
 import { HEROES_ADDRESS, MARKET_ENABLED } from "../config";
 
 /**
- * Mercado de NFTs: navega listagens ativas direto do contrato, compra,
- * lista os próprios heróis on-chain e cancela listagens.
- * Requer chain configurada (VITE_RPC_URL + endereços); sem ela a cena
- * mostra o aviso e volta.
+ * NFT marketplace: browses active listings straight from the contract, buys,
+ * lists the player's own on-chain heroes and cancels listings.
+ * Requires a configured chain (VITE_RPC_URL + addresses); without it the
+ * scene shows the notice and goes back.
  */
 export class MarketScene extends Phaser.Scene {
   private rows: Phaser.GameObjects.GameObject[] = [];
@@ -28,7 +28,7 @@ export class MarketScene extends Phaser.Scene {
   create() {
     const { width } = this.scale;
 
-    this.add.text(20, 20, "MERCADO — MinerBlast", {
+    this.add.text(20, 20, "MARKET — MinerBlast", {
       fontFamily: "monospace",
       fontSize: "22px",
       color: "#ffb74d",
@@ -36,7 +36,7 @@ export class MarketScene extends Phaser.Scene {
     });
 
     const back = this.add
-      .text(width - 140, 20, "[ Voltar ]", {
+      .text(width - 140, 20, "[ Back ]", {
         fontFamily: "monospace",
         fontSize: "16px",
         color: "#4fc3f7",
@@ -57,7 +57,7 @@ export class MarketScene extends Phaser.Scene {
       this.add.text(
         20,
         80,
-        "Mercado indisponível: configure VITE_RPC_URL e os endereços\ndos contratos para negociar NFTs.",
+        "Market unavailable: set VITE_RPC_URL and the contract\naddresses to trade NFTs.",
         { fontFamily: "monospace", fontSize: "15px", color: "#ef9a9a" }
       );
       return;
@@ -72,14 +72,14 @@ export class MarketScene extends Phaser.Scene {
   }
 
   private async refresh() {
-    this.statusText.setColor("#90a4ae").setText("carregando listagens...");
+    this.statusText.setColor("#90a4ae").setText("loading listings...");
     try {
       const [listings, state] = await Promise.all([fetchListings(), api.state()]);
       this.renderListings(listings);
       this.renderMyHeroes(state.heroes.map((h) => h.id));
       this.statusText.setText("");
     } catch (err) {
-      this.statusText.setColor("#ef9a9a").setText(`erro: ${(err as Error).message}`);
+      this.statusText.setColor("#ef9a9a").setText(`error: ${(err as Error).message}`);
     }
   }
 
@@ -88,7 +88,7 @@ export class MarketScene extends Phaser.Scene {
     const me = connectedAddress()?.toLowerCase();
 
     this.rows.push(
-      this.add.text(20, 64, "LISTAGENS ATIVAS", {
+      this.add.text(20, 64, "ACTIVE LISTINGS", {
         fontFamily: "monospace",
         fontSize: "14px",
         color: "#b0bec5",
@@ -97,7 +97,7 @@ export class MarketScene extends Phaser.Scene {
 
     if (listings.length === 0) {
       this.rows.push(
-        this.add.text(20, 90, "nenhuma listagem ativa", {
+        this.add.text(20, 90, "no active listings", {
           fontFamily: "monospace",
           fontSize: "13px",
           color: "#78909c",
@@ -108,7 +108,7 @@ export class MarketScene extends Phaser.Scene {
     listings.slice(0, 10).forEach((l, i) => {
       const y = 90 + i * 30;
       const mine = l.seller.toLowerCase() === me;
-      const kind = l.collection.toLowerCase() === HEROES_ADDRESS.toLowerCase() ? "Herói" : "Casa";
+      const kind = l.collection.toLowerCase() === HEROES_ADDRESS.toLowerCase() ? "Hero" : "House";
       this.rows.push(
         this.add.text(20, y, `${kind} #${l.tokenId}  ${formatEther(l.price)} BLAST`, {
           fontFamily: "monospace",
@@ -117,7 +117,7 @@ export class MarketScene extends Phaser.Scene {
         })
       );
       const action = this.add
-        .text(360, y, mine ? "[ Cancelar ]" : "[ Comprar ]", {
+        .text(360, y, mine ? "[ Cancel ]" : "[ Buy ]", {
           fontFamily: "monospace",
           fontSize: "13px",
           color: mine ? "#ef9a9a" : "#4fc3f7",
@@ -130,12 +130,12 @@ export class MarketScene extends Phaser.Scene {
     });
   }
 
-  /** Heróis on-chain do jogador (ids "chain-<tokenId>" vindos do servidor). */
+  /** The player's on-chain heroes (ids "chain-<tokenId>" from the server). */
   private renderMyHeroes(heroIds: string[]) {
     const chainHeroes = heroIds.filter((id) => id.startsWith("chain-"));
 
     this.rows.push(
-      this.add.text(20, 420, "VENDER MEUS HERÓIS", {
+      this.add.text(20, 420, "SELL MY HEROES", {
         fontFamily: "monospace",
         fontSize: "14px",
         color: "#b0bec5",
@@ -144,7 +144,7 @@ export class MarketScene extends Phaser.Scene {
 
     if (chainHeroes.length === 0) {
       this.rows.push(
-        this.add.text(20, 446, "nenhum herói on-chain (modo dev não permite vender)", {
+        this.add.text(20, 446, "no on-chain heroes (dev mode does not allow selling)", {
           fontFamily: "monospace",
           fontSize: "13px",
           color: "#78909c",
@@ -156,7 +156,7 @@ export class MarketScene extends Phaser.Scene {
     chainHeroes.slice(0, 3).forEach((id, i) => {
       const tokenId = BigInt(id.slice("chain-".length));
       const btn = this.add
-        .text(20 + i * 180, 446, `[ Vender herói #${tokenId} ]`, {
+        .text(20 + i * 180, 446, `[ Sell hero #${tokenId} ]`, {
           fontFamily: "monospace",
           fontSize: "13px",
           color: "#a5d6a7",
@@ -170,45 +170,45 @@ export class MarketScene extends Phaser.Scene {
   }
 
   private async onList(tokenId: bigint) {
-    const input = window.prompt(`Preço em BLAST para o herói #${tokenId}:`, "1000");
+    const input = window.prompt(`Price in BLAST for hero #${tokenId}:`, "1000");
     if (!input) return;
     let priceWei: bigint;
     try {
       priceWei = parseEther(input);
       if (priceWei <= 0n) throw new Error();
     } catch {
-      this.statusText.setColor("#ef9a9a").setText("preço inválido");
+      this.statusText.setColor("#ef9a9a").setText("invalid price");
       return;
     }
     try {
-      this.statusText.setColor("#90a4ae").setText("aprove o NFT e a listagem na carteira (2 tx)...");
+      this.statusText.setColor("#90a4ae").setText("approve the NFT and the listing in your wallet (2 tx)...");
       await listNft(HEROES_ADDRESS as Address, tokenId, priceWei);
-      this.statusText.setColor("#a5d6a7").setText("listagem enviada");
+      this.statusText.setColor("#a5d6a7").setText("listing sent");
       this.refresh();
     } catch (err) {
-      this.statusText.setColor("#ef9a9a").setText(`listar falhou: ${(err as Error).message}`);
+      this.statusText.setColor("#ef9a9a").setText(`listing failed: ${(err as Error).message}`);
     }
   }
 
   private async onBuy(l: MarketListing) {
     try {
-      this.statusText.setColor("#90a4ae").setText("confirme approve + compra na carteira...");
+      this.statusText.setColor("#90a4ae").setText("confirm approve + purchase in your wallet...");
       await buyListing(l);
-      this.statusText.setColor("#a5d6a7").setText("compra enviada");
+      this.statusText.setColor("#a5d6a7").setText("purchase sent");
       this.refresh();
     } catch (err) {
-      this.statusText.setColor("#ef9a9a").setText(`compra falhou: ${(err as Error).message}`);
+      this.statusText.setColor("#ef9a9a").setText(`purchase failed: ${(err as Error).message}`);
     }
   }
 
   private async onCancel(l: MarketListing) {
     try {
-      this.statusText.setColor("#90a4ae").setText("confirme o cancelamento na carteira...");
+      this.statusText.setColor("#90a4ae").setText("confirm the cancellation in your wallet...");
       await cancelListing(l.id);
-      this.statusText.setColor("#a5d6a7").setText("cancelamento enviado");
+      this.statusText.setColor("#a5d6a7").setText("cancellation sent");
       this.refresh();
     } catch (err) {
-      this.statusText.setColor("#ef9a9a").setText(`cancelar falhou: ${(err as Error).message}`);
+      this.statusText.setColor("#ef9a9a").setText(`cancel failed: ${(err as Error).message}`);
     }
   }
 }

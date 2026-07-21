@@ -12,7 +12,7 @@ const HOUSE_PRICES: [bigint, bigint, bigint, bigint, bigint, bigint] = [
   ethers.parseEther("20000"),
 ];
 const UPGRADE_BASE_FEE = ethers.parseEther("50");
-const APR_BPS = 1200; // 12% a.a.
+const APR_BPS = 1200; // 12% p.a.
 
 async function deployFixture() {
   const [admin, treasury, player] = await ethers.getSigners();
@@ -36,7 +36,7 @@ async function deployFixture() {
     admin.address,
   ])) as Staking;
 
-  // admin atua como minter para preparar cenários de teste
+  // admin acts as minter to set up test scenarios
   await heroes.grantRole(await heroes.MINTER_ROLE(), admin.address);
   await heroes.grantRole(await heroes.UPGRADER_ROLE(), await upgrade.getAddress());
   await blast.transfer(player.address, ethers.parseEther("100000"));
@@ -52,7 +52,7 @@ function heroAttrs(rarity: number, level = 1) {
 }
 
 describe("Houses", () => {
-  it("vende casa com queima de 50%, tesouraria e atributos por raridade", async () => {
+  it("sells a house with 50% burn, treasury payout and per-rarity attributes", async () => {
     const { blast, houses, treasury, player } = await loadFixture(deployFixture);
     const price = HOUSE_PRICES[2];
     await blast.connect(player).approve(await houses.getAddress(), price);
@@ -70,54 +70,54 @@ describe("Houses", () => {
     expect(attrs.regenBoostBps).to.equal(5000); // 2000 + 2*1500
   });
 
-  it("rejeita raridade com preço zerado", async () => {
+  it("rejects a rarity with zero price", async () => {
     const { houses, admin, player } = await loadFixture(deployFixture);
     await houses.connect(admin).setPrice(0, 0);
     await expect(houses.connect(player).buyHouse(0)).to.be.revertedWith(
-      "Houses: raridade indisponivel"
+      "Houses: rarity unavailable"
     );
   });
 });
 
 describe("HeroUpgrade", () => {
-  it("funde herói: queima sacrifício + taxa e sobe o nível do alvo", async () => {
+  it("fuses a hero: burns the sacrifice + fee and levels up the target", async () => {
     const { blast, heroes, upgrade, admin, player } = await loadFixture(deployFixture);
-    await heroes.connect(admin).mint(player.address, heroAttrs(1, 2)); // alvo id 1
-    await heroes.connect(admin).mint(player.address, heroAttrs(1)); // sacrifício id 2
+    await heroes.connect(admin).mint(player.address, heroAttrs(1, 2)); // target id 1
+    await heroes.connect(admin).mint(player.address, heroAttrs(1)); // sacrifice id 2
 
-    const fee = UPGRADE_BASE_FEE * 2n; // baseFee * nível 2
+    const fee = UPGRADE_BASE_FEE * 2n; // baseFee * level 2
     await blast.connect(player).approve(await upgrade.getAddress(), fee);
     const supplyBefore = await blast.totalSupply();
 
     await upgrade.connect(player).fuse(1, 2);
 
-    expect(await blast.totalSupply()).to.equal(supplyBefore - fee); // taxa 100% queimada
+    expect(await blast.totalSupply()).to.equal(supplyBefore - fee); // fee 100% burned
     expect((await heroes.attributesOf(1)).level).to.equal(3);
     await expect(heroes.ownerOf(2)).to.be.revertedWithCustomError(heroes, "ERC721NonexistentToken");
   });
 
-  it("rejeita raridades diferentes, nível máximo e herói de terceiros", async () => {
+  it("rejects mismatched rarities, max level and a third party's hero", async () => {
     const { blast, heroes, upgrade, admin, player, treasury } = await loadFixture(deployFixture);
     await heroes.connect(admin).mint(player.address, heroAttrs(1)); // 1
     await heroes.connect(admin).mint(player.address, heroAttrs(2)); // 2
-    await heroes.connect(admin).mint(player.address, heroAttrs(0, 4)); // 3: Comum no nível máx
+    await heroes.connect(admin).mint(player.address, heroAttrs(0, 4)); // 3: Common at max level
     await heroes.connect(admin).mint(player.address, heroAttrs(0)); // 4
-    await heroes.connect(admin).mint(treasury.address, heroAttrs(1)); // 5: de outro dono
+    await heroes.connect(admin).mint(treasury.address, heroAttrs(1)); // 5: owned by someone else
 
     await blast.connect(player).approve(await upgrade.getAddress(), ethers.parseEther("10000"));
 
     await expect(upgrade.connect(player).fuse(1, 2)).to.be.revertedWith(
-      "Upgrade: raridades diferentes"
+      "Upgrade: rarity mismatch"
     );
-    await expect(upgrade.connect(player).fuse(3, 4)).to.be.revertedWith("Upgrade: nivel maximo");
+    await expect(upgrade.connect(player).fuse(3, 4)).to.be.revertedWith("Upgrade: max level");
     await expect(upgrade.connect(player).fuse(1, 5)).to.be.revertedWith(
-      "Upgrade: nao e dono do sacrificio"
+      "Upgrade: not sacrifice owner"
     );
   });
 });
 
 describe("Staking", () => {
-  it("stake com lock de 30 dias: bloqueia saque antecipado e paga recompensa do pool", async () => {
+  it("stake with 30-day lock: blocks early withdrawal and pays reward from the pool", async () => {
     const { blast, staking, admin, player } = await loadFixture(deployFixture);
     const amount = ethers.parseEther("10000");
 
@@ -127,7 +127,7 @@ describe("Staking", () => {
     await blast.connect(player).approve(await staking.getAddress(), amount);
     await staking.connect(player).stake(amount);
 
-    await expect(staking.connect(player).withdraw(0)).to.be.revertedWith("Staking: em lock");
+    await expect(staking.connect(player).withdraw(0)).to.be.revertedWith("Staking: still locked");
 
     await network.provider.send("evm_increaseTime", [30 * 86400]);
     await network.provider.send("evm_mine");
@@ -136,14 +136,14 @@ describe("Staking", () => {
     await staking.connect(player).withdraw(0);
     const received = (await blast.balanceOf(player.address)) - balBefore;
 
-    // recompensa ≈ 10000 * 12% * (30/365) ≈ 98.6 BLAST
+    // reward ≈ 10000 * 12% * (30/365) ≈ 98.6 BLAST
     const expectedReward = (amount * 1200n * BigInt(30 * 86400)) / (10000n * BigInt(365 * 86400));
     expect(received).to.be.closeTo(amount + expectedReward, ethers.parseEther("1"));
 
-    await expect(staking.connect(player).withdraw(0)).to.be.revertedWith("Staking: ja sacado");
+    await expect(staking.connect(player).withdraw(0)).to.be.revertedWith("Staking: already withdrawn");
   });
 
-  it("pool vazio limita a recompensa mas o principal volta inteiro", async () => {
+  it("an empty pool limits the reward but the principal is returned in full", async () => {
     const { blast, staking, player } = await loadFixture(deployFixture);
     const amount = ethers.parseEther("500");
     await blast.connect(player).approve(await staking.getAddress(), amount);
@@ -159,7 +159,7 @@ describe("Staking", () => {
 });
 
 describe("Heroes (Enumerable)", () => {
-  it("lista os heróis de um jogador sem indexer", async () => {
+  it("lists a player's heroes without an indexer", async () => {
     const { heroes, admin, player } = await loadFixture(deployFixture);
     await heroes.connect(admin).mint(player.address, heroAttrs(0));
     await heroes.connect(admin).mint(player.address, heroAttrs(3));

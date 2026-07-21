@@ -26,17 +26,17 @@ export class AuthService {
     try {
       siwe = new SiweMessage(message);
     } catch {
-      throw new UnauthorizedException("mensagem SIWE invalida");
+      throw new UnauthorizedException("invalid SIWE message");
     }
 
     const pending = this.nonces.get(siwe.address.toLowerCase());
     if (!pending || pending.expiresAt < Date.now() || pending.nonce !== siwe.nonce) {
-      throw new UnauthorizedException("nonce invalido ou expirado");
+      throw new UnauthorizedException("invalid or expired nonce");
     }
 
     const result = await siwe.verify({ signature, nonce: pending.nonce }).catch(() => null);
     if (!result || !result.success) {
-      throw new UnauthorizedException("assinatura SIWE invalida");
+      throw new UnauthorizedException("invalid SIWE signature");
     }
 
     this.nonces.delete(siwe.address.toLowerCase());

@@ -22,10 +22,10 @@ export interface ChainHouse {
 }
 
 /**
- * Leitura de NFTs do jogador direto dos contratos (via Enumerable).
- * Ativo somente com RPC_URL + HEROES_ADDRESS configurados; sem eles o jogo
- * roda em modo dev (heróis de desenvolvimento, sem casas on-chain).
- * A Fase 4 substitui o polling por um indexer de eventos.
+ * Reads the player's NFTs directly from the contracts (via Enumerable).
+ * Active only with RPC_URL + HEROES_ADDRESS configured; without them the game
+ * runs in dev mode (development heroes, no on-chain houses).
+ * Phase 4 replaces the polling with an event indexer.
  */
 @Injectable()
 export class ChainService {
@@ -41,9 +41,9 @@ export class ChainService {
       if (process.env.HOUSES_ADDRESS) {
         this.houses = new Contract(process.env.HOUSES_ADDRESS, HOUSES_ABI, this.provider);
       }
-      this.logger.log("Sync on-chain de heróis habilitado");
+      this.logger.log("On-chain hero sync enabled");
     } else {
-      this.logger.warn("RPC_URL/HEROES_ADDRESS ausentes — modo dev (heróis locais)");
+      this.logger.warn("RPC_URL/HEROES_ADDRESS missing — dev mode (local heroes)");
     }
   }
 
@@ -51,7 +51,7 @@ export class ChainService {
     return this.heroes !== undefined;
   }
 
-  /** Heróis on-chain do jogador, convertidos para o formato do motor. */
+  /** The player's on-chain heroes, converted to the engine format. */
   async heroesOf(owner: string, now: number): Promise<EngineHero[]> {
     if (!this.heroes) return [];
     const balance = Number(await this.heroes.balanceOf(owner));
@@ -59,7 +59,7 @@ export class ChainService {
     for (let i = 0; i < balance; i++) {
       const tokenId = (await this.heroes.tokenOfOwnerByIndex(owner, i)) as bigint;
       const a = await this.heroes.attributesOf(tokenId);
-      const levelBonus = 1 + (Number(a.level) - 1) * 0.1; // +10% de atributos por nível
+      const levelBonus = 1 + (Number(a.level) - 1) * 0.1; // +10% attributes per level
       result.push({
         id: `chain-${tokenId}`,
         rarity: Number(a.rarity),
