@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { api, GameStateDto, HeroDto } from "../net/api";
 import { claimVoucher } from "../web3/wallet";
 import { registerPixelArt, blockTier } from "../art/pixelart";
+import { drawPanel } from "../art/ui";
 
 const COLS = 8;
 const ROWS = 5;
@@ -23,6 +24,7 @@ const RARITY_NAMES = ["Common", "Rare", "S.Rare", "Epic", "Legend", "Mythic"];
 export class MiningScene extends Phaser.Scene {
   private state?: GameStateDto;
   private blockSprites: Phaser.GameObjects.Image[] = [];
+  private blockCracks: Phaser.GameObjects.Image[] = [];
   private blockBars: Phaser.GameObjects.Rectangle[] = [];
   private heroRows: Phaser.GameObjects.Container[] = [];
   private pendingText!: Phaser.GameObjects.Text;
@@ -41,6 +43,23 @@ export class MiningScene extends Phaser.Scene {
 
   create() {
     registerPixelArt(this);
+    if (!this.anims.exists("boom")) {
+      this.anims.create({
+        key: "boom",
+        frames: [{ key: "boom-0" }, { key: "boom-1" }, { key: "boom-2" }],
+        frameRate: 14,
+        hideOnComplete: true,
+      });
+    }
+
+    // cave backdrop behind the mining grid + side/status panels
+    this.add
+      .tileSprite(GRID_X - 10, GRID_Y - 10, COLS * TILE + 14, ROWS * TILE + 14, "cave")
+      .setOrigin(0);
+    drawPanel(this, 12, 62, 216, 356); // hero list
+    drawPanel(this, 12, 424, 216, 60); // houses
+    drawPanel(this, 12, 550, 792, 40); // status bar
+
     this.add.text(GRID_X, 24, "MINERBLAST — Treasure Mining", {
       fontFamily: "monospace",
       fontSize: "22px",
@@ -83,7 +102,7 @@ export class MiningScene extends Phaser.Scene {
       wordWrap: { width: 760 },
     });
 
-    // block grid (textures by ore hardness)
+    // block grid (textures by ore hardness + progressive crack overlays)
     for (let i = 0; i < COLS * ROWS; i++) {
       const x = GRID_X + (i % COLS) * TILE;
       const y = GRID_Y + Math.floor(i / COLS) * TILE;
@@ -91,8 +110,14 @@ export class MiningScene extends Phaser.Scene {
         .image(x, y, "block-0")
         .setOrigin(0)
         .setDisplaySize(TILE - 6, TILE - 6);
+      const crack = this.add
+        .image(x, y, "crack-1")
+        .setOrigin(0)
+        .setDisplaySize(TILE - 6, TILE - 6)
+        .setVisible(false);
       const bar = this.add.rectangle(x, y + TILE - 12, TILE - 6, 5, 0xffc107).setOrigin(0);
       this.blockSprites.push(img);
+      this.blockCracks.push(crack);
       this.blockBars.push(bar);
     }
 
@@ -143,6 +168,18 @@ export class MiningScene extends Phaser.Scene {
       const sprite = this.blockSprites[i];
       if (sprite.texture.key !== key) {
         sprite.setTexture(key).setDisplaySize(TILE - 6, TILE - 6);
+      }
+      // cracks deepen as HP drops
+      const ratio = b.hp / b.maxHp;
+      const crack = this.blockCracks[i];
+      if (alive && ratio < 0.66) {
+        const crackKey = ratio < 0.33 ? "crack-2" : "crack-1";
+        if (crack.texture.key !== crackKey) {
+          crack.setTexture(crackKey).setDisplaySize(TILE - 6, TILE - 6);
+        }
+        crack.setVisible(true);
+      } else {
+        crack.setVisible(false);
       }
       this.blockBars[i].setVisible(alive).width = (TILE - 6) * (b.hp / b.maxHp);
     });
@@ -224,9 +261,21 @@ export class MiningScene extends Phaser.Scene {
       const y = 100 + i * 92;
       const c = this.add.container(20, y);
       const body = this.add.image(0, -4, `hero-${h.rarity}`).setOrigin(0).setScale(0.85);
+      const pick = this.add.image(46, 26, "pick").setOrigin(0.15, 0.85);
       if (h.mode === "work") {
-        // subtle mining bob while working
+        // mining bob + pickaxe swing while working
         this.tweens.add({ targets: body, y: 0, duration: 420, yoyo: true, repeat: -1 });
+        pick.setAngle(-35);
+        this.tweens.add({
+          targets: pick,
+          angle: 30,
+          duration: 420,
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.easeInOut",
+        });
+      } else {
+        pick.setAngle(15).setAlpha(0.55);
       }
       const name = this.add.text(54, 0, `${RARITY_NAMES[h.rarity]}  pwr ${h.power} spd ${h.speed}`, {
         fontFamily: "monospace",
@@ -257,7 +306,7 @@ export class MiningScene extends Phaser.Scene {
       const homeIcon = h.houseId
         ? this.add.image(40, 40, "house").setScale(0.6)
         : null;
-      c.add([body, name, mode, barBg, bar, stamina]);
+      c.add([body, pick, name, mode, barBg, bar, stamina]);
       if (homeIcon) c.add(homeIcon);
       c.setSize(190, 60);
       c.setInteractive(new Phaser.Geom.Rectangle(0, 0, 190, 60), Phaser.Geom.Rectangle.Contains);
@@ -316,15 +365,10 @@ export class MiningScene extends Phaser.Scene {
       ease: "Bounce.easeOut",
       onComplete: () => {
         bomb.destroy();
-        const blast = this.add.circle(x, y, 6, 0xffa726).setAlpha(0.9);
+        const boom = this.add.sprite(x, y, "boom-0");
+        boom.play("boom");
+        boom.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => boom.destroy());
         const spark = this.add.image(x, y, "spark").setScale(0.5);
-        this.tweens.add({
-          targets: blast,
-          radius: 26,
-          alpha: 0,
-          duration: 350,
-          onComplete: () => blast.destroy(),
-        });
         this.tweens.add({
           targets: spark,
           scale: 1.6,

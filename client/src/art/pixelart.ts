@@ -43,18 +43,18 @@ function shade(color: number, factor: number): number {
 export const RARITY_COLORS = [0x9e9e9e, 0x66bb6a, 0x42a5f5, 0xab47bc, 0xffa726, 0xef5350];
 
 /**
- * Miner hero — 16x16, dark outline, shaded helmet with head-lamp, glowing
- * visor and a pickaxe on the back. K outline, L lamp, l lamp glow,
- * H helmet, h helmet shade, V visor, E eyes, B body, b body shade,
- * G gear (gloves/boots), X pick head, P pick handle.
+ * Miner hero — 16x16, dark outline, shaded helmet with head-lamp and a
+ * glowing visor. The pickaxe is a separate `pick` texture so the scene can
+ * swing it while the hero works. K outline, L lamp, l lamp glow, H helmet,
+ * h helmet shade, V visor, E eyes, B body, b body shade, G gear.
  */
 const HERO_MAP = [
   "......KKK.......",
   ".....KlLlK......",
   "....KKKKKKK.....",
-  "...KHHHHHHHK.X..",
-  "..KHHHHHHHHHKXP.",
-  "..KHhhhhhhhHKP..",
+  "...KHHHHHHHK....",
+  "..KHHHHHHHHHK...",
+  "..KHhhhhhhhHK...",
   ".KHVVVVVVVVVHK..",
   ".KHVEEKVKEEVHK..",
   ".KHVVVVVVVVVHK..",
@@ -65,6 +65,102 @@ const HERO_MAP = [
   "..KGBbbbbbBGK...",
   "...KBB.K.BBK....",
   "..KGGGK.KGGGK...",
+];
+
+/** Pickaxe — 10x10 diagonal, steel head and wooden handle. */
+const PICK_MAP = [
+  "......KXX.",
+  ".....KXXXK",
+  "....KXXKK.",
+  "...KXXK...",
+  "..KPXK.X..",
+  ".KPPK..XK.",
+  "KPPK......",
+  "KPK.......",
+  "KK........",
+  "..........",
+];
+
+/** Progressive crack overlays for damaged blocks (transparent elsewhere). */
+const CRACK_LIGHT_MAP = [
+  "................",
+  "................",
+  "......C.........",
+  ".....C..........",
+  "......C.........",
+  ".......C........",
+  "......C.........",
+  "................",
+  "..........C.....",
+  ".........C......",
+  "..........C.....",
+  "................",
+  "................",
+  "................",
+  "................",
+  "................",
+];
+
+const CRACK_HEAVY_MAP = [
+  "................",
+  "..C.............",
+  "...C..C.....C...",
+  "....CC.....C....",
+  "...C..C...C.....",
+  "..C....C.C......",
+  ".C......C.......",
+  "........C.C.....",
+  ".....C.C...C....",
+  "....C.C.....C...",
+  "...C...C.....C..",
+  "..C.....C.....C.",
+  ".C.......C......",
+  "..........C.....",
+  "................",
+  "................",
+];
+
+/** Explosion frames — expanding burst (w flash, Y core, O mid, R outer). */
+const BOOM_FRAMES: string[][] = [
+  [
+    "...Y...",
+    "..YwY..",
+    ".YwwwY.",
+    "YwwWwwY",
+    ".YwwwY.",
+    "..YwY..",
+    "...Y...",
+  ],
+  [
+    "....O......",
+    "..O.Y.O....",
+    ".O.YwY.O...",
+    "..YwwwY....",
+    "O.YwWwY..O.",
+    "..YwwwY....",
+    ".O.YwY.O...",
+    "..O.Y.O....",
+    "....O......",
+    "...........",
+    "...........",
+  ],
+  [
+    ".....R.........",
+    "...R...R...R...",
+    "..R..O.O..R....",
+    ".....O.O.......",
+    "..R.O...O.R....",
+    ".R..........R..",
+    "....O...O......",
+    ".R...O.O....R..",
+    "..R.......R....",
+    "...R...R.......",
+    ".....R.........",
+    "...............",
+    "...............",
+    "...............",
+    "...............",
+  ],
 ];
 
 /**
@@ -164,6 +260,33 @@ export function blockTier(maxHp: number): number {
   return maxHp >= 90 ? 2 : maxHp >= 50 ? 1 : 0;
 }
 
+/** Deterministic PRNG (mulberry32) for the cave background speckles. */
+function localRng(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** 32x32 cave rock tile: subtle speckled darkness behind the mining grid. */
+function caveRows(): string[] {
+  const rand = localRng(77);
+  const rows: string[] = [];
+  for (let y = 0; y < 32; y++) {
+    let row = "";
+    for (let x = 0; x < 32; x++) {
+      const r = rand();
+      row += r < 0.05 ? "k" : r < 0.11 ? "d" : "c";
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
 const ORE_BY_TIER = [0xffca28, 0x4fc3f7, 0xef5350]; // gold, ice, magma
 
 /** Generates all game textures (idempotent per scene/game). */
@@ -226,4 +349,29 @@ export function registerPixelArt(scene: Phaser.Scene): void {
   }, 2);
 
   makeTexture(scene, "spark", SPARK_MAP, { Y: 0xffee58, y: 0xfff9c4 }, 2);
+
+  makeTexture(scene, "pick", PICK_MAP, {
+    K: 0x10141f,
+    X: 0xcfd8dc,
+    P: 0x8d6e63,
+  }, 3);
+
+  makeTexture(scene, "crack-1", CRACK_LIGHT_MAP, { C: 0x10141f }, 4);
+  makeTexture(scene, "crack-2", CRACK_HEAVY_MAP, { C: 0x10141f }, 4);
+
+  BOOM_FRAMES.forEach((frame, i) =>
+    makeTexture(scene, `boom-${i}`, frame, {
+      w: 0xfff9c4,
+      W: 0xffffff,
+      Y: 0xffee58,
+      O: 0xffa726,
+      R: 0xef5350,
+    }, 3)
+  );
+
+  makeTexture(scene, "cave", caveRows(), {
+    c: 0x141a27,
+    d: 0x111624,
+    k: 0x1c2434,
+  }, 2);
 }

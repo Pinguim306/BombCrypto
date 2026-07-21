@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { connectWallet, signIn } from "../web3/wallet";
 import { hasToken } from "../net/api";
 import { registerPixelArt } from "../art/pixelart";
+import { drawPanel } from "../art/ui";
 
 /** Initial screen: connect the wallet and sign the SIWE login. */
 export class ConnectScene extends Phaser.Scene {
@@ -13,12 +14,26 @@ export class ConnectScene extends Phaser.Scene {
     const { width, height } = this.scale;
     registerPixelArt(this);
 
-    // showcase of heroes of the 6 rarities under the title
+    // cave backdrop + title panel
+    this.add.tileSprite(0, 0, width, height, "cave").setOrigin(0).setAlpha(0.6);
+    drawPanel(this, width / 2 - 260, height * 0.18, 520, 330);
+
+    // showcase of heroes of the 6 rarities under the title, bobbing gently
     for (let r = 0; r < 6; r++) {
-      this.add.image(width / 2 + (r - 2.5) * 70, height * 0.44, `hero-${r}`);
+      const hero = this.add.image(width / 2 + (r - 2.5) * 70, height * 0.44, `hero-${r}`);
+      this.tweens.add({
+        targets: hero,
+        y: height * 0.44 - 6,
+        duration: 700 + r * 90,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.easeInOut",
+      });
     }
-    this.add.image(width / 2 - 180, height * 0.29, "bomb");
-    this.add.image(width / 2 + 180, height * 0.29, "spark");
+    const bomb = this.add.image(width / 2 - 180, height * 0.29, "bomb");
+    this.tweens.add({ targets: bomb, angle: 8, duration: 900, yoyo: true, repeat: -1 });
+    const spark = this.add.image(width / 2 + 180, height * 0.29, "spark");
+    this.tweens.add({ targets: spark, angle: 360, duration: 6000, repeat: -1 });
 
     this.add
       .text(width / 2, height * 0.3, "MINERBLAST", {
