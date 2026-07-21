@@ -57,6 +57,15 @@ window.addEventListener("mb-disconnect", () => {
   location.reload();
 });
 
+// Footer network line: name from env, test-asset disclaimer only on testnet.
+const netName = (import.meta.env.VITE_NETWORK_NAME as string | undefined) ?? "Robinhood Chain";
+const netNameEl = document.getElementById("net-name");
+if (netNameEl) netNameEl.textContent = netName;
+const disclaimerEl = document.getElementById("net-disclaimer");
+if (disclaimerEl && /testnet/i.test(netName)) {
+  disclaimerEl.textContent = " · rewards and NFTs are test assets with no real value";
+}
+
 // $BLAST contract address chip in the header (set VITE_BLAST_CA at deploy
 // time — e.g. on Vercel — once the launchpad token goes live).
 const ca = (import.meta.env.VITE_BLAST_CA as string | undefined) ?? TOKEN_ADDRESS;

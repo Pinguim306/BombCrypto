@@ -11,6 +11,7 @@ interface ImportMetaEnv {
   readonly VITE_HOUSES_ADDRESS?: string;
   readonly VITE_GACHA_ADDRESS?: string;
   readonly VITE_BLAST_CA?: string;
+  readonly VITE_NETWORK_NAME?: string;
 }
 
 interface ImportMeta {
