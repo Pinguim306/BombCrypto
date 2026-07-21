@@ -67,8 +67,9 @@ if (disclaimerEl && /testnet/i.test(netName)) {
 }
 
 // $BLAST contract address chip in the header (set VITE_BLAST_CA at deploy
-// time — e.g. on Vercel — once the launchpad token goes live).
-const ca = (import.meta.env.VITE_BLAST_CA as string | undefined) ?? TOKEN_ADDRESS;
+// time — e.g. on Vercel — once the launchpad token goes live). `||`, not
+// `??`: a present-but-empty env var must still fall back to the game token.
+const ca = ((import.meta.env.VITE_BLAST_CA as string | undefined) ?? "").trim() || TOKEN_ADDRESS;
 const caChip = document.getElementById("blast-ca");
 if (caChip && ca && !/^0x0{40}$/.test(ca)) {
   const caText = document.getElementById("blast-ca-text");

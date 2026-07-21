@@ -89,9 +89,10 @@ export class HeroesScene extends Phaser.Scene {
       this.cards.push(prev.container, label, next.container);
     }
 
-    this.cards.push(this.add.text(400, 520, `${heroes.length} hero${heroes.length > 1 ? "es" : ""} total`, {
+    // left of the pager row, clear of the row-2 card frames (which end at y=520)
+    this.cards.push(this.add.text(26, 548, `${heroes.length} hero${heroes.length > 1 ? "es" : ""} total`, {
       fontFamily: "monospace", fontSize: "12px", color: "#78909c",
-    }).setOrigin(0.5));
+    }).setOrigin(0, 0.5));
   }
 
   private drawHeroCard(h: HeroDto, x: number, y: number): Phaser.GameObjects.Container {
@@ -124,7 +125,8 @@ export class HeroesScene extends Phaser.Scene {
     const barW = w - 28;
     c.add(this.add.rectangle(x + 14, y + 150, barW, 8, 0x263238).setOrigin(0));
     c.add(this.add.rectangle(x + 14, y + 150, barW * (h.stamina / h.staminaMax), 8, 0x4fc3f7).setOrigin(0));
-    c.add(this.add.text(x + 14, y + 161, `stamina ${h.stamina}/${h.staminaMax}${h.houseId ? "  ⌂ sheltered" : ""}`, {
+    // worst case "sta 188/188  ⌂ sheltered" (~144px) stays inside the 178px card
+    c.add(this.add.text(x + 14, y + 161, `sta ${h.stamina}/${h.staminaMax}${h.houseId ? "  ⌂ sheltered" : ""}`, {
       fontFamily: "monospace", fontSize: "10px", color: "#90a4ae",
     }));
 

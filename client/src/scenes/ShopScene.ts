@@ -1,12 +1,13 @@
 import Phaser from "phaser";
 import { formatEther } from "viem";
 import {
-  gachaPrices, buyChest, buyPack, myUnopenedChests, canOpen, openChestAndReveal,
+  gachaPrices, buyChest, buyPack, myUnopenedChests, chestStatus, rerollChest, openChestAndReveal,
 } from "../web3/gacha";
 import { housePrices, buyHouse, blastBalance } from "../web3/houses";
 import { GACHA_ENABLED, MARKET_ENABLED } from "../config";
 import { registerPixelArt, RARITY_COLORS } from "../art/pixelart";
 import { drawPanel, drawRibbon, makeButton } from "../art/ui";
+import { sleep, shortError } from "../util";
 
 const RARITY_NAMES = ["Common", "Rare", "S.Rare", "Epic", "Legend", "Mythic"];
 
@@ -16,12 +17,16 @@ export class ShopScene extends Phaser.Scene {
   private balanceText!: Phaser.GameObjects.Text;
   private overlay?: Phaser.GameObjects.Container;
   private pendingBtn?: ReturnType<typeof makeButton>;
+  /** Bumped on every create(); async loops from a previous scene run see a
+   *  stale value and stop instead of touching destroyed GameObjects. */
+  private epoch = 0;
 
   constructor() {
     super("shop");
   }
 
   create() {
+    this.epoch++;
     registerPixelArt(this);
     if (!this.anims.exists("boom")) {
       this.anims.create({
@@ -91,20 +96,26 @@ export class ShopScene extends Phaser.Scene {
 
   private async onBuyChest(valueWei: bigint, pack: boolean) {
     try {
-      this.status.setColor("#90a4ae").setText("Confirm the purchase in your wallet...");
+      // buyChest/buyPack resolve only after the tx is MINED, so the reveal
+      // overlay's first on-chain read is guaranteed to see the new chest
+      this.status.setColor("#90a4ae").setText("Confirm the purchase in your wallet, then wait a moment for it to confirm...");
       await (pack ? buyPack(valueWei) : buyChest(valueWei));
+      if (!this.sys.settings.active) return;
       this.status.setText("");
       this.openRevealOverlay();
     } catch (err) {
-      this.status.setColor("#ef9a9a").setText(`Purchase failed: ${(err as Error).message}`);
+      if (!this.sys.settings.active) return;
+      this.status.setColor("#ef9a9a").setText(`Purchase failed: ${shortError(err)}`);
     }
   }
 
   /** Shows the pending-chests pill if the player still has unopened chests. */
   private async checkPendingChests() {
     const pending = await myUnopenedChests().catch(() => [] as bigint[]);
-    if (!this.sys.settings.active || pending.length === 0) return;
+    if (!this.sys.settings.active) return;
     this.pendingBtn?.container.destroy();
+    this.pendingBtn = undefined;
+    if (pending.length === 0) return;
     this.pendingBtn = makeButton(this, 688, 190, `Open ${pending.length} chest${pending.length > 1 ? "s" : ""}`, {
       width: 160, height: 40, color: 0x8d6e13, icon: "chest", iconScale: 0.4, fontSize: "12px",
     });
@@ -118,6 +129,7 @@ export class ShopScene extends Phaser.Scene {
    */
   private async openRevealOverlay() {
     if (this.overlay) return;
+    const epoch = this.epoch;
     const panel = this.add.container(0, 0).setDepth(200);
     this.overlay = panel;
 
@@ -151,12 +163,15 @@ export class ShopScene extends Phaser.Scene {
 
     const shake = () =>
       this.tweens.add({ targets: chest, angle: { from: -4, to: 4 }, duration: 90, yoyo: true, repeat: 5, onComplete: () => chest.setAngle(0) });
+    // true once this overlay must stop touching GameObjects: closed via X,
+    // scene left, or scene re-created (epoch mismatch = objects destroyed)
+    const dead = () => closed || !this.sys.settings.active || this.epoch !== epoch;
 
     // walk through every pending chest, one at a time
     let opened = 0;
-    while (!closed && this.sys.settings.active) {
+    while (!dead()) {
       const pending = await myUnopenedChests().catch(() => [] as bigint[]);
-      if (closed || !this.sys.settings.active) return;
+      if (dead()) return;
       if (pending.length === 0) {
         info.setColor("#a5d6a7").setText(
           opened > 0
@@ -170,24 +185,74 @@ export class ShopScene extends Phaser.Scene {
       const left = pending.length;
       info.setColor("#ffcc80").setText(`Chest #${id} (${left} left)\nThe chest is being prepared... ~30s`);
       openBtn.setEnabled(false);
+      openBtn.setLabel("OPEN CHEST");
 
-      // wait for the on-chain reveal window
-      while (!closed && this.sys.settings.active && !(await canOpen(id))) {
+      // wait for the on-chain reveal window (bounded; ~3 min per cycle)
+      let status = await chestStatus(id);
+      let polls = 0;
+      while (!dead() && status === "waiting" && polls < 45) {
         shake();
-        await new Promise((r) => setTimeout(r, 4000));
+        await sleep(4000);
+        if (dead()) return;
+        status = await chestStatus(id);
+        polls++;
       }
-      if (closed || !this.sys.settings.active) return;
+      if (dead()) return;
 
+      if (status === "unavailable") {
+        // opened from another tab or wallet switched — rescan the list
+        await sleep(2000);
+        continue;
+      }
+
+      if (status === "waiting") {
+        info.setColor("#ffcc80").setText(
+          `Chest #${id} is taking longer than usual.\nStill waiting — you can close and come back later.`
+        );
+        continue;
+      }
+
+      if (status === "expired") {
+        // blockhash gone (>256 blocks since purchase): the chest needs a
+        // reroll tx to get a fresh reveal block before it can be opened
+        info.setColor("#ffcc80").setText(
+          `Chest #${id}'s reveal window expired.\nReroll it (a quick transaction) to prepare it again.`
+        );
+        openBtn.setLabel("REROLL");
+        openBtn.setEnabled(true);
+        await new Promise<void>((resolve) => openBtn.onClick(resolve));
+        if (dead()) return;
+        openBtn.setEnabled(false);
+        closeBtn.setEnabled(false);
+        info.setColor("#90a4ae").setText("Confirm the reroll in your wallet...");
+        try {
+          await rerollChest(id);
+          if (dead()) return;
+          closeBtn.setEnabled(true);
+        } catch (err) {
+          if (dead()) return;
+          closeBtn.setEnabled(true);
+          info.setColor("#ef9a9a").setText(`Reroll failed: ${shortError(err)}\nYou can try again.`);
+          await sleep(3000);
+        }
+        continue;
+      }
+
+      // status === "ready"
       info.setColor("#eceff1").setText(`Chest #${id} is ready!`);
       openBtn.setEnabled(true);
       await new Promise<void>((resolve) => openBtn.onClick(resolve));
-      if (closed || !this.sys.settings.active) return;
+      if (dead()) return;
       openBtn.setEnabled(false);
+      // closing while the tx is in the wallet would let a second overlay
+      // submit a duplicate openChest for the same id — lock the X until done
+      closeBtn.setEnabled(false);
       info.setColor("#90a4ae").setText("Confirm the transaction in your wallet...");
 
       try {
         const revealed = await openChestAndReveal(id);
-        if (closed || !this.sys.settings.active) return;
+        if (dead()) return;
+        closeBtn.setEnabled(true);
         opened++;
         // reveal ceremony: boom + hero pops out of the chest
         const boom = this.add.sprite(400, py + 130, "boom-0").setDepth(201).setScale(1.6);
@@ -200,12 +265,14 @@ export class ShopScene extends Phaser.Scene {
         info.setColor(color).setText(
           `${RARITY_NAMES[revealed.rarity].toUpperCase()} HERO #${revealed.heroId}!`
         );
-        await new Promise((r) => setTimeout(r, 2600));
+        await sleep(2600);
+        if (dead()) return;
         heroImg.destroy();
       } catch (err) {
-        if (closed || !this.sys.settings.active) return;
-        info.setColor("#ef9a9a").setText(`Open failed: ${(err as Error).message}\nYou can try again.`);
-        await new Promise((r) => setTimeout(r, 3000));
+        if (dead()) return;
+        closeBtn.setEnabled(true);
+        info.setColor("#ef9a9a").setText(`Open failed: ${shortError(err)}\nYou can try again.`);
+        await sleep(3000);
       }
     }
   }
@@ -291,7 +358,7 @@ export class ShopScene extends Phaser.Scene {
       this.status.setColor("#a5d6a7").setText(`${RARITY_NAMES[rarity]} house bought! It appears on the mining screen (~1 min).`);
       this.refreshBalance();
     } catch (err) {
-      this.status.setColor("#ef9a9a").setText(`House purchase failed: ${(err as Error).message}`);
+      this.status.setColor("#ef9a9a").setText(`House purchase failed: ${shortError(err)}`);
     }
   }
 }

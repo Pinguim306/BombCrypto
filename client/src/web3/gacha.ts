@@ -15,6 +15,16 @@ const CHEST_OPENED_EVENT = [
   },
 ] as const;
 
+const CHEST_BOUGHT_EVENT = {
+  type: "event",
+  name: "ChestBought",
+  inputs: [
+    { indexed: true, name: "chestId", type: "uint256" },
+    { indexed: true, name: "buyer", type: "address" },
+    { indexed: false, name: "revealBlock", type: "uint64" },
+  ],
+} as const;
+
 const GACHA_ABI = [
   {
     type: "function",
@@ -77,6 +87,13 @@ const GACHA_ABI = [
     inputs: [{ name: "chestId", type: "uint256" }],
     outputs: [{ type: "uint256" }],
   },
+  {
+    type: "function",
+    name: "reroll",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "chestId", type: "uint256" }],
+    outputs: [],
+  },
 ] as const;
 
 const publicClient = GACHA_ENABLED ? createPublicClient({ transport: http(RPC_URL) }) : null;
@@ -91,6 +108,25 @@ function requireWallet() {
 function randomSalt(): `0x${string}` {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   return keccak256(toHex(bytes));
+}
+
+/**
+ * Waits for a tx to be mined and verifies it did not revert. A receipt with
+ * status "reverted" resolves normally in viem, so it must be checked here —
+ * otherwise reverted opens would surface as "event not found".
+ */
+async function confirmTx(hash: `0x${string}`, what: string) {
+  if (!publicClient) throw new Error("gacha requires a configured chain");
+  let receipt;
+  try {
+    receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 240_000 });
+  } catch {
+    throw new Error(`the ${what} transaction is taking long to confirm — check your wallet activity before retrying`);
+  }
+  if (receipt.status !== "success") {
+    throw new Error(`the ${what} transaction reverted on-chain`);
+  }
+  return receipt;
 }
 
 export interface GachaPrices {
@@ -109,9 +145,11 @@ export async function gachaPrices(): Promise<GachaPrices> {
   return { chestWei: chestWei as bigint, packWei: packWei as bigint, packSize: Number(packSize) };
 }
 
-export async function buyChest(valueWei: bigint): Promise<`0x${string}`> {
+/** Buys one chest and only resolves once the purchase is mined, so callers
+ *  can immediately query the new chest on-chain. */
+export async function buyChest(valueWei: bigint): Promise<void> {
   const { client, account } = requireWallet();
-  return client.writeContract({
+  const hash = await client.writeContract({
     address: GACHA_ADDRESS,
     abi: GACHA_ABI,
     functionName: "buyChest",
@@ -120,11 +158,12 @@ export async function buyChest(valueWei: bigint): Promise<`0x${string}`> {
     account,
     chain: null,
   });
+  await confirmTx(hash, "purchase");
 }
 
-export async function buyPack(valueWei: bigint): Promise<`0x${string}`> {
+export async function buyPack(valueWei: bigint): Promise<void> {
   const { client, account } = requireWallet();
-  return client.writeContract({
+  const hash = await client.writeContract({
     address: GACHA_ADDRESS,
     abi: GACHA_ABI,
     functionName: "buyPack",
@@ -133,37 +172,74 @@ export async function buyPack(valueWei: bigint): Promise<`0x${string}`> {
     account,
     chain: null,
   });
+  await confirmTx(hash, "purchase");
 }
 
-/** The player's unopened chest ids (small-scale scan; indexer later). */
+async function unopenedFromIds(ids: bigint[], me: string): Promise<bigint[]> {
+  const unopened: bigint[] = [];
+  // bounded parallelism: friendly to public RPCs
+  const CHUNK = 20;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const states = await Promise.all(
+      chunk.map((id) =>
+        publicClient!.readContract({
+          address: GACHA_ADDRESS,
+          abi: GACHA_ABI,
+          functionName: "chests",
+          args: [id],
+        }) as Promise<readonly [string, bigint, string, boolean]>
+      )
+    );
+    states.forEach(([buyer, , , opened], j) => {
+      if (!opened && buyer.toLowerCase() === me) unopened.push(chunk[j]);
+    });
+  }
+  return unopened.sort((a, b) => (a < b ? -1 : 1));
+}
+
+/** The player's unopened chest ids, via the indexed ChestBought event —
+ *  one log query instead of scanning every chest ever sold. */
 export async function myUnopenedChests(): Promise<bigint[]> {
   if (!publicClient) throw new Error("gacha requires a configured chain");
-  const me = connectedAddress()?.toLowerCase();
-  if (!me) return [];
-  const next = (await publicClient.readContract({
-    address: GACHA_ADDRESS,
-    abi: GACHA_ABI,
-    functionName: "nextChestId",
-  })) as bigint;
+  const account = connectedAddress();
+  if (!account) return [];
+  const me = account.toLowerCase();
 
-  const ids: bigint[] = [];
-  for (let id = 1n; id < next; id++) {
-    const [buyer, , , opened] = (await publicClient.readContract({
+  try {
+    const logs = await publicClient.getLogs({
+      address: GACHA_ADDRESS,
+      event: CHEST_BOUGHT_EVENT,
+      args: { buyer: account },
+      fromBlock: 0n,
+      toBlock: "latest",
+    });
+    const ids = [...new Set(logs.map((l) => l.args.chestId!))];
+    return unopenedFromIds(ids, me);
+  } catch {
+    // RPC without a usable eth_getLogs range: fall back to the full scan
+    const next = (await publicClient.readContract({
       address: GACHA_ADDRESS,
       abi: GACHA_ABI,
-      functionName: "chests",
-      args: [id],
-    })) as readonly [string, bigint, string, boolean];
-    if (!opened && buyer.toLowerCase() === me) ids.push(id);
+      functionName: "nextChestId",
+    })) as bigint;
+    const all: bigint[] = [];
+    for (let id = 1n; id < next; id++) all.push(id);
+    return unopenedFromIds(all, me);
   }
-  return ids;
 }
 
-/** True when the chest's reveal window is open (simulation succeeds). */
-export async function canOpen(chestId: bigint): Promise<boolean> {
-  if (!publicClient) return false;
+export type ChestStatus = "ready" | "waiting" | "expired" | "unavailable";
+
+/**
+ * Where the chest stands in the commit-reveal flow. "expired" means the
+ * reveal blockhash is gone (>256 blocks) and the chest needs a reroll tx;
+ * "unavailable" covers already-opened / not-the-buyer / no wallet.
+ */
+export async function chestStatus(chestId: bigint): Promise<ChestStatus> {
+  if (!publicClient) return "unavailable";
   const account = connectedAddress();
-  if (!account) return false;
+  if (!account) return "unavailable";
   try {
     await publicClient.simulateContract({
       address: GACHA_ADDRESS,
@@ -172,10 +248,28 @@ export async function canOpen(chestId: bigint): Promise<boolean> {
       args: [chestId],
       account,
     });
-    return true;
-  } catch {
-    return false;
+    return "ready";
+  } catch (err) {
+    const msg = String((err as Error).message ?? "");
+    if (msg.includes("reveal expired")) return "expired";
+    if (msg.includes("already opened") || msg.includes("not the buyer")) return "unavailable";
+    // "wait for reveal block" and transient RPC errors both mean: try later
+    return "waiting";
   }
+}
+
+/** Renews an expired chest's reveal block (Gacha.reroll). Resolves when mined. */
+export async function rerollChest(chestId: bigint): Promise<void> {
+  const { client, account } = requireWallet();
+  const hash = await client.writeContract({
+    address: GACHA_ADDRESS,
+    abi: GACHA_ABI,
+    functionName: "reroll",
+    args: [chestId],
+    account,
+    chain: null,
+  });
+  await confirmTx(hash, "reroll");
 }
 
 export async function openChest(chestId: bigint): Promise<`0x${string}`> {
@@ -202,7 +296,7 @@ export interface RevealedHero {
 export async function openChestAndReveal(chestId: bigint): Promise<RevealedHero> {
   if (!publicClient) throw new Error("gacha requires a configured chain");
   const hash = await openChest(chestId);
-  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  const receipt = await confirmTx(hash, "open");
   const logs = parseEventLogs({ abi: CHEST_OPENED_EVENT, logs: receipt.logs });
   const ev = logs.find((l) => l.eventName === "ChestOpened");
   if (!ev) throw new Error("chest opened but the reveal event was not found");
