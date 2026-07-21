@@ -43,8 +43,8 @@ export const BOMB_BASE_INTERVAL_MS = 4_000; // base interval between bombs
 export const REST_FULL_MS = 20 * 60_000; // full rest in 20 min
 export const MAP_COLS = 8;
 export const MAP_ROWS = 5;
-// 5x since chests moved to ETH pricing (0.005 ETH) — recalibrate after TGE
-export const REWARD_MICRO_PER_HP = 100_000; // 0.10 BLAST per mined HP point
+// 7.5x original rate (5x ETH-pricing shift +50% boost) — recalibrate after TGE
+export const REWARD_MICRO_PER_HP = 150_000; // 0.15 BLAST per mined HP point
 
 /** Deterministic PRNG (mulberry32) for reproducible map generation. */
 export function rng(seed: number): () => number {

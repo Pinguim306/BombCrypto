@@ -92,8 +92,9 @@ Systems equivalent to the original game's, with our own names and numbers:
   transfer to the dead address `0x…dEaD`, so they work with any ERC-20.
 - **Withdrawal rules** (on-chain, admin-tunable): minimum accumulated amount
   per claim + per-player cooldown + global daily payout cap. Production
-  recommendation: **10,000 BLAST minimum, 24h cooldown** (testnet beta runs
-  100 / 1h). Raise toward 40,000 as earn rates and price are calibrated.
+  target: **60,000 BLAST minimum, 24h cooldown** (testnet beta runs
+  750 / 1h), calibrated against current earn rates (~750-1,100 BLAST/hour
+  for a starter team).
 - Key health metric: **vault runway** = vault balance / daily payouts —
   tracked via /admin/metrics and topped up from creator fees.
 

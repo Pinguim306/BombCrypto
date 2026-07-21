@@ -18,9 +18,9 @@ export interface AdventureStage {
 }
 
 export const STAGES: AdventureStage[] = [
-  { id: 0, name: "Shallow Cavern", difficulty: 25, staminaCost: 8, rewardMicro: 12_500_000, minRarity: 0 },
-  { id: 1, name: "Deep Mine", difficulty: 60, staminaCost: 14, rewardMicro: 35_000_000, minRarity: 1 },
-  { id: 2, name: "Volcanic Core", difficulty: 120, staminaCost: 22, rewardMicro: 90_000_000, minRarity: 3 },
+  { id: 0, name: "Shallow Cavern", difficulty: 25, staminaCost: 8, rewardMicro: 18_750_000, minRarity: 0 },
+  { id: 1, name: "Deep Mine", difficulty: 60, staminaCost: 14, rewardMicro: 52_500_000, minRarity: 1 },
+  { id: 2, name: "Volcanic Core", difficulty: 120, staminaCost: 22, rewardMicro: 135_000_000, minRarity: 3 },
 ];
 
 export const DAILY_ATTEMPT_LIMIT = 10;
