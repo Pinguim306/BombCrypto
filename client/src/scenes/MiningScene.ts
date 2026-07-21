@@ -7,11 +7,20 @@ import { drawPanel, drawRibbon, drawPill, makeButton, Button } from "../art/ui";
 const COLS = 8;
 const ROWS = 5;
 const TILE = 64;
-const GRID_X = 240;
+const GRID_X = 258;
 const GRID_Y = 90;
 const POLL_MS = 2000;
 
 const RARITY_NAMES = ["Common", "Rare", "S.Rare", "Epic", "Legend", "Mythic"];
+
+// Display-only earnings estimate — MUST mirror server/src/game/engine.ts
+// (BOMB_BASE_INTERVAL_MS and REWARD_MICRO_PER_HP). A working hero throws a
+// bomb every 4000/(1+speed/100) ms and earns power * 0.15 BLAST per bomb:
+// BLAST/hour = 135 * power * (1 + speed/100).
+const teamBlastPerHour = (heroes: HeroDto[]): number =>
+  heroes
+    .filter((h) => h.mode === "work")
+    .reduce((sum, h) => sum + 135 * h.power * (1 + h.speed / 100), 0);
 
 /**
  * Main mining screen. All simulation happens on the server; this scene
@@ -25,6 +34,7 @@ export class MiningScene extends Phaser.Scene {
   private blockBars: Phaser.GameObjects.Rectangle[] = [];
   private heroRows: Phaser.GameObjects.Container[] = [];
   private pendingText!: Phaser.GameObjects.Text;
+  private rateText!: Phaser.GameObjects.Text;
   private housesText!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
   private claimBtn!: Button;
@@ -55,27 +65,30 @@ export class MiningScene extends Phaser.Scene {
     this.add
       .tileSprite(GRID_X - 10, GRID_Y - 10, COLS * TILE + 14, ROWS * TILE + 14, "cave")
       .setOrigin(0);
-    drawPanel(this, 12, 62, 216, 356); // hero list
-    drawPanel(this, 12, 424, 216, 120); // houses
-    drawPanel(this, 12, 550, 776, 40); // status bar
+    drawPanel(this, 30, 62, 216, 356); // hero list
+    drawPanel(this, 30, 424, 216, 120); // houses
+    drawPanel(this, 30, 550, 740, 40); // status bar
 
     // section ribbon (the MinerBlast logo lives in the site header)
-    drawRibbon(this, GRID_X + (COLS * TILE) / 2, 30, "TREASURE MINING");
+    drawRibbon(this, 400, 30, "TREASURE MINING");
 
     // pending BLAST pill counter
     this.pendingText = drawPill(this, GRID_X, 52, 262, "coin", "loading...");
 
+    // team mining rate, aligned with the hero list column below it
+    this.rateText = drawPill(this, 30, 20, 216, "pick", "...");
+
     // Shop/Market moved to the site header; only Claim stays in-game
-    this.claimBtn = makeButton(this, 722, 46, "Claim", {
+    this.claimBtn = makeButton(this, 708, 46, "Claim", {
       width: 124, height: 36, color: 0x3949ab, icon: "coin", iconScale: 0.55,
     });
     this.claimBtn.onClick(() => this.onClaim());
 
-    this.statusText = this.add.text(20, 560, "", {
+    this.statusText = this.add.text(38, 560, "", {
       fontFamily: "monospace",
       fontSize: "13px",
       color: "#90a4ae",
-      wordWrap: { width: 760 },
+      wordWrap: { width: 724 },
     });
 
     // block grid (textures by ore hardness + progressive crack overlays)
@@ -97,13 +110,13 @@ export class MiningScene extends Phaser.Scene {
       this.blockBars.push(bar);
     }
 
-    this.add.text(20, 70, "HEROES — click for actions", {
+    this.add.text(38, 70, "HEROES — click for actions", {
       fontFamily: "monospace",
       fontSize: "11px",
       color: "#90a4ae",
     });
 
-    this.housesText = this.add.text(20, 430, "", {
+    this.housesText = this.add.text(38, 430, "", {
       fontFamily: "monospace",
       fontSize: "11px",
       color: "#b0bec5",
@@ -139,6 +152,11 @@ export class MiningScene extends Phaser.Scene {
     const pending = Number(this.state.pendingBlast);
     const min = this.state.claimRules.minBlast;
     this.pendingText.setText(`${pending.toFixed(2)} BLAST · min ${min.toLocaleString("en-US")}`);
+
+    const rate = teamBlastPerHour(this.state.heroes);
+    this.rateText.setText(
+      rate > 0 ? `~${Math.round(rate).toLocaleString("en-US")} BLAST/h` : "team idle · 0 BLAST/h"
+    );
     // claim button only active once the minimum is reached
     const canClaim = pending >= min;
     this.claimBtn.setEnabled(canClaim);
@@ -252,14 +270,14 @@ export class MiningScene extends Phaser.Scene {
 
     // pager (only when the roster does not fit on one page)
     if (pages > 1) {
-      const prev = this.add.text(150, 68, "◀", {
+      const prev = this.add.text(168, 68, "◀", {
         fontFamily: "monospace", fontSize: "14px", color: this.heroPage > 0 ? "#4fc3f7" : "#37474f",
       }).setInteractive({ useHandCursor: true });
       prev.on("pointerdown", () => { if (this.heroPage > 0) { this.heroPage--; this.render(); } });
-      const label = this.add.text(170, 69, `${this.heroPage + 1}/${pages}`, {
+      const label = this.add.text(188, 69, `${this.heroPage + 1}/${pages}`, {
         fontFamily: "monospace", fontSize: "12px", color: "#90a4ae",
       });
-      const next = this.add.text(202, 68, "▶", {
+      const next = this.add.text(220, 68, "▶", {
         fontFamily: "monospace", fontSize: "14px",
         color: this.heroPage < pages - 1 ? "#4fc3f7" : "#37474f",
       }).setInteractive({ useHandCursor: true });
@@ -270,7 +288,7 @@ export class MiningScene extends Phaser.Scene {
     const visible = heroes.slice(this.heroPage * PER_PAGE, this.heroPage * PER_PAGE + PER_PAGE);
     this.heroRows = visible.map((h, i) => {
       const y = 100 + i * 78;
-      const c = this.add.container(20, y);
+      const c = this.add.container(38, y);
       // rarity-framed portrait
       const frame = this.add.rectangle(-3, -7, 58, 58, 0x101624)
         .setOrigin(0)
@@ -368,7 +386,7 @@ export class MiningScene extends Phaser.Scene {
   /** Centered hero action panel: work/rest, shelter, adventure — no keyboard. */
   private openHeroPanel(h: HeroDto) {
     this.closeHeroPanel();
-    const px = 260;
+    const px = 230;
     const py = 150;
     const pw = 340;
     const ph = 300;
@@ -386,8 +404,10 @@ export class MiningScene extends Phaser.Scene {
 
     const ribbon = drawRibbon(this, px + pw / 2, py + 4, `${RARITY_NAMES[h.rarity]} Hero`, 200);
     const hero = this.add.image(px + 70, py + 88, `hero-${h.rarity}`).setScale(2.0);
+    const heroRate = Math.round(135 * h.power * (1 + h.speed / 100));
     const stats = this.add.text(px + 150, py + 46,
-      `Power    ${h.power}\nSpeed    ${h.speed}\nStamina  ${h.stamina}/${h.staminaMax}`,
+      `Power    ${h.power}\nSpeed    ${h.speed}\nStamina  ${h.stamina}/${h.staminaMax}\n` +
+        `Mines    ~${heroRate.toLocaleString("en-US")} BLAST/h`,
       { fontFamily: "monospace", fontSize: "13px", color: "#eceff1", lineSpacing: 6 });
     const modeLine = this.add.text(px + 20, py + 156,
       h.mode === "work" ? "Status: mining" : "Status: resting",
