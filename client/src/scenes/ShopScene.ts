@@ -4,7 +4,7 @@ import { gachaPrices, buyChest, buyPack, myUnopenedChests, canOpen, openChest } 
 import { housePrices, buyHouse, blastBalance } from "../web3/houses";
 import { GACHA_ENABLED, MARKET_ENABLED } from "../config";
 import { registerPixelArt, RARITY_COLORS } from "../art/pixelart";
-import { drawPanel, makeButton } from "../art/ui";
+import { drawPanel, drawRibbon, makeButton } from "../art/ui";
 
 const RARITY_NAMES = ["Common", "Rare", "S.Rare", "Epic", "Legend", "Mythic"];
 
@@ -21,9 +21,7 @@ export class ShopScene extends Phaser.Scene {
     registerPixelArt(this);
     this.add.tileSprite(0, 0, 800, 600, "cave").setOrigin(0).setAlpha(0.5);
 
-    this.add.text(24, 20, "SHOP", {
-      fontFamily: "monospace", fontSize: "26px", color: "#ffb74d", fontStyle: "bold",
-    });
+    drawRibbon(this, 400, 34, "SHOP", 180);
     const back = makeButton(this, 740, 34, "Back", { width: 90, height: 34, color: 0x37474f });
     back.onClick(() => this.scene.start("mining"));
 

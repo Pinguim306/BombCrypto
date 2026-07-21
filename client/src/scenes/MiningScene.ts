@@ -1,8 +1,8 @@
 import Phaser from "phaser";
 import { api, GameStateDto, HeroDto } from "../net/api";
 import { claimVoucher } from "../web3/wallet";
-import { registerPixelArt, blockTier } from "../art/pixelart";
-import { drawPanel, makeButton, Button } from "../art/ui";
+import { registerPixelArt, blockTier, RARITY_COLORS } from "../art/pixelart";
+import { drawPanel, drawRibbon, drawPill, makeButton, Button } from "../art/ui";
 
 const COLS = 8;
 const ROWS = 5;
@@ -34,6 +34,8 @@ export class MiningScene extends Phaser.Scene {
   private heroPanel?: Phaser.GameObjects.Container;
   private stageButtons: Phaser.GameObjects.Text[] = [];
   private selectedStage = 0;
+  private heroPage = 0;
+  private pageWidgets: Phaser.GameObjects.GameObject[] = [];
   private pollTimer?: Phaser.Time.TimerEvent;
   private bombTimer?: Phaser.Time.TimerEvent;
 
@@ -60,25 +62,15 @@ export class MiningScene extends Phaser.Scene {
     drawPanel(this, 12, 424, 216, 120); // houses
     drawPanel(this, 12, 550, 792, 40); // status bar
 
-    // section title (the MinerBlast logo lives in the site header)
-    this.add.text(GRID_X, 26, "TREASURE MINING", {
-      fontFamily: "monospace",
-      fontSize: "20px",
-      color: "#ffb74d",
-      fontStyle: "bold",
-    });
+    // section ribbon (the MinerBlast logo lives in the site header)
+    drawRibbon(this, GRID_X + (COLS * TILE) / 2, 30, "TREASURE MINING");
 
-    // pending BLAST with a coin icon
-    this.add.image(GRID_X + 10, 62, "coin").setScale(0.7);
-    this.pendingText = this.add.text(GRID_X + 26, 54, "loading...", {
-      fontFamily: "monospace",
-      fontSize: "15px",
-      color: "#ffca28",
-    });
+    // pending BLAST pill counter
+    this.pendingText = drawPill(this, GRID_X, 52, 262, "coin", "loading...");
 
     // Shop/Market moved to the site header; only Claim stays in-game
-    this.claimBtn = makeButton(this, 722, 48, "Claim", {
-      width: 124, height: 40, color: 0x3949ab, icon: "coin", iconScale: 0.55,
+    this.claimBtn = makeButton(this, 722, 46, "Claim", {
+      width: 124, height: 36, color: 0x3949ab, icon: "coin", iconScale: 0.55,
     });
     this.claimBtn.onClick(() => this.onClaim());
 
@@ -146,7 +138,7 @@ export class MiningScene extends Phaser.Scene {
     if (!this.state) return;
     const pending = Number(this.state.pendingBlast);
     const min = this.state.claimRules.minBlast;
-    this.pendingText.setText(`${pending.toFixed(2)} BLAST   (claim at ${min.toLocaleString("en-US")})`);
+    this.pendingText.setText(`${pending.toFixed(2)} BLAST · min ${min.toLocaleString("en-US")}`);
     // claim button only active once the minimum is reached
     const canClaim = pending >= min;
     this.claimBtn.setEnabled(canClaim);
@@ -154,7 +146,9 @@ export class MiningScene extends Phaser.Scene {
 
     this.state.blocks.forEach((b, i) => {
       const alive = b.hp > 0;
-      const key = alive ? `block-${blockTier(b.maxHp)}` : "block-dead";
+      // depleted floor varies per cell: some tiles reveal a glowing crystal
+      const deadKey = (i * 7 + 3) % 5 === 0 ? "block-dead2" : "block-dead";
+      const key = alive ? `block-${blockTier(b.maxHp)}` : deadKey;
       const sprite = this.blockSprites[i];
       if (sprite.texture.key !== key) {
         sprite.setTexture(key).setDisplaySize(TILE - 6, TILE - 6);
@@ -242,10 +236,40 @@ export class MiningScene extends Phaser.Scene {
   }
 
   private renderHeroes(heroes: HeroDto[]) {
+    const PER_PAGE = 4;
+    const pages = Math.max(1, Math.ceil(heroes.length / PER_PAGE));
+    if (this.heroPage >= pages) this.heroPage = pages - 1;
+
     this.heroRows.forEach((c) => c.destroy());
-    this.heroRows = heroes.map((h, i) => {
-      const y = 100 + i * 92;
+    this.pageWidgets.forEach((w) => w.destroy());
+    this.pageWidgets = [];
+
+    // pager (only when the roster does not fit on one page)
+    if (pages > 1) {
+      const prev = this.add.text(150, 68, "◀", {
+        fontFamily: "monospace", fontSize: "14px", color: this.heroPage > 0 ? "#4fc3f7" : "#37474f",
+      }).setInteractive({ useHandCursor: true });
+      prev.on("pointerdown", () => { if (this.heroPage > 0) { this.heroPage--; this.render(); } });
+      const label = this.add.text(170, 69, `${this.heroPage + 1}/${pages}`, {
+        fontFamily: "monospace", fontSize: "12px", color: "#90a4ae",
+      });
+      const next = this.add.text(202, 68, "▶", {
+        fontFamily: "monospace", fontSize: "14px",
+        color: this.heroPage < pages - 1 ? "#4fc3f7" : "#37474f",
+      }).setInteractive({ useHandCursor: true });
+      next.on("pointerdown", () => { if (this.heroPage < pages - 1) { this.heroPage++; this.render(); } });
+      this.pageWidgets.push(prev, label, next);
+    }
+
+    const visible = heroes.slice(this.heroPage * PER_PAGE, this.heroPage * PER_PAGE + PER_PAGE);
+    this.heroRows = visible.map((h, i) => {
+      const y = 100 + i * 78;
       const c = this.add.container(20, y);
+      // rarity-framed portrait
+      const frame = this.add.rectangle(-3, -7, 58, 58, 0x101624)
+        .setOrigin(0)
+        .setStrokeStyle(2, RARITY_COLORS[h.rarity] ?? 0xffffff);
+      c.add(frame);
       const body = this.add.image(0, -4, `hero-${h.rarity}`).setOrigin(0).setScale(0.85);
       const pick = this.add.image(46, 26, "pick").setOrigin(0.15, 0.85);
       if (h.mode === "work") {
@@ -354,17 +378,15 @@ export class MiningScene extends Phaser.Scene {
     const card = drawPanel(this, px, py, pw, ph);
     panel.add(card);
 
-    const hero = this.add.image(px + 70, py + 90, `hero-${h.rarity}`).setScale(2.2);
-    const title = this.add.text(px + 130, py + 24, `${RARITY_NAMES[h.rarity]} Hero`, {
-      fontFamily: "monospace", fontSize: "16px", color: "#ffb74d", fontStyle: "bold",
-    });
-    const stats = this.add.text(px + 130, py + 54,
+    const ribbon = drawRibbon(this, px + pw / 2, py + 4, `${RARITY_NAMES[h.rarity]} Hero`, 200);
+    const hero = this.add.image(px + 70, py + 88, `hero-${h.rarity}`).setScale(2.0);
+    const stats = this.add.text(px + 150, py + 46,
       `Power    ${h.power}\nSpeed    ${h.speed}\nStamina  ${h.stamina}/${h.staminaMax}`,
       { fontFamily: "monospace", fontSize: "13px", color: "#eceff1", lineSpacing: 6 });
-    const modeLine = this.add.text(px + 20, py + 150,
+    const modeLine = this.add.text(px + 20, py + 156,
       h.mode === "work" ? "Status: mining" : "Status: resting",
       { fontFamily: "monospace", fontSize: "12px", color: h.mode === "work" ? "#a5d6a7" : "#90a4ae" });
-    panel.add([hero, title, stats, modeLine]);
+    panel.add([ribbon, hero, stats, modeLine]);
 
     // action buttons
     const workBtn = makeButton(this, px + 90, py + 195, h.mode === "work" ? "Rest" : "Work", {

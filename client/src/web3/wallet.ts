@@ -33,6 +33,26 @@ export async function connectWallet(): Promise<Address> {
   return addr;
 }
 
+/**
+ * Re-attaches the wallet after a page reload with a live session (JWT saved).
+ * Uses eth_accounts (no popup); returns null if the site is not authorized.
+ * Without this, claims/marketplace would fail with "wallet not connected"
+ * after any reload.
+ */
+export async function reconnectSilently(): Promise<Address | null> {
+  if (!window.ethereum) return null;
+  try {
+    const accounts: string[] = await window.ethereum.request({ method: "eth_accounts" });
+    if (!accounts || accounts.length === 0) return null;
+    client = createWalletClient({ transport: custom(window.ethereum) });
+    account = accounts[0] as Address;
+    window.dispatchEvent(new CustomEvent("mb-wallet", { detail: account }));
+    return account;
+  } catch {
+    return null;
+  }
+}
+
 /** SIWE login: gets a nonce from the server, signs the message and exchanges it for a JWT. */
 export async function signIn(): Promise<void> {
   if (!client || !account) throw new Error("wallet not connected");

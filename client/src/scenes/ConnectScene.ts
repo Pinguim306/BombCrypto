@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { connectWallet, signIn } from "../web3/wallet";
+import { connectWallet, signIn, reconnectSilently } from "../web3/wallet";
 import { hasToken } from "../net/api";
 import { registerPixelArt } from "../art/pixelart";
 import { drawPanel } from "../art/ui";
@@ -53,7 +53,9 @@ export class ConnectScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     if (hasToken()) {
-      this.scene.start("mining");
+      // page reload with a live session: silently re-attach the wallet so
+      // claims and marketplace ownership keep working, then jump in
+      reconnectSilently().finally(() => this.scene.start("mining"));
       return;
     }
 

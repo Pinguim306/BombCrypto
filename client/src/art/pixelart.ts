@@ -207,6 +207,27 @@ const DEAD_BLOCK_MAP = [
   "DDDDDDDDDDDDDDDD",
 ];
 
+/** Depleted block variant — cave floor with a small glowing crystal cluster.
+ *  X crystal bright, x crystal dark, plus the rubble palette. */
+const DEAD_CRYSTAL_MAP = [
+  "DDDDDDDDDDDDDDDD",
+  "DKKKKKKKKKKKKKKD",
+  "DKKKCKKKKKKKKKKD",
+  "DKKKKKKKKKKCKKKD",
+  "DKKKKKKKKKKKKKKD",
+  "DKKKKKKKKXKKKKKD",
+  "DKKKKKKKXXxKKKKD",
+  "DKKKKKKKXxxKKKKD",
+  "DKKKKKKXXxxxKKKD",
+  "DKKKKKKKxxKKKKKD",
+  "DKKKCKKKKKKKCKKD",
+  "DKKKKKKKKKKKKKKD",
+  "DKKrKKKKKKKKKKKD",
+  "DKrrrKKKKKrKKKKD",
+  "DrrrrrKKKrrrKKKD",
+  "DDDDDDDDDDDDDDDD",
+];
+
 /** Round bomb — shine, rim light and a lit fuse. K body, k rim, W shine,
  *  F fuse spark, f fuse cord. */
 const BOMB_MAP = [
@@ -381,6 +402,15 @@ export function registerPixelArt(scene: Phaser.Scene): void {
     K: 0x263238,
     C: 0x10141f,
     r: 0x37474f, // rubble
+  }, P);
+
+  makeTexture(scene, "block-dead2", DEAD_CRYSTAL_MAP, {
+    D: 0x1c2333,
+    K: 0x263238,
+    C: 0x10141f,
+    r: 0x37474f,
+    X: 0x80deea, // crystal bright
+    x: 0x26a6b8, // crystal dark
   }, P);
 
   makeTexture(scene, "bomb", BOMB_MAP, {
