@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "buffer": "^6.0.3",
     "phaser": "^3.87.0",
     "siwe": "^2.3.2",
     "viem": "^2.21.0"

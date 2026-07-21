@@ -1,3 +1,7 @@
+// polyfill de Buffer para o pacote siwe no navegador
+import { Buffer } from "buffer";
+(globalThis as any).Buffer ??= Buffer;
+
 import Phaser from "phaser";
 import { ConnectScene } from "./scenes/ConnectScene";
 import { MiningScene } from "./scenes/MiningScene";
@@ -9,5 +13,6 @@ new Phaser.Game({
   width: 800,
   height: 600,
   backgroundColor: "#10141f",
+  pixelArt: true, // mantém os sprites nítidos ao escalar
   scene: [ConnectScene, MiningScene, MarketScene],
 });

@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { api, GameStateDto, HeroDto } from "../net/api";
 import { claimVoucher } from "../web3/wallet";
+import { registerPixelArt, blockTier } from "../art/pixelart";
 
 const COLS = 8;
 const ROWS = 5;
@@ -9,7 +10,6 @@ const GRID_X = 240;
 const GRID_Y = 90;
 const POLL_MS = 2000;
 
-const RARITY_COLORS = [0x9e9e9e, 0x66bb6a, 0x42a5f5, 0xab47bc, 0xffa726, 0xef5350];
 const RARITY_NAMES = ["Comum", "Raro", "S.Raro", "Épico", "Lend.", "Mítico"];
 
 /**
@@ -22,7 +22,7 @@ const RARITY_NAMES = ["Comum", "Raro", "S.Raro", "Épico", "Lend.", "Mítico"];
  */
 export class MiningScene extends Phaser.Scene {
   private state?: GameStateDto;
-  private blockSprites: Phaser.GameObjects.Rectangle[] = [];
+  private blockSprites: Phaser.GameObjects.Image[] = [];
   private blockBars: Phaser.GameObjects.Rectangle[] = [];
   private heroRows: Phaser.GameObjects.Container[] = [];
   private pendingText!: Phaser.GameObjects.Text;
@@ -40,6 +40,7 @@ export class MiningScene extends Phaser.Scene {
   }
 
   create() {
+    registerPixelArt(this);
     this.add.text(GRID_X, 24, "MINERBLAST — Mineração do Tesouro", {
       fontFamily: "monospace",
       fontSize: "22px",
@@ -82,16 +83,16 @@ export class MiningScene extends Phaser.Scene {
       wordWrap: { width: 760 },
     });
 
-    // grade de blocos
+    // grade de blocos (texturas por dureza do minério)
     for (let i = 0; i < COLS * ROWS; i++) {
       const x = GRID_X + (i % COLS) * TILE;
       const y = GRID_Y + Math.floor(i / COLS) * TILE;
-      const rect = this.add
-        .rectangle(x, y, TILE - 6, TILE - 6, 0x795548)
+      const img = this.add
+        .image(x, y, "block-0")
         .setOrigin(0)
-        .setStrokeStyle(2, 0x3e2723);
+        .setDisplaySize(TILE - 6, TILE - 6);
       const bar = this.add.rectangle(x, y + TILE - 12, TILE - 6, 5, 0xffc107).setOrigin(0);
-      this.blockSprites.push(rect);
+      this.blockSprites.push(img);
       this.blockBars.push(bar);
     }
 
@@ -138,7 +139,11 @@ export class MiningScene extends Phaser.Scene {
 
     this.state.blocks.forEach((b, i) => {
       const alive = b.hp > 0;
-      this.blockSprites[i].setFillStyle(alive ? 0x795548 : 0x263238);
+      const key = alive ? `block-${blockTier(b.maxHp)}` : "block-dead";
+      const sprite = this.blockSprites[i];
+      if (sprite.texture.key !== key) {
+        sprite.setTexture(key).setDisplaySize(TILE - 6, TILE - 6);
+      }
       this.blockBars[i].setVisible(alive).width = (TILE - 6) * (b.hp / b.maxHp);
     });
 
@@ -216,10 +221,7 @@ export class MiningScene extends Phaser.Scene {
     this.heroRows = heroes.map((h, i) => {
       const y = 100 + i * 92;
       const c = this.add.container(20, y);
-      const color = RARITY_COLORS[h.rarity] ?? 0xffffff;
-
-      const body = this.add.rectangle(0, 0, 44, 44, color).setOrigin(0).setStrokeStyle(2, 0x10141f);
-      const eyes = this.add.rectangle(8, 14, 28, 8, 0x10141f).setOrigin(0);
+      const body = this.add.image(0, -4, `hero-${h.rarity}`).setOrigin(0).setScale(0.85);
       const name = this.add.text(54, 0, `${RARITY_NAMES[h.rarity]}  pwr ${h.power} spd ${h.speed}`, {
         fontFamily: "monospace",
         fontSize: "12px",
@@ -246,7 +248,11 @@ export class MiningScene extends Phaser.Scene {
         color: "#90a4ae",
       });
 
-      c.add([body, eyes, name, mode, barBg, bar, stamina]);
+      const homeIcon = h.houseId
+        ? this.add.image(40, 40, "house").setScale(0.6)
+        : null;
+      c.add([body, name, mode, barBg, bar, stamina]);
+      if (homeIcon) c.add(homeIcon);
       c.setSize(190, 60);
       c.setInteractive(new Phaser.Geom.Rectangle(0, 0, 190, 60), Phaser.Geom.Rectangle.Contains);
       c.on("pointerdown", () => {
@@ -296,7 +302,7 @@ export class MiningScene extends Phaser.Scene {
     const x = GRID_X + (i % COLS) * TILE + TILE / 2 - 3;
     const y = GRID_Y + Math.floor(i / COLS) * TILE + TILE / 2 - 3;
 
-    const bomb = this.add.circle(x, y - 20, 8, 0x10141f).setStrokeStyle(2, 0xeceff1);
+    const bomb = this.add.image(x, y - 20, "bomb");
     this.tweens.add({
       targets: bomb,
       y,
@@ -305,12 +311,21 @@ export class MiningScene extends Phaser.Scene {
       onComplete: () => {
         bomb.destroy();
         const blast = this.add.circle(x, y, 6, 0xffa726).setAlpha(0.9);
+        const spark = this.add.image(x, y, "spark").setScale(0.5);
         this.tweens.add({
           targets: blast,
           radius: 26,
           alpha: 0,
           duration: 350,
           onComplete: () => blast.destroy(),
+        });
+        this.tweens.add({
+          targets: spark,
+          scale: 1.6,
+          angle: 90,
+          alpha: 0,
+          duration: 380,
+          onComplete: () => spark.destroy(),
         });
       },
     });

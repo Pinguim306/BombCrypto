@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { connectWallet, signIn } from "../web3/wallet";
 import { hasToken } from "../net/api";
+import { registerPixelArt } from "../art/pixelart";
 
 /** Tela inicial: conectar carteira e assinar o login SIWE. */
 export class ConnectScene extends Phaser.Scene {
@@ -10,6 +11,14 @@ export class ConnectScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+    registerPixelArt(this);
+
+    // vitrine de heróis das 6 raridades sob o título
+    for (let r = 0; r < 6; r++) {
+      this.add.image(width / 2 + (r - 2.5) * 70, height * 0.44, `hero-${r}`);
+    }
+    this.add.image(width / 2 - 180, height * 0.29, "bomb");
+    this.add.image(width / 2 + 180, height * 0.29, "spark");
 
     this.add
       .text(width / 2, height * 0.3, "MINERBLAST", {
