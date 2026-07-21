@@ -17,7 +17,9 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   console.log(`Deployer: ${deployer.address}`);
 
-  const chestPrice = ethers.parseEther(process.env.CHEST_PRICE ?? "100");
+  const chestPriceEth = ethers.parseEther(process.env.CHEST_PRICE_ETH ?? "0.005");
+  const packPriceEth = ethers.parseEther(process.env.PACK_PRICE_ETH ?? "0.04");
+  const packSize = Number(process.env.PACK_SIZE ?? 10);
   const dailyCap = ethers.parseEther(process.env.DAILY_MINT_CAP ?? "500000");
   const minClaim = ethers.parseEther(process.env.MIN_CLAIM ?? "10000");
   const claimCooldown = Number(process.env.CLAIM_COOLDOWN_S ?? 86400);
@@ -41,14 +43,18 @@ async function main() {
   console.log(`Heroes:      ${await heroes.getAddress()}`);
 
   const gacha = await ethers.deployContract("Gacha", [
-    blastAddress,
     await heroes.getAddress(),
     treasury,
-    chestPrice,
+    chestPriceEth,
+    packPriceEth,
+    packSize,
     deployer.address,
   ]);
   await gacha.waitForDeployment();
-  console.log(`Gacha:       ${await gacha.getAddress()}`);
+  console.log(
+    `Gacha:       ${await gacha.getAddress()} (chest ${ethers.formatEther(chestPriceEth)} ETH, ` +
+      `pack x${packSize} ${ethers.formatEther(packPriceEth)} ETH)`
+  );
 
   const vault = await ethers.deployContract("RewardVault", [
     blastAddress,

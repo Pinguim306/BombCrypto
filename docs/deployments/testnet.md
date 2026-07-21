@@ -19,7 +19,7 @@ token); v2 reflects the production economy: BLAST issued externally
 |---|---|
 | BlastToken (dev stand-in, 1B fixed) | `0xc18aA7B1e455d7694319F5578844107104619787` |
 | Heroes | `0x3DfF06CAFaD28459c694eEf39Fc5a96d137e6387` |
-| Gacha | `0x74F8f63eA7d330bbb2fcF8437d286DB29647Bb85` |
+| Gacha (ETH-priced, v2) | `0x0B69B0D6d294560c95a29727FD9674029Ac5da78` |
 | RewardVault (pre-funded) | `0x612B9718efB3e3760e9868b2eaf8F50A2c4F372C` |
 | Houses | `0xd93506b0A2176a08158E5D088F2535adada41364` |
 | HeroUpgrade | `0x3f1209c82f65127F4Cb0Ed998683DE60486d8432` |
@@ -41,6 +41,16 @@ Admin/treasury/signer (test only): `0x35Cd3B0e29a6B8739c065Ec2da668272EFbCd7DE`
   works: gacha 50%, house purchases 50%, upgrade fees 100%, half of the 4%
   marketplace fee.
 
+## Gacha pricing (ETH) and reward scaling
+
+- Chest: **0.005 ETH**; promo pack: **10 chests for 0.04 ETH** (20% off).
+  All ETH is forwarded to the treasury (used to buy BLAST back / fund the
+  vault). Admin-tunable via `setPrices`.
+- In-game rewards were scaled **5x** to match the move to ETH pricing:
+  mining pays 0.10 BLAST per HP (was 0.02) and adventure stages pay
+  12.5 / 35 / 90 BLAST base (was 2.5 / 7 / 18). Final calibration after TGE.
+- The old BLAST-priced gacha (`0x74F8...Bb85`) had its MINTER_ROLE revoked.
+
 ## Withdrawal (claim) rules
 
 On-chain in the vault and mirrored by the server (`MIN_CLAIM_BLAST`,
@@ -48,26 +58,24 @@ On-chain in the vault and mirrored by the server (`MIN_CLAIM_BLAST`,
 
 | Setting | Testnet beta | Production recommendation |
 |---|---|---|
-| Minimum per withdrawal | 100 BLAST | **10,000 BLAST** |
+| Minimum per withdrawal | 500 BLAST | **40,000 BLAST** (owner's target; ~2-3 days at 5x rates) |
 | Cooldown between withdrawals | 1 h | **24 h** |
 | Global daily payout cap | 500,000 BLAST | tune from beta data |
 
-Rationale for 10,000 (vs. the 40,000 example): at current earn rates a
-starter team makes roughly 100–150 BLAST/hour of active play, so 10,000 ≈
-3–5 days of engaged play — long enough to deter mercenary farm-and-dump,
-short enough to keep newcomers motivated. 40,000 (~2 weeks for starters) is
-viable later once earn rates and token price are calibrated in beta; it is a
-one-transaction admin change (`setMinClaim`).
+With rewards scaled 5x, a starter team earns roughly 500–750 BLAST/hour of
+active play, which makes the owner's original 40,000 target reachable in
+~2–3 days of engaged play — now a healthy production value. It remains a
+one-transaction admin change (`setMinClaim`) either way.
 
 ## Verified on-chain (v2)
 
-- Gacha flow: chest bought (50 BLAST → `0x…dEaD`, 50 → treasury), Hero #1
-  minted (Common, power 18, speed 18, stamina 36).
+- ETH gacha flow: chest bought for **0.005 ETH** (forwarded to the
+  treasury), Hero #2 minted (Common, power 16, speed 17, stamina 28).
 - Vault funded with 45,000,000 BLAST at deploy.
 - Claim of 2.36 BLAST paid **from the vault balance** (no minting):
   tx `0x1cf6423079edbf3e7d4df8e7e02eb00431ba7a90bbb1fa02b6e9287c9ba78862`;
   vault balance moved 45,000,000 → 44,999,997.64.
-- Beta limits left active: minClaim 100 BLAST, cooldown 3600s.
+- Beta limits left active: minClaim 500 BLAST (5x-proportional), cooldown 3600s.
 
 ## Arbitrum/Orbit gotcha (important)
 
@@ -88,7 +96,7 @@ VAULT_ADDRESS=0x612B9718efB3e3760e9868b2eaf8F50A2c4F372C
 HEROES_ADDRESS=0x3DfF06CAFaD28459c694eEf39Fc5a96d137e6387
 HOUSES_ADDRESS=0xd93506b0A2176a08158E5D088F2535adada41364
 SIGNER_KEY=<key with SIGNER_ROLE — never commit>
-MIN_CLAIM_BLAST=100
+MIN_CLAIM_BLAST=500
 CLAIM_COOLDOWN_HOURS=1
 NODE_USE_ENV_PROXY=1   # only needed behind an env proxy
 ```
@@ -103,6 +111,7 @@ VITE_VAULT_ADDRESS=0x612B9718efB3e3760e9868b2eaf8F50A2c4F372C
 VITE_MARKET_ADDRESS=0x812f08AA82D284a7D4353D63089EAC1B4712c268
 VITE_HEROES_ADDRESS=0x3DfF06CAFaD28459c694eEf39Fc5a96d137e6387
 VITE_HOUSES_ADDRESS=0xd93506b0A2176a08158E5D088F2535adada41364
+VITE_GACHA_ADDRESS=0x0B69B0D6d294560c95a29727FD9674029Ac5da78
 ```
 
 Indexer env: `RPC_URL`, `VAULT_ADDRESS`, `HEROES_ADDRESS`, `MARKET_ADDRESS`

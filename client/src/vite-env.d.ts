@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_MARKET_ADDRESS?: string;
   readonly VITE_HEROES_ADDRESS?: string;
   readonly VITE_HOUSES_ADDRESS?: string;
+  readonly VITE_GACHA_ADDRESS?: string;
 }
 
 interface ImportMeta {

@@ -1,15 +1,14 @@
 import { ethers } from "hardhat";
 
-// End-to-end smoke test against a live deployment:
-//   grants SIGNER_ROLE to the signer address, buys a chest, waits for the
-//   reveal block, opens it, and prints the minted hero.
+// End-to-end smoke test against a live deployment (ETH-priced gacha):
+//   grants SIGNER_ROLE to the signer address, buys a chest with ETH, waits
+//   for the reveal block, opens it, and prints the minted hero.
 // NOTE (Arbitrum/Orbit): inside contracts block.number is the *L1* block
 // number, which advances on its own (~12s); we poll with a static call
 // until the reveal window opens instead of comparing RPC (L2) block numbers.
-// Env: TOKEN, GACHA, HEROES, VAULT (addresses), SIGNER (address for role).
+// Env: GACHA, HEROES, VAULT (addresses), SIGNER (address for role).
 async function main() {
   const [deployer] = await ethers.getSigners();
-  const token = await ethers.getContractAt("BlastToken", process.env.TOKEN!);
   const gacha = await ethers.getContractAt("Gacha", process.env.GACHA!);
   const heroes = await ethers.getContractAt("Heroes", process.env.HEROES!);
   const vault = await ethers.getContractAt("RewardVault", process.env.VAULT!);
@@ -23,15 +22,16 @@ async function main() {
     console.log(`SIGNER_ROLE already granted to ${signerAddr}`);
   }
 
-  const price = await gacha.chestPrice();
-  console.log(`Chest price: ${ethers.formatEther(price)} BLAST`);
-  await (await token.approve(await gacha.getAddress(), price)).wait();
+  const price = await gacha.chestPriceWei();
+  console.log(`Chest price: ${ethers.formatEther(price)} ETH`);
 
-  const buyTx = await gacha.buyChest(ethers.id(`smoke-${deployer.address}`));
+  const buyTx = await gacha.buyChest(ethers.id(`smoke-${deployer.address}`), { value: price });
   const buyRcpt = await buyTx.wait();
-  const chestId = await gacha.nextChestId() - 1n;
+  const chestId = (await gacha.nextChestId()) - 1n;
   const chest = await gacha.chests(chestId);
-  console.log(`Chest #${chestId} bought at block ${buyRcpt!.blockNumber}; reveal block ${chest.revealBlock}`);
+  console.log(
+    `Chest #${chestId} bought at block ${buyRcpt!.blockNumber}; reveal block ${chest.revealBlock}`
+  );
 
   // poll until the L1-based reveal block has passed (up to ~3 min)
   for (let attempt = 0; ; attempt++) {

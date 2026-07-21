@@ -1,6 +1,9 @@
 import Phaser from "phaser";
+import { formatEther } from "viem";
 import { api, GameStateDto, HeroDto } from "../net/api";
 import { claimVoucher } from "../web3/wallet";
+import { gachaPrices, buyChest, buyPack, myUnopenedChests, canOpen, openChest } from "../web3/gacha";
+import { GACHA_ENABLED } from "../config";
 import { registerPixelArt, blockTier } from "../art/pixelart";
 import { drawPanel } from "../art/ui";
 
@@ -58,7 +61,9 @@ export class MiningScene extends Phaser.Scene {
       .setOrigin(0);
     drawPanel(this, 12, 62, 216, 356); // hero list
     drawPanel(this, 12, 424, 216, 60); // houses
+    drawPanel(this, 12, 490, 216, 54); // gacha shop
     drawPanel(this, 12, 550, 792, 40); // status bar
+    this.createShop();
 
     this.add.text(GRID_X, 24, "MINERBLAST — Treasure Mining", {
       fontFamily: "monospace",
@@ -144,6 +149,93 @@ export class MiningScene extends Phaser.Scene {
       this.pollTimer?.remove();
       this.bombTimer?.remove();
     });
+  }
+
+  /** Gacha shop: buy chests/packs with ETH and open pending chests. */
+  private async createShop() {
+    this.add.text(22, 496, "SHOP (ETH)", {
+      fontFamily: "monospace",
+      fontSize: "11px",
+      color: "#90a4ae",
+    });
+
+    if (!GACHA_ENABLED) {
+      this.add.text(22, 512, "chain not configured", {
+        fontFamily: "monospace",
+        fontSize: "11px",
+        color: "#78909c",
+      });
+      return;
+    }
+
+    try {
+      const prices = await gachaPrices();
+      const chestBtn = this.add
+        .text(22, 512, `[ Chest ${formatEther(prices.chestWei)}Ξ ]`, {
+          fontFamily: "monospace",
+          fontSize: "12px",
+          color: "#a5d6a7",
+          backgroundColor: "#1c2333",
+          padding: { x: 6, y: 3 },
+        })
+        .setInteractive({ useHandCursor: true });
+      chestBtn.on("pointerdown", () => this.onBuyChest(prices.chestWei, false));
+
+      const packBtn = this.add
+        .text(112, 512, `[ x${prices.packSize} ${formatEther(prices.packWei)}Ξ ]`, {
+          fontFamily: "monospace",
+          fontSize: "12px",
+          color: "#ffcc80",
+          backgroundColor: "#1c2333",
+          padding: { x: 6, y: 3 },
+        })
+        .setInteractive({ useHandCursor: true });
+      packBtn.on("pointerdown", () => this.onBuyChest(prices.packWei, true));
+    } catch {
+      this.add.text(22, 512, "shop unavailable", {
+        fontFamily: "monospace",
+        fontSize: "11px",
+        color: "#78909c",
+      });
+    }
+  }
+
+  private async onBuyChest(valueWei: bigint, pack: boolean) {
+    try {
+      this.statusText.setColor("#90a4ae").setText("confirm the purchase in your wallet...");
+      await (pack ? buyPack(valueWei) : buyChest(valueWei));
+      this.statusText.setText("chest bought — waiting for the reveal window (~30s)...");
+      this.openPendingChests();
+    } catch (err) {
+      this.statusText.setColor("#ef9a9a").setText(`purchase failed: ${(err as Error).message}`);
+    }
+  }
+
+  /** Polls pending chests and opens each one as its reveal window opens. */
+  private async openPendingChests() {
+    for (let attempt = 0; attempt < 24; attempt++) {
+      const pending = await myUnopenedChests().catch(() => [] as bigint[]);
+      if (pending.length === 0) {
+        this.statusText
+          .setColor("#a5d6a7")
+          .setText("all chests opened! heroes appear after the next sync (~1 min)");
+        return;
+      }
+      const ready = [];
+      for (const id of pending) if (await canOpen(id)) ready.push(id);
+      for (const id of ready) {
+        this.statusText.setColor("#90a4ae").setText(`opening chest #${id} — confirm in wallet...`);
+        await openChest(id).catch((err) => {
+          this.statusText.setColor("#ef9a9a").setText(`open failed: ${(err as Error).message}`);
+        });
+      }
+      if (ready.length === 0) {
+        await new Promise((r) => setTimeout(r, 5000));
+      }
+    }
+    this.statusText
+      .setColor("#ffcc80")
+      .setText("some chests are still pending — use the shop again later to open them");
   }
 
   private async refresh() {

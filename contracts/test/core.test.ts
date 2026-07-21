@@ -3,7 +3,9 @@ import { ethers, network } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import type { BlastToken, Heroes, Gacha, RewardVault } from "../typechain-types";
 
-const CHEST_PRICE = ethers.parseEther("100");
+const CHEST_PRICE_ETH = ethers.parseEther("0.005");
+const PACK_PRICE_ETH = ethers.parseEther("0.04");
+const PACK_SIZE = 10;
 const DAILY_CAP = ethers.parseEther("10000");
 const MIN_CLAIM = ethers.parseEther("10");
 const COOLDOWN = 24 * 3600;
@@ -19,10 +21,11 @@ async function deployFixture() {
     "https://api.minerblast.example/heroes/",
   ])) as Heroes;
   const gacha = (await ethers.deployContract("Gacha", [
-    await blast.getAddress(),
     await heroes.getAddress(),
     treasury.address,
-    CHEST_PRICE,
+    CHEST_PRICE_ETH,
+    PACK_PRICE_ETH,
+    PACK_SIZE,
     admin.address,
   ])) as Gacha;
   const vault = (await ethers.deployContract("RewardVault", [
@@ -97,15 +100,18 @@ describe("Heroes", () => {
 });
 
 describe("Gacha", () => {
-  it("buys and opens a chest: 50% to the dead address, treasury paid, hero minted", async () => {
-    const { blast, heroes, gacha, treasury, player } = await loadFixture(deployFixture);
+  it("buys a chest with ETH (forwarded to treasury) and opens it into a hero", async () => {
+    const { heroes, gacha, treasury, player } = await loadFixture(deployFixture);
 
-    await blast.connect(player).approve(await gacha.getAddress(), CHEST_PRICE);
-    const deadBefore = await blast.balanceOf(DEAD);
+    await expect(
+      gacha.connect(player).buyChest(ethers.id("my-salt"), { value: CHEST_PRICE_ETH - 1n })
+    ).to.be.revertedWith("Gacha: wrong ETH amount");
 
-    await gacha.connect(player).buyChest(ethers.id("my-salt"));
-    expect(await blast.balanceOf(DEAD)).to.equal(deadBefore + CHEST_PRICE / 2n);
-    expect(await blast.balanceOf(treasury.address)).to.equal(CHEST_PRICE / 2n);
+    const treasuryBefore = await ethers.provider.getBalance(treasury.address);
+    await gacha.connect(player).buyChest(ethers.id("my-salt"), { value: CHEST_PRICE_ETH });
+    expect(await ethers.provider.getBalance(treasury.address)).to.equal(
+      treasuryBefore + CHEST_PRICE_ETH
+    );
 
     await network.provider.send("hardhat_mine", ["0x3"]);
     await gacha.connect(player).openChest(1);
@@ -117,10 +123,30 @@ describe("Gacha", () => {
     expect(attrs.power).to.be.greaterThan(0);
   });
 
+  it("sells a discounted pack: 10 chests for 0.04 ETH, all openable into heroes", async () => {
+    const { heroes, gacha, treasury, player } = await loadFixture(deployFixture);
+
+    await expect(
+      gacha.connect(player).buyPack(ethers.id("pack"), { value: CHEST_PRICE_ETH })
+    ).to.be.revertedWith("Gacha: wrong ETH amount");
+
+    const treasuryBefore = await ethers.provider.getBalance(treasury.address);
+    await gacha.connect(player).buyPack(ethers.id("pack"), { value: PACK_PRICE_ETH });
+    expect(await ethers.provider.getBalance(treasury.address)).to.equal(
+      treasuryBefore + PACK_PRICE_ETH
+    );
+    expect(await gacha.nextChestId()).to.equal(BigInt(PACK_SIZE) + 1n);
+
+    await network.provider.send("hardhat_mine", ["0x3"]);
+    for (let id = 1; id <= PACK_SIZE; id++) {
+      await gacha.connect(player).openChest(id);
+    }
+    expect(await heroes.balanceOf(player.address)).to.equal(PACK_SIZE);
+  });
+
   it("prevents opening before the reveal block and by anyone other than the buyer", async () => {
-    const { blast, gacha, player, other } = await loadFixture(deployFixture);
-    await blast.connect(player).approve(await gacha.getAddress(), CHEST_PRICE);
-    await gacha.connect(player).buyChest(ethers.id("salt"));
+    const { gacha, player, other } = await loadFixture(deployFixture);
+    await gacha.connect(player).buyChest(ethers.id("salt"), { value: CHEST_PRICE_ETH });
 
     await expect(gacha.connect(player).openChest(1)).to.be.revertedWith(
       "Gacha: wait for reveal block"
@@ -132,9 +158,8 @@ describe("Gacha", () => {
   });
 
   it("allows reroll after the blockhash expires (>256 blocks)", async () => {
-    const { blast, gacha, heroes, player } = await loadFixture(deployFixture);
-    await blast.connect(player).approve(await gacha.getAddress(), CHEST_PRICE);
-    await gacha.connect(player).buyChest(ethers.id("salt"));
+    const { gacha, heroes, player } = await loadFixture(deployFixture);
+    await gacha.connect(player).buyChest(ethers.id("salt"), { value: CHEST_PRICE_ETH });
 
     await network.provider.send("hardhat_mine", ["0x105"]); // 261 blocks
     await expect(gacha.connect(player).openChest(1)).to.be.revertedWith(

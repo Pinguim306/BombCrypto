@@ -3,22 +3,17 @@ pragma solidity 0.8.28;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Heroes} from "./Heroes.sol";
 
-/// @title MinerBlast hero gacha
-/// @notice Sells chests paid in BLAST with commit-reveal randomness:
-///         the purchase records a future block and the opening uses that
-///         block's blockhash + a salt from the buyer. On mainnet, the plan is
-///         to migrate to Chainlink VRF; commit-reveal is the testnet fallback.
-///         Per-rarity probabilities are public and fixed at deploy time.
+/// @title MinerBlast hero gacha (ETH-priced)
+/// @notice Chests are paid in native ETH: a single chest at `chestPriceWei`
+///         or a discounted pack of `packSize` chests at `packPriceWei`.
+///         All ETH is forwarded to the treasury (used to buy BLAST back and
+///         fund the reward vault). Randomness is commit-reveal: the purchase
+///         records a future block and opening uses its blockhash + the
+///         buyer's salt. Mainnet plan: migrate to Chainlink VRF; commit-
+///         reveal is the testnet fallback. Rarity odds are public on-chain.
 contract Gacha is AccessControl, ReentrancyGuard {
-    using SafeERC20 for IERC20;
-
-    /// @dev launchpad tokens may not be burnable; "burns" go to the dead address
-    address public constant BURN_ADDRESS = 0x000000000000000000000000000000000000dEaD;
-
     struct Chest {
         address buyer;
         uint64 revealBlock; // first block whose hash can reveal
@@ -26,51 +21,61 @@ contract Gacha is AccessControl, ReentrancyGuard {
         bool opened;
     }
 
-    IERC20 public immutable blast;
     Heroes public immutable heroes;
     address public treasury;
 
-    uint256 public chestPrice;
-    /// @dev fraction of the price burned, in basis points (10000 = 100%)
-    uint16 public burnBps = 5000;
+    uint256 public chestPriceWei;
+    uint256 public packPriceWei;
+    uint8 public packSize;
 
     /// @dev Cumulative probability per rarity, in bps.
-    ///      Common 52%, Rare 26%, SuperRare 12%, Epic 6.5%, Legendary 3%, Mythic 0.5%
+    ///      Common 52%, Rare 26%, SuperRare 12%, Epic 6.5%, Legend 3%, Mythic 0.5%
     uint16[6] public rarityCumBps = [5200, 7800, 9000, 9650, 9950, 10000];
 
     uint256 public nextChestId = 1;
     mapping(uint256 chestId => Chest) public chests;
 
     event ChestBought(uint256 indexed chestId, address indexed buyer, uint64 revealBlock);
+    event PackBought(address indexed buyer, uint256 firstChestId, uint8 count);
     event ChestOpened(uint256 indexed chestId, address indexed buyer, uint256 heroId, uint8 rarity);
     event ChestRerolled(uint256 indexed chestId, uint64 newRevealBlock);
 
-    constructor(IERC20 blast_, Heroes heroes_, address treasury_, uint256 chestPrice_, address admin) {
-        blast = blast_;
+    constructor(
+        Heroes heroes_,
+        address treasury_,
+        uint256 chestPriceWei_,
+        uint256 packPriceWei_,
+        uint8 packSize_,
+        address admin
+    ) {
         heroes = heroes_;
         treasury = treasury_;
-        chestPrice = chestPrice_;
+        chestPriceWei = chestPriceWei_;
+        packPriceWei = packPriceWei_;
+        packSize = packSize_;
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
-    /// @notice Buys a chest. The payment is split between burn and treasury.
-    function buyChest(bytes32 salt) external nonReentrant returns (uint256 chestId) {
-        uint256 burnAmount = (chestPrice * burnBps) / 10000;
-        blast.safeTransferFrom(msg.sender, BURN_ADDRESS, burnAmount);
-        blast.safeTransferFrom(msg.sender, treasury, chestPrice - burnAmount);
+    /// @notice Buys a single chest for `chestPriceWei` in ETH.
+    function buyChest(bytes32 salt) external payable nonReentrant returns (uint256 chestId) {
+        require(msg.value == chestPriceWei, "Gacha: wrong ETH amount");
+        _forwardToTreasury();
+        chestId = _createChest(salt);
+    }
 
-        chestId = nextChestId++;
-        chests[chestId] = Chest({
-            buyer: msg.sender,
-            revealBlock: uint64(block.number + 2),
-            salt: salt,
-            opened: false
-        });
-        emit ChestBought(chestId, msg.sender, uint64(block.number + 2));
+    /// @notice Buys a discounted pack of `packSize` chests for `packPriceWei`.
+    function buyPack(bytes32 salt) external payable nonReentrant returns (uint256 firstChestId) {
+        require(msg.value == packPriceWei, "Gacha: wrong ETH amount");
+        _forwardToTreasury();
+        firstChestId = nextChestId;
+        for (uint8 i = 0; i < packSize; i++) {
+            _createChest(salt);
+        }
+        emit PackBought(msg.sender, firstChestId, packSize);
     }
 
     /// @notice Opens the chest and mints the hero. Must be called within 256
-    ///         blocks after the revealBlock; after that use `reroll` to renew.
+    ///         blocks of the reveal block; afterwards use `reroll`.
     function openChest(uint256 chestId) external nonReentrant returns (uint256 heroId) {
         Chest storage c = chests[chestId];
         require(c.buyer == msg.sender, "Gacha: not the buyer");
@@ -98,6 +103,22 @@ contract Gacha is AccessControl, ReentrancyGuard {
         emit ChestRerolled(chestId, c.revealBlock);
     }
 
+    function _createChest(bytes32 salt) private returns (uint256 chestId) {
+        chestId = nextChestId++;
+        chests[chestId] = Chest({
+            buyer: msg.sender,
+            revealBlock: uint64(block.number + 2),
+            salt: salt,
+            opened: false
+        });
+        emit ChestBought(chestId, msg.sender, uint64(block.number + 2));
+    }
+
+    function _forwardToTreasury() private {
+        (bool ok, ) = treasury.call{value: msg.value}("");
+        require(ok, "Gacha: treasury transfer failed");
+    }
+
     function _pickRarity(uint16 roll) internal view returns (uint8) {
         for (uint8 i = 0; i < 6; i++) {
             if (roll < rarityCumBps[i]) return i;
@@ -106,7 +127,7 @@ contract Gacha is AccessControl, ReentrancyGuard {
     }
 
     /// @dev Base attributes grow with rarity; pseudo-random variation within
-    ///      the rarity's range. Fine balancing will come from the GDD.
+    ///      the rarity band. Fine balancing comes from the GDD.
     function _rollAttributes(uint8 rarity, uint256 rand)
         internal
         pure
@@ -127,13 +148,14 @@ contract Gacha is AccessControl, ReentrancyGuard {
 
     // ---- administration (multisig + timelock in production) ----
 
-    function setChestPrice(uint256 price) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        chestPrice = price;
-    }
-
-    function setBurnBps(uint16 bps) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(bps <= 10000, "Gacha: invalid bps");
-        burnBps = bps;
+    function setPrices(uint256 chestPriceWei_, uint256 packPriceWei_, uint8 packSize_)
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        require(packSize_ > 0, "Gacha: pack size zero");
+        chestPriceWei = chestPriceWei_;
+        packPriceWei = packPriceWei_;
+        packSize = packSize_;
     }
 
     function setTreasury(address treasury_) external onlyRole(DEFAULT_ADMIN_ROLE) {
