@@ -105,8 +105,8 @@ export class ShopScene extends Phaser.Scene {
     const pending = await myUnopenedChests().catch(() => [] as bigint[]);
     if (!this.sys.settings.active || pending.length === 0) return;
     this.pendingBtn?.container.destroy();
-    this.pendingBtn = makeButton(this, 640, 222, `Open ${pending.length} chest${pending.length > 1 ? "s" : ""}`, {
-      width: 200, height: 40, color: 0x8d6e13, icon: "chest", iconScale: 0.4,
+    this.pendingBtn = makeButton(this, 688, 190, `Open ${pending.length} chest${pending.length > 1 ? "s" : ""}`, {
+      width: 160, height: 40, color: 0x8d6e13, icon: "chest", iconScale: 0.4, fontSize: "12px",
     });
     this.pendingBtn.onClick(() => this.openRevealOverlay());
   }
