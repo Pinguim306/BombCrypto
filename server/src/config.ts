@@ -4,10 +4,10 @@
  * RewardVault settings (minClaim / claimCooldown), or claims the server
  * signs would revert on-chain.
  *
- * Production recommendation: 10,000 BLAST minimum + 24h cooldown.
- * Testnet uses lower values so testers can reach a claim in one session.
+ * Production recommendation: 30,000 BLAST minimum + 24h cooldown.
+ * Testnet beta runs 375 / 1h so testers can reach a claim in one session.
  */
-export const MIN_CLAIM_BLAST = Number(process.env.MIN_CLAIM_BLAST ?? 10_000);
+export const MIN_CLAIM_BLAST = Number(process.env.MIN_CLAIM_BLAST ?? 30_000);
 export const MIN_CLAIM_MICRO = Math.round(MIN_CLAIM_BLAST * 1_000_000);
 
 export const CLAIM_COOLDOWN_HOURS = Number(process.env.CLAIM_COOLDOWN_HOURS ?? 24);

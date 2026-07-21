@@ -1,8 +1,8 @@
 import { ethers } from "hardhat";
 
 // One-off migration on the Robinhood Chain testnet: deploys the ETH-priced
-// Gacha, moves MINTER_ROLE from the old BLAST-priced gacha to it, and raises
-// the vault minClaim proportionally to the 5x reward scaling.
+// Gacha, moves MINTER_ROLE from the old BLAST-priced gacha to it, and sets
+// the vault minClaim proportionally to the current reward scaling (3.75x).
 // Env: HEROES, OLD_GACHA, VAULT (addresses).
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -31,8 +31,8 @@ async function main() {
   console.log("MINTER_ROLE: granted to new gacha, revoked from old");
 
   const vault = await ethers.getContractAt("RewardVault", VAULT);
-  await (await vault.setMinClaim(ethers.parseEther(process.env.MIN_CLAIM ?? "500"))).wait();
-  console.log(`Vault minClaim: ${process.env.MIN_CLAIM ?? "500"} BLAST (5x rewards proportional)`);
+  await (await vault.setMinClaim(ethers.parseEther(process.env.MIN_CLAIM ?? "375"))).wait();
+  console.log(`Vault minClaim: ${process.env.MIN_CLAIM ?? "375"} BLAST (3.75x rewards proportional)`);
 }
 
 main().catch((e) => {

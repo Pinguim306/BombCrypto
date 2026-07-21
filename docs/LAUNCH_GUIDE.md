@@ -113,12 +113,16 @@ pnpm --filter @minerblast/client build   # deploy client/dist to Pages/Vercel
 
 ### B.1 Hard prerequisites (in order)
 
-1. **Robinhood Chain mainnet live** (expected late 2026) — chain id, RPC and
-   explorer URLs published.
-2. **TGE on the launchpad (ponsfamily.com)** — the real $BLAST address.
-   Confirm with the launchpad: standard ERC-20? any fee-on-transfer or
-   blacklist mechanics? (fee-on-transfer would require vault/marketplace
-   adjustments — check BEFORE deploying).
+1. **Robinhood Chain mainnet — LIVE** (verified 2026-07-21): chain id
+   **4663**, RPC `https://rpc.mainnet.chain.robinhood.com`, explorer
+   `robinhoodchain.blockscout.com`. The hardhat config already has the
+   `robinhoodMainnet` network.
+2. **TGE on pons (ponsfamily.com)** — the real $BLAST address. Token
+   compatibility is **confirmed**: pons launch tokens are plain
+   OpenZeppelin ERC-20s (fixed 1B supply minted once, no fee-on-transfer,
+   no blacklist, no mint) — the vault/marketplace need no adjustments.
+   Full mechanics, addresses and the launch playbook:
+   `docs/PONS_INTEGRATION.md`.
 3. **External audit** of the 8 contracts (scope is small and stable;
    reference budget US$15–40k). Fix findings, re-test, publish the report.
 4. **Wallet architecture:**
@@ -154,9 +158,12 @@ npx hardhat run script/deploy.ts --network robinhoodMainnet
 #    - every contract: grantRole(DEFAULT_ADMIN_ROLE, <admin Safe>)
 #                      renounceRole(DEFAULT_ADMIN_ROLE, deployer)
 
-# 4. fund the vault: buy the supply share on the launchpad, then
-#    blast.approve(vault, X) + vault.fund(X) from the treasury Safe
-#    (size X for months of runway at the daily cap, not the whole share)
+# 4. fund the vault: buy the supply share on pons (creator's atomic
+#    initial buy at launch + tranches after the anti-snipe window; see
+#    docs/PONS_INTEGRATION.md), then blast.approve(vault, X) +
+#    vault.fund(X) from the treasury Safe (size X for months of runway
+#    at the daily cap, not the whole share). Creator fees (70% of the
+#    pool's 1%) are the recurring top-up: claim -> treasury -> fund().
 
 # 5. point server + client envs at mainnet addresses; fresh database
 #    (testnet progress does not migrate — announce this in advance)
