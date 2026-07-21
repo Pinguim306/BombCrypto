@@ -49,4 +49,7 @@ Variáveis de ambiente: ver `contracts/.env.example` e `server/.env.example`.
 - ✅ Fase 2 — loop principal jogável: motor de mineração server-side, auth SIWE, vouchers EIP-712 e cliente Phaser
 - ✅ Fase 3 — economia completa: contratos Houses/HeroUpgrade/Staking, persistência SQLite,
   casas acelerando regeneração, reconciliação de vouchers, sync on-chain de heróis e métricas admin
-- ⏭ Fase 4 — marketplace on-chain, modo Aventura, indexer de eventos e arte original
+- ✅ Fase 4 — Marketplace on-chain com escrow e taxa (4%, metade queimada), modo Aventura
+  com 3 estágios e limite diário, indexer de eventos e UI de aventura no cliente
+- ⏭ Fase 5 — arte original (artista), auditoria externa, anti-bot, deploy na testnet da
+  Robinhood Chain e beta público

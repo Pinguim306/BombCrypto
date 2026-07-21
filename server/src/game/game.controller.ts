@@ -20,6 +20,18 @@ export class GameController {
     return this.game.setMode(req.player!, id, body.mode);
   }
 
+  @Post("heroes/:id/adventure")
+  adventure(
+    @Req() req: AuthedRequest,
+    @Param("id") id: string,
+    @Body() body: { stageId?: number }
+  ) {
+    if (typeof body?.stageId !== "number") {
+      throw new BadRequestException("stageId numerico e obrigatorio");
+    }
+    return this.game.goAdventure(req.player!, id, body.stageId);
+  }
+
   @Post("heroes/:id/house")
   setHouse(
     @Req() req: AuthedRequest,

@@ -28,7 +28,10 @@ export class MiningScene extends Phaser.Scene {
   private pendingText!: Phaser.GameObjects.Text;
   private housesText!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
+  private stageButtons: Phaser.GameObjects.Text[] = [];
+  private selectedStage = 0;
   private keyH!: Phaser.Input.Keyboard.Key;
+  private keyA!: Phaser.Input.Keyboard.Key;
   private pollTimer?: Phaser.Time.TimerEvent;
   private bombTimer?: Phaser.Time.TimerEvent;
 
@@ -81,9 +84,9 @@ export class MiningScene extends Phaser.Scene {
       this.blockBars.push(bar);
     }
 
-    this.add.text(20, 70, "HERÓIS (clique: minerar/descansar; H+clique: casa)", {
+    this.add.text(20, 70, "HERÓIS (clique: minerar/descansar; H+clique: casa; A+clique: aventura)", {
       fontFamily: "monospace",
-      fontSize: "11px",
+      fontSize: "10px",
       color: "#90a4ae",
     });
 
@@ -94,6 +97,7 @@ export class MiningScene extends Phaser.Scene {
     });
 
     this.keyH = this.input.keyboard!.addKey("H");
+    this.keyA = this.input.keyboard!.addKey("A");
 
     this.refresh();
     this.pollTimer = this.time.addEvent({ delay: POLL_MS, loop: true, callback: () => this.refresh() });
@@ -138,7 +142,62 @@ export class MiningScene extends Phaser.Scene {
         .join("\n")
     );
 
+    this.renderStages();
+
     this.renderHeroes(this.state.heroes);
+  }
+
+  /** Botões de seleção do estágio de aventura (usados com A+clique no herói). */
+  private renderStages() {
+    if (!this.state) return;
+    this.stageButtons.forEach((b) => b.destroy());
+    this.stageButtons = this.state.adventure.stages.map((s, i) => {
+      const selected = this.selectedStage === s.id;
+      const btn = this.add
+        .text(
+          GRID_X + i * 178,
+          GRID_Y + ROWS * TILE + 14,
+          `${selected ? "▶ " : ""}${s.name}\n${s.rewardBlast} BLAST · ${s.staminaCost} stam`,
+          {
+            fontFamily: "monospace",
+            fontSize: "11px",
+            color: selected ? "#ffb74d" : "#b0bec5",
+            backgroundColor: "#1c2333",
+            padding: { x: 8, y: 6 },
+          }
+        )
+        .setInteractive({ useHandCursor: true });
+      btn.on("pointerdown", () => {
+        this.selectedStage = s.id;
+        this.renderStages();
+      });
+      return btn;
+    });
+    const attempts = this.add.text(
+      GRID_X,
+      GRID_Y + ROWS * TILE + 62,
+      `aventuras hoje: ${this.state.adventure.attemptsToday}/10`,
+      { fontFamily: "monospace", fontSize: "11px", color: "#90a4ae" }
+    );
+    this.stageButtons.push(attempts);
+  }
+
+  private async goAdventure(h: HeroDto) {
+    try {
+      this.statusText.setColor("#90a4ae").setText("expedição em andamento...");
+      const r = await api.adventure(h.id, this.selectedStage);
+      this.state = r.state;
+      this.render();
+      this.statusText
+        .setColor(r.success ? "#a5d6a7" : "#ef9a9a")
+        .setText(
+          r.success
+            ? `vitória em ${r.stage}! +${(r.rewardMicro / 1_000_000).toFixed(2)} BLAST (chance ${r.successChance}%)`
+            : `derrota em ${r.stage} (chance era ${r.successChance}%) — metade da stamina devolvida`
+        );
+    } catch (err) {
+      this.statusText.setColor("#ef9a9a").setText(`aventura: ${(err as Error).message}`);
+    }
   }
 
   private renderHeroes(heroes: HeroDto[]) {
@@ -179,7 +238,11 @@ export class MiningScene extends Phaser.Scene {
       c.add([body, eyes, name, mode, barBg, bar, stamina]);
       c.setSize(190, 60);
       c.setInteractive(new Phaser.Geom.Rectangle(0, 0, 190, 60), Phaser.Geom.Rectangle.Contains);
-      c.on("pointerdown", () => (this.keyH.isDown ? this.toggleHouse(h) : this.toggleHero(h)));
+      c.on("pointerdown", () => {
+        if (this.keyA.isDown) return this.goAdventure(h);
+        if (this.keyH.isDown) return this.toggleHouse(h);
+        return this.toggleHero(h);
+      });
       return c;
     });
   }

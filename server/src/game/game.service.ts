@@ -11,11 +11,14 @@ import {
 } from "./engine";
 import { PersistenceService } from "../storage/persistence.service";
 import { ChainService, ChainHouse } from "./chain.service";
+import { AdventureTracker, STAGES, currentDay, runAdventure } from "./adventure";
+import { randomInt } from "node:crypto";
 
 export interface PlayerState {
   address: string;
   mining: MiningState;
   houses: ChainHouse[];
+  adventure: AdventureTracker;
   /** última sincronização on-chain (ms) */
   syncedAt: number;
 }
@@ -43,6 +46,8 @@ export class GameService {
       const saved = this.persistence.loadPlayerState(key);
       if (saved) {
         player = JSON.parse(saved) as PlayerState;
+        // migração de estados salvos antes do modo Aventura
+        player.adventure ??= { day: currentDay(Date.now()), attemptsToday: 0 };
       } else {
         const seed = this.seedCounter++;
         player = {
@@ -52,6 +57,7 @@ export class GameService {
             seed * 1000 + Date.now() % 997
           ),
           houses: this.chain.enabled ? [] : [DEV_HOUSE],
+          adventure: { day: currentDay(Date.now()), attemptsToday: 0 },
           syncedAt: 0,
         };
       }
@@ -122,6 +128,16 @@ export class GameService {
       pendingBlast: (m.pendingMicroBlast / 1_000_000).toFixed(6),
       mapsCleared: m.mapsCleared,
       chainSync: this.chain.enabled,
+      adventure: {
+        attemptsToday: player.adventure.day === currentDay(now) ? player.adventure.attemptsToday : 0,
+        stages: STAGES.map((s) => ({
+          id: s.id,
+          name: s.name,
+          staminaCost: s.staminaCost,
+          minRarity: s.minRarity,
+          rewardBlast: (s.rewardMicro / 1_000_000).toFixed(2),
+        })),
+      },
       blocks: m.blocks.map((b) => ({ hp: b.hp, maxHp: b.maxHp })),
       houses: player.houses.map((h) => ({
         ...h,
@@ -176,6 +192,29 @@ export class GameService {
     }
     this.persist(player);
     return this.state(address);
+  }
+
+  /** Envia um herói a um estágio de aventura; resolução 100% server-side. */
+  async goAdventure(address: string, heroId: string, stageId: number) {
+    const player = await this.getOrCreate(address);
+    const now = Date.now();
+    advance(player.mining, now);
+
+    const hero = player.mining.heroes.find((h) => h.id === heroId);
+    if (!hero) throw new NotFoundException("heroi nao encontrado");
+    const stage = STAGES.find((s) => s.id === stageId);
+    if (!stage) throw new NotFoundException("estagio nao encontrado");
+
+    try {
+      // randomInt de node:crypto — aleatoriedade não previsível pelo cliente
+      const rand = randomInt(1_000_000) / 1_000_000;
+      const result = runAdventure(hero, stage, player.adventure, rand, now);
+      player.mining.pendingMicroBlast += result.rewardMicro;
+      this.persist(player);
+      return { ...result, state: await this.state(address, now) };
+    } catch (err) {
+      throw new BadRequestException((err as Error).message);
+    }
   }
 
   /** Debita o saldo pendente ao emitir um voucher. Retorna micro-BLAST debitados. */

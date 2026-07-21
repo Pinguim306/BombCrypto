@@ -64,6 +64,16 @@ async function main() {
   await staking.waitForDeployment();
   console.log(`Staking:     ${await staking.getAddress()}`);
 
+  const market = await ethers.deployContract("Marketplace", [
+    await blast.getAddress(),
+    treasury,
+    deployer.address,
+  ]);
+  await market.waitForDeployment();
+  console.log(`Marketplace: ${await market.getAddress()}`);
+
+  await (await market.setCollectionAllowed(await heroes.getAddress(), true)).wait();
+  await (await market.setCollectionAllowed(await houses.getAddress(), true)).wait();
   await (await heroes.grantRole(await heroes.MINTER_ROLE(), await gacha.getAddress())).wait();
   await (await heroes.grantRole(await heroes.UPGRADER_ROLE(), await upgrade.getAddress())).wait();
   await (await blast.grantRole(await blast.MINTER_ROLE(), await vault.getAddress())).wait();

@@ -52,13 +52,32 @@ export interface HouseDto {
   occupants: number;
 }
 
+export interface StageDto {
+  id: number;
+  name: string;
+  staminaCost: number;
+  minRarity: number;
+  rewardBlast: string;
+}
+
 export interface GameStateDto {
   pendingBlast: string;
   mapsCleared: number;
   chainSync: boolean;
+  adventure: { attemptsToday: number; stages: StageDto[] };
   blocks: { hp: number; maxHp: number }[];
   houses: HouseDto[];
   heroes: HeroDto[];
+}
+
+export interface AdventureResultDto {
+  success: boolean;
+  stage: string;
+  rewardMicro: number;
+  staminaSpent: number;
+  attemptsLeft: number;
+  successChance: number;
+  state: GameStateDto;
 }
 
 export interface VoucherDto {
@@ -83,6 +102,11 @@ export const api = {
     request<GameStateDto>(`/game/heroes/${heroId}/mode`, {
       method: "POST",
       body: JSON.stringify({ mode }),
+    }),
+  adventure: (heroId: string, stageId: number) =>
+    request<AdventureResultDto>(`/game/heroes/${heroId}/adventure`, {
+      method: "POST",
+      body: JSON.stringify({ stageId }),
     }),
   setHouse: (heroId: string, houseId: string | null) =>
     request<GameStateDto>(`/game/heroes/${heroId}/house`, {
