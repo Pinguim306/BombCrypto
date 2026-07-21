@@ -38,9 +38,36 @@ async function main() {
   await vault.waitForDeployment();
   console.log(`RewardVault: ${await vault.getAddress()}`);
 
+  const housePrices = [200, 500, 1200, 3000, 8000, 20000].map((p) => ethers.parseEther(String(p)));
+  const houses = await ethers.deployContract("Houses", [
+    await blast.getAddress(),
+    treasury,
+    housePrices,
+    deployer.address,
+  ]);
+  await houses.waitForDeployment();
+  console.log(`Houses:      ${await houses.getAddress()}`);
+
+  const upgrade = await ethers.deployContract("HeroUpgrade", [
+    await heroes.getAddress(),
+    await blast.getAddress(),
+    ethers.parseEther(process.env.UPGRADE_BASE_FEE ?? "50"),
+  ]);
+  await upgrade.waitForDeployment();
+  console.log(`HeroUpgrade: ${await upgrade.getAddress()}`);
+
+  const staking = await ethers.deployContract("Staking", [
+    await blast.getAddress(),
+    Number(process.env.STAKING_APR_BPS ?? 1200),
+    deployer.address,
+  ]);
+  await staking.waitForDeployment();
+  console.log(`Staking:     ${await staking.getAddress()}`);
+
   await (await heroes.grantRole(await heroes.MINTER_ROLE(), await gacha.getAddress())).wait();
+  await (await heroes.grantRole(await heroes.UPGRADER_ROLE(), await upgrade.getAddress())).wait();
   await (await blast.grantRole(await blast.MINTER_ROLE(), await vault.getAddress())).wait();
-  console.log("Roles configuradas: Gacha pode mintar heróis, Vault pode mintar BLAST.");
+  console.log("Roles: Gacha minta heróis, HeroUpgrade funde/queima, Vault minta BLAST.");
   console.log("Pendente: grantRole(SIGNER_ROLE) no Vault para a chave do servidor de jogo.");
 }
 

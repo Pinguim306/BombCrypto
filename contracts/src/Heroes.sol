@@ -2,13 +2,15 @@
 pragma solidity 0.8.28;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /// @title Heróis NFT do MinerBlast
 /// @notice Atributos ficam on-chain, empacotados num único slot. O mint é
-///         exclusivo do Gacha (MINTER_ROLE) e upgrades do HeroUpgrade
-///         (UPGRADER_ROLE), a ser adicionado na Fase 3.
-contract Heroes is ERC721, AccessControl {
+///         exclusivo do Gacha (MINTER_ROLE) e upgrades/queimas do HeroUpgrade
+///         (UPGRADER_ROLE). Enumerable permite ao servidor do jogo listar os
+///         heróis de um jogador sem depender de indexer.
+contract Heroes is ERC721Enumerable, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
@@ -77,7 +79,7 @@ contract Heroes is ERC721, AccessControl {
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721, AccessControl)
+        override(ERC721Enumerable, AccessControl)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
