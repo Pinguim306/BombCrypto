@@ -255,6 +255,58 @@ const SPARK_MAP = [
   "....Y....",
 ];
 
+/** Treasure chest (closed) — wooden body, gold bands, lock. K outline,
+ *  W wood, w wood shade, G gold band, g gold shade, L lock, . transparent. */
+const CHEST_MAP = [
+  "................",
+  "...KKKKKKKKKK...",
+  "..KGGGGGGGGGGK..",
+  ".KGggggggggggGK.",
+  ".KWKKKKKKKKKKWK.",
+  ".KWWWWWWWWWWWWK.",
+  ".KWwwwwwwwwwwWK.",
+  "KGGGGGGGGGGGGGGK",
+  "KGgggggLLgggggGK",
+  "KWWWWWWLLWWWWWWK",
+  "KWwwwwwLLwwwwwWK",
+  "KWwwwwwwwwwwwwWK",
+  "KWwwwwwwwwwwwwWK",
+  "KKKKKKKKKKKKKKKK",
+  "................",
+  "................",
+];
+
+/** BLAST coin — gold disc with a bold "B". K outline, G gold, g shade,
+ *  H highlight, B letter. */
+const COIN_MAP = [
+  "....KKKK....",
+  "..KKGGGGKK..",
+  ".KGHHGGGGGK.",
+  ".KGHGBBBGGK.",
+  "KGGGGBGBGGGK",
+  "KGGGGBBBGGGK",
+  "KGGGGBGBGGGK",
+  ".KGGGBBBGGK.",
+  ".KGGGGGGGgK.",
+  "..KKGggggK..",
+  "....KKKK....",
+  "............",
+];
+
+/** ETH diamond — for ETH-priced buttons. K outline, D diamond, d shade, H shine. */
+const ETH_MAP = [
+  "....KK....",
+  "...KHHK...",
+  "..KHDDdK..",
+  ".KHDDDddK.",
+  "KHDDDDdddK",
+  ".KDDDDddK.",
+  "..KDDddK..",
+  "...KDdK...",
+  "....KK....",
+  "..........",
+];
+
 /** Block hardness (0 soft, 1 medium, 2 hard) from max HP. */
 export function blockTier(maxHp: number): number {
   return maxHp >= 90 ? 2 : maxHp >= 50 ? 1 : 0;
@@ -349,6 +401,30 @@ export function registerPixelArt(scene: Phaser.Scene): void {
   }, 2);
 
   makeTexture(scene, "spark", SPARK_MAP, { Y: 0xffee58, y: 0xfff9c4 }, 2);
+
+  makeTexture(scene, "chest", CHEST_MAP, {
+    K: 0x10141f,
+    W: 0x8d6e63,
+    w: 0x6d4c41,
+    G: 0xffca28,
+    g: 0xf9a825,
+    L: 0x455a64,
+  }, 4);
+
+  makeTexture(scene, "coin", COIN_MAP, {
+    K: 0x8d6a10,
+    G: 0xffca28,
+    g: 0xf9a825,
+    H: 0xfff59d,
+    B: 0x6d4c00,
+  }, 3);
+
+  makeTexture(scene, "eth", ETH_MAP, {
+    K: 0x1a2233,
+    D: 0x627eea,
+    d: 0x3c5ac8,
+    H: 0xb6c4f5,
+  }, 3);
 
   makeTexture(scene, "pick", PICK_MAP, {
     K: 0x10141f,

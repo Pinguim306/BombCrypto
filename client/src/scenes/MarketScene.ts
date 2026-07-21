@@ -8,164 +8,136 @@ import {
   MarketListing,
 } from "../web3/market";
 import { connectedAddress } from "../web3/wallet";
-import { api } from "../net/api";
+import { api, HeroDto } from "../net/api";
 import { HEROES_ADDRESS, MARKET_ENABLED } from "../config";
+import { registerPixelArt } from "../art/pixelart";
+import { drawPanel, makeButton } from "../art/ui";
+
+const RARITY_NAMES = ["Common", "Rare", "S.Rare", "Epic", "Legend", "Mythic"];
 
 /**
- * NFT marketplace: browses active listings straight from the contract, buys,
- * lists the player's own on-chain heroes and cancels listings.
- * Requires a configured chain (VITE_RPC_URL + addresses); without it the
- * scene shows the notice and goes back.
+ * Visual NFT marketplace: browse active listings as cards, buy, list the
+ * player's own on-chain heroes and cancel listings.
  */
 export class MarketScene extends Phaser.Scene {
-  private rows: Phaser.GameObjects.GameObject[] = [];
-  private statusText!: Phaser.GameObjects.Text;
+  private cards: Phaser.GameObjects.GameObject[] = [];
+  private status!: Phaser.GameObjects.Text;
 
   constructor() {
     super("market");
   }
 
   create() {
-    const { width } = this.scale;
+    registerPixelArt(this);
+    this.add.tileSprite(0, 0, 800, 600, "cave").setOrigin(0).setAlpha(0.5);
 
-    this.add.text(20, 20, "MARKET — MinerBlast", {
-      fontFamily: "monospace",
-      fontSize: "22px",
-      color: "#ffb74d",
-      fontStyle: "bold",
+    this.add.text(24, 20, "MARKET", {
+      fontFamily: "monospace", fontSize: "26px", color: "#ffb74d", fontStyle: "bold",
+    });
+    makeButton(this, 740, 34, "Back", { width: 90, height: 34, color: 0x37474f })
+      .onClick(() => this.scene.start("mining"));
+
+    this.status = this.add.text(24, 566, "", {
+      fontFamily: "monospace", fontSize: "13px", color: "#90a4ae", wordWrap: { width: 750 },
     });
 
-    const back = this.add
-      .text(width - 140, 20, "[ Back ]", {
-        fontFamily: "monospace",
-        fontSize: "16px",
-        color: "#4fc3f7",
-        backgroundColor: "#1c2333",
-        padding: { x: 10, y: 6 },
-      })
-      .setInteractive({ useHandCursor: true });
-    back.on("pointerdown", () => this.scene.start("mining"));
-
-    this.statusText = this.add.text(20, 560, "", {
-      fontFamily: "monospace",
-      fontSize: "13px",
-      color: "#90a4ae",
-      wordWrap: { width: 760 },
+    drawPanel(this, 24, 64, 752, 300); // listings
+    drawPanel(this, 24, 374, 752, 172); // sell
+    this.add.text(40, 74, "ACTIVE LISTINGS", {
+      fontFamily: "monospace", fontSize: "14px", color: "#eceff1", fontStyle: "bold",
+    });
+    this.add.text(40, 384, "SELL MY HEROES", {
+      fontFamily: "monospace", fontSize: "14px", color: "#eceff1", fontStyle: "bold",
     });
 
     if (!MARKET_ENABLED) {
-      this.add.text(
-        20,
-        80,
-        "Market unavailable: set VITE_RPC_URL and the contract\naddresses to trade NFTs.",
-        { fontFamily: "monospace", fontSize: "15px", color: "#ef9a9a" }
-      );
+      this.status.setColor("#ef9a9a").setText("Market unavailable: chain not configured.");
       return;
     }
-
     this.refresh();
   }
 
-  private clearRows() {
-    this.rows.forEach((r) => r.destroy());
-    this.rows = [];
+  private clearCards() {
+    this.cards.forEach((c) => c.destroy());
+    this.cards = [];
   }
 
   private async refresh() {
-    this.statusText.setColor("#90a4ae").setText("loading listings...");
+    this.status.setColor("#90a4ae").setText("Loading listings...");
     try {
       const [listings, state] = await Promise.all([fetchListings(), api.state()]);
       this.renderListings(listings);
-      this.renderMyHeroes(state.heroes.map((h) => h.id));
-      this.statusText.setText("");
+      this.renderMyHeroes(state.heroes);
+      this.status.setText("");
     } catch (err) {
-      this.statusText.setColor("#ef9a9a").setText(`error: ${(err as Error).message}`);
+      this.status.setColor("#ef9a9a").setText(`Error: ${(err as Error).message}`);
     }
   }
 
   private renderListings(listings: MarketListing[]) {
-    this.clearRows();
+    this.clearCards();
     const me = connectedAddress()?.toLowerCase();
 
-    this.rows.push(
-      this.add.text(20, 64, "ACTIVE LISTINGS", {
-        fontFamily: "monospace",
-        fontSize: "14px",
-        color: "#b0bec5",
-      })
-    );
-
     if (listings.length === 0) {
-      this.rows.push(
-        this.add.text(20, 90, "no active listings", {
-          fontFamily: "monospace",
-          fontSize: "13px",
-          color: "#78909c",
-        })
-      );
-    }
-
-    listings.slice(0, 10).forEach((l, i) => {
-      const y = 90 + i * 30;
-      const mine = l.seller.toLowerCase() === me;
-      const kind = l.collection.toLowerCase() === HEROES_ADDRESS.toLowerCase() ? "Hero" : "House";
-      this.rows.push(
-        this.add.text(20, y, `${kind} #${l.tokenId}  ${formatEther(l.price)} BLAST`, {
-          fontFamily: "monospace",
-          fontSize: "13px",
-          color: "#eceff1",
-        })
-      );
-      const action = this.add
-        .text(360, y, mine ? "[ Cancel ]" : "[ Buy ]", {
-          fontFamily: "monospace",
-          fontSize: "13px",
-          color: mine ? "#ef9a9a" : "#4fc3f7",
-          backgroundColor: "#1c2333",
-          padding: { x: 8, y: 3 },
-        })
-        .setInteractive({ useHandCursor: true });
-      action.on("pointerdown", () => (mine ? this.onCancel(l) : this.onBuy(l)));
-      this.rows.push(action);
-    });
-  }
-
-  /** The player's on-chain heroes (ids "chain-<tokenId>" from the server). */
-  private renderMyHeroes(heroIds: string[]) {
-    const chainHeroes = heroIds.filter((id) => id.startsWith("chain-"));
-
-    this.rows.push(
-      this.add.text(20, 420, "SELL MY HEROES", {
-        fontFamily: "monospace",
-        fontSize: "14px",
-        color: "#b0bec5",
-      })
-    );
-
-    if (chainHeroes.length === 0) {
-      this.rows.push(
-        this.add.text(20, 446, "no on-chain heroes (dev mode does not allow selling)", {
-          fontFamily: "monospace",
-          fontSize: "13px",
-          color: "#78909c",
-        })
-      );
+      this.cards.push(this.add.text(40, 100, "No active listings yet.", {
+        fontFamily: "monospace", fontSize: "13px", color: "#78909c",
+      }));
       return;
     }
 
-    chainHeroes.slice(0, 3).forEach((id, i) => {
-      const tokenId = BigInt(id.slice("chain-".length));
-      const btn = this.add
-        .text(20 + i * 180, 446, `[ Sell hero #${tokenId} ]`, {
-          fontFamily: "monospace",
-          fontSize: "13px",
-          color: "#a5d6a7",
-          backgroundColor: "#1c2333",
-          padding: { x: 8, y: 4 },
-        })
-        .setInteractive({ useHandCursor: true });
-      btn.on("pointerdown", () => this.onList(tokenId));
-      this.rows.push(btn);
+    listings.slice(0, 10).forEach((l, i) => {
+      const col = i % 5;
+      const row = Math.floor(i / 5);
+      const x = 40 + col * 146;
+      const y = 100 + row * 122;
+      const mine = l.seller.toLowerCase() === me;
+      const isHero = l.collection.toLowerCase() === HEROES_ADDRESS.toLowerCase();
+
+      drawPanel(this, x, y, 138, 112, 0x1c2536);
+      this.cards.push(this.add.image(x + 69, y + 34, isHero ? "hero-2" : "house").setScale(1.1));
+      this.cards.push(this.add.text(x + 69, y + 62, `${isHero ? "Hero" : "House"} #${l.tokenId}`, {
+        fontFamily: "monospace", fontSize: "11px", color: "#eceff1",
+      }).setOrigin(0.5));
+      this.cards.push(this.add.image(x + 30, y + 80, "coin").setScale(0.45));
+      this.cards.push(this.add.text(x + 44, y + 74, Number(formatEther(l.price)).toLocaleString("en-US"), {
+        fontFamily: "monospace", fontSize: "11px", color: "#ffca28",
+      }));
+
+      const btn = makeButton(this, x + 69, y + 98, mine ? "Cancel" : "Buy", {
+        width: 120, height: 22, color: mine ? 0xc62828 : 0x2e7d32, fontSize: "11px",
+      });
+      btn.onClick(() => (mine ? this.onCancel(l) : this.onBuy(l)));
+      this.cards.push(btn.container);
+    });
+  }
+
+  private renderMyHeroes(heroes: HeroDto[]) {
+    const chainHeroes = heroes.filter((h) => h.id.startsWith("chain-"));
+    if (chainHeroes.length === 0) {
+      this.cards.push(this.add.text(40, 410, "No on-chain heroes to sell (dev heroes cannot be listed).", {
+        fontFamily: "monospace", fontSize: "13px", color: "#78909c",
+      }));
+      return;
+    }
+
+    chainHeroes.slice(0, 5).forEach((h, i) => {
+      const tokenId = BigInt(h.id.slice("chain-".length));
+      const x = 40 + i * 146;
+      const y = 408;
+      drawPanel(this, x, y, 138, 118, 0x1c2536);
+      this.cards.push(this.add.image(x + 69, y + 34, `hero-${h.rarity}`).setScale(1.1));
+      this.cards.push(this.add.text(x + 69, y + 62, `#${tokenId} ${RARITY_NAMES[h.rarity]}`, {
+        fontFamily: "monospace", fontSize: "10px", color: "#eceff1",
+      }).setOrigin(0.5));
+      this.cards.push(this.add.text(x + 69, y + 78, `pwr ${h.power}`, {
+        fontFamily: "monospace", fontSize: "10px", color: "#90a4ae",
+      }).setOrigin(0.5));
+
+      const btn = makeButton(this, x + 69, y + 102, "Sell", {
+        width: 120, height: 24, color: 0x3949ab, fontSize: "11px",
+      });
+      btn.onClick(() => this.onList(tokenId));
+      this.cards.push(btn.container);
     });
   }
 
@@ -177,38 +149,38 @@ export class MarketScene extends Phaser.Scene {
       priceWei = parseEther(input);
       if (priceWei <= 0n) throw new Error();
     } catch {
-      this.statusText.setColor("#ef9a9a").setText("invalid price");
+      this.status.setColor("#ef9a9a").setText("Invalid price.");
       return;
     }
     try {
-      this.statusText.setColor("#90a4ae").setText("approve the NFT and the listing in your wallet (2 tx)...");
+      this.status.setColor("#90a4ae").setText("Approve the NFT and the listing in your wallet (2 transactions)...");
       await listNft(HEROES_ADDRESS as Address, tokenId, priceWei);
-      this.statusText.setColor("#a5d6a7").setText("listing sent");
+      this.status.setColor("#a5d6a7").setText("Listing sent!");
       this.refresh();
     } catch (err) {
-      this.statusText.setColor("#ef9a9a").setText(`listing failed: ${(err as Error).message}`);
+      this.status.setColor("#ef9a9a").setText(`Listing failed: ${(err as Error).message}`);
     }
   }
 
   private async onBuy(l: MarketListing) {
     try {
-      this.statusText.setColor("#90a4ae").setText("confirm approve + purchase in your wallet...");
+      this.status.setColor("#90a4ae").setText("Confirm approve + purchase in your wallet...");
       await buyListing(l);
-      this.statusText.setColor("#a5d6a7").setText("purchase sent");
+      this.status.setColor("#a5d6a7").setText("Purchase sent!");
       this.refresh();
     } catch (err) {
-      this.statusText.setColor("#ef9a9a").setText(`purchase failed: ${(err as Error).message}`);
+      this.status.setColor("#ef9a9a").setText(`Purchase failed: ${(err as Error).message}`);
     }
   }
 
   private async onCancel(l: MarketListing) {
     try {
-      this.statusText.setColor("#90a4ae").setText("confirm the cancellation in your wallet...");
+      this.status.setColor("#90a4ae").setText("Confirm the cancellation in your wallet...");
       await cancelListing(l.id);
-      this.statusText.setColor("#a5d6a7").setText("cancellation sent");
+      this.status.setColor("#a5d6a7").setText("Cancellation sent!");
       this.refresh();
     } catch (err) {
-      this.statusText.setColor("#ef9a9a").setText(`cancel failed: ${(err as Error).message}`);
+      this.status.setColor("#ef9a9a").setText(`Cancel failed: ${(err as Error).message}`);
     }
   }
 }

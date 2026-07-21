@@ -1,11 +1,8 @@
 import Phaser from "phaser";
-import { formatEther } from "viem";
 import { api, GameStateDto, HeroDto } from "../net/api";
 import { claimVoucher } from "../web3/wallet";
-import { gachaPrices, buyChest, buyPack, myUnopenedChests, canOpen, openChest } from "../web3/gacha";
-import { GACHA_ENABLED } from "../config";
 import { registerPixelArt, blockTier } from "../art/pixelart";
-import { drawPanel } from "../art/ui";
+import { drawPanel, makeButton, Button } from "../art/ui";
 
 const COLS = 8;
 const ROWS = 5;
@@ -33,10 +30,10 @@ export class MiningScene extends Phaser.Scene {
   private pendingText!: Phaser.GameObjects.Text;
   private housesText!: Phaser.GameObjects.Text;
   private statusText!: Phaser.GameObjects.Text;
+  private claimBtn!: Button;
+  private heroPanel?: Phaser.GameObjects.Container;
   private stageButtons: Phaser.GameObjects.Text[] = [];
   private selectedStage = 0;
-  private keyH!: Phaser.Input.Keyboard.Key;
-  private keyA!: Phaser.Input.Keyboard.Key;
   private pollTimer?: Phaser.Time.TimerEvent;
   private bombTimer?: Phaser.Time.TimerEvent;
 
@@ -60,45 +57,39 @@ export class MiningScene extends Phaser.Scene {
       .tileSprite(GRID_X - 10, GRID_Y - 10, COLS * TILE + 14, ROWS * TILE + 14, "cave")
       .setOrigin(0);
     drawPanel(this, 12, 62, 216, 356); // hero list
-    drawPanel(this, 12, 424, 216, 60); // houses
-    drawPanel(this, 12, 490, 216, 54); // gacha shop
+    drawPanel(this, 12, 424, 216, 120); // houses
     drawPanel(this, 12, 550, 792, 40); // status bar
-    this.createShop();
 
-    this.add.text(GRID_X, 24, "MINERBLAST — Treasure Mining", {
+    this.add.text(GRID_X, 22, "MINERBLAST — Treasure Mining", {
       fontFamily: "monospace",
-      fontSize: "22px",
+      fontSize: "20px",
       color: "#ffb74d",
       fontStyle: "bold",
     });
 
-    this.pendingText = this.add.text(GRID_X, 54, "loading...", {
+    // pending BLAST with a coin icon
+    this.add.image(GRID_X + 8, 58, "coin").setScale(0.7);
+    this.pendingText = this.add.text(GRID_X + 24, 50, "loading...", {
       fontFamily: "monospace",
-      fontSize: "16px",
-      color: "#a5d6a7",
+      fontSize: "15px",
+      color: "#ffca28",
     });
 
-    const market = this.add
-      .text(GRID_X + 300, 50, "[ Market ]", {
-        fontFamily: "monospace",
-        fontSize: "16px",
-        color: "#ffcc80",
-        backgroundColor: "#1c2333",
-        padding: { x: 10, y: 6 },
-      })
-      .setInteractive({ useHandCursor: true });
-    market.on("pointerdown", () => this.scene.start("market"));
+    // top-right action buttons (visual, with icons)
+    const shopBtn = makeButton(this, GRID_X + 300, 58, "Shop", {
+      width: 90, height: 34, color: 0x2e7d32, icon: "chest", iconScale: 0.42,
+    });
+    shopBtn.onClick(() => this.scene.start("shop"));
 
-    const claim = this.add
-      .text(GRID_X + 420, 50, "[ Claim BLAST ]", {
-        fontFamily: "monospace",
-        fontSize: "16px",
-        color: "#4fc3f7",
-        backgroundColor: "#1c2333",
-        padding: { x: 10, y: 6 },
-      })
-      .setInteractive({ useHandCursor: true });
-    claim.on("pointerdown", () => this.onClaim());
+    const marketBtn = makeButton(this, GRID_X + 398, 58, "Market", {
+      width: 96, height: 34, color: 0xef6c00, icon: "coin", iconScale: 0.5,
+    });
+    marketBtn.onClick(() => this.scene.start("market"));
+
+    this.claimBtn = makeButton(this, GRID_X + 502, 58, "Claim", {
+      width: 100, height: 34, color: 0x3949ab, icon: "coin", iconScale: 0.5,
+    });
+    this.claimBtn.onClick(() => this.onClaim());
 
     this.statusText = this.add.text(20, 560, "", {
       fontFamily: "monospace",
@@ -126,9 +117,9 @@ export class MiningScene extends Phaser.Scene {
       this.blockBars.push(bar);
     }
 
-    this.add.text(20, 70, "HEROES (click: mine/rest; H+click: house; A+click: adventure)", {
+    this.add.text(20, 70, "HEROES — click a hero for actions", {
       fontFamily: "monospace",
-      fontSize: "10px",
+      fontSize: "11px",
       color: "#90a4ae",
     });
 
@@ -138,8 +129,6 @@ export class MiningScene extends Phaser.Scene {
       color: "#b0bec5",
     });
 
-    this.keyH = this.input.keyboard!.addKey("H");
-    this.keyA = this.input.keyboard!.addKey("A");
 
     this.refresh();
     this.pollTimer = this.time.addEvent({ delay: POLL_MS, loop: true, callback: () => this.refresh() });
@@ -149,93 +138,6 @@ export class MiningScene extends Phaser.Scene {
       this.pollTimer?.remove();
       this.bombTimer?.remove();
     });
-  }
-
-  /** Gacha shop: buy chests/packs with ETH and open pending chests. */
-  private async createShop() {
-    this.add.text(22, 496, "SHOP (ETH)", {
-      fontFamily: "monospace",
-      fontSize: "11px",
-      color: "#90a4ae",
-    });
-
-    if (!GACHA_ENABLED) {
-      this.add.text(22, 512, "chain not configured", {
-        fontFamily: "monospace",
-        fontSize: "11px",
-        color: "#78909c",
-      });
-      return;
-    }
-
-    try {
-      const prices = await gachaPrices();
-      const chestBtn = this.add
-        .text(22, 512, `[ Chest ${formatEther(prices.chestWei)}Ξ ]`, {
-          fontFamily: "monospace",
-          fontSize: "12px",
-          color: "#a5d6a7",
-          backgroundColor: "#1c2333",
-          padding: { x: 6, y: 3 },
-        })
-        .setInteractive({ useHandCursor: true });
-      chestBtn.on("pointerdown", () => this.onBuyChest(prices.chestWei, false));
-
-      const packBtn = this.add
-        .text(112, 512, `[ x${prices.packSize} ${formatEther(prices.packWei)}Ξ ]`, {
-          fontFamily: "monospace",
-          fontSize: "12px",
-          color: "#ffcc80",
-          backgroundColor: "#1c2333",
-          padding: { x: 6, y: 3 },
-        })
-        .setInteractive({ useHandCursor: true });
-      packBtn.on("pointerdown", () => this.onBuyChest(prices.packWei, true));
-    } catch {
-      this.add.text(22, 512, "shop unavailable", {
-        fontFamily: "monospace",
-        fontSize: "11px",
-        color: "#78909c",
-      });
-    }
-  }
-
-  private async onBuyChest(valueWei: bigint, pack: boolean) {
-    try {
-      this.statusText.setColor("#90a4ae").setText("confirm the purchase in your wallet...");
-      await (pack ? buyPack(valueWei) : buyChest(valueWei));
-      this.statusText.setText("chest bought — waiting for the reveal window (~30s)...");
-      this.openPendingChests();
-    } catch (err) {
-      this.statusText.setColor("#ef9a9a").setText(`purchase failed: ${(err as Error).message}`);
-    }
-  }
-
-  /** Polls pending chests and opens each one as its reveal window opens. */
-  private async openPendingChests() {
-    for (let attempt = 0; attempt < 24; attempt++) {
-      const pending = await myUnopenedChests().catch(() => [] as bigint[]);
-      if (pending.length === 0) {
-        this.statusText
-          .setColor("#a5d6a7")
-          .setText("all chests opened! heroes appear after the next sync (~1 min)");
-        return;
-      }
-      const ready = [];
-      for (const id of pending) if (await canOpen(id)) ready.push(id);
-      for (const id of ready) {
-        this.statusText.setColor("#90a4ae").setText(`opening chest #${id} — confirm in wallet...`);
-        await openChest(id).catch((err) => {
-          this.statusText.setColor("#ef9a9a").setText(`open failed: ${(err as Error).message}`);
-        });
-      }
-      if (ready.length === 0) {
-        await new Promise((r) => setTimeout(r, 5000));
-      }
-    }
-    this.statusText
-      .setColor("#ffcc80")
-      .setText("some chests are still pending — use the shop again later to open them");
   }
 
   private async refresh() {
@@ -250,9 +152,13 @@ export class MiningScene extends Phaser.Scene {
 
   private render() {
     if (!this.state) return;
-    this.pendingText.setText(
-      `pending: ${Number(this.state.pendingBlast).toFixed(4)} BLAST   maps: ${this.state.mapsCleared}`
-    );
+    const pending = Number(this.state.pendingBlast);
+    const min = this.state.claimRules.minBlast;
+    this.pendingText.setText(`${pending.toFixed(2)} BLAST   (claim at ${min.toLocaleString("en-US")})`);
+    // claim button only active once the minimum is reached
+    const canClaim = pending >= min;
+    this.claimBtn.setEnabled(canClaim);
+    this.claimBtn.setLabel(canClaim ? "Claim" : "Locked");
 
     this.state.blocks.forEach((b, i) => {
       const alive = b.hp > 0;
@@ -276,16 +182,12 @@ export class MiningScene extends Phaser.Scene {
       this.blockBars[i].setVisible(alive).width = (TILE - 6) * (b.hp / b.maxHp);
     });
 
-    this.housesText.setText(
-      ["HOUSES:"]
-        .concat(
-          this.state.houses.map(
-            (h) =>
-              `${RARITY_NAMES[h.rarity]} — ${h.occupants}/${h.capacity} slots, +${h.regenBoostBps / 100}% regen`
-          )
+    const houseLines = this.state.houses.length
+      ? this.state.houses.map(
+          (h) => `${RARITY_NAMES[h.rarity]} — ${h.occupants}/${h.capacity} slots, +${h.regenBoostBps / 100}% regen`
         )
-        .join("\n")
-    );
+      : ["No houses yet.", "Buy one in the Shop, then", "click a hero and Shelter it."];
+    this.housesText.setText(["HOUSES:"].concat(houseLines).join("\n"));
 
     this.renderStages();
 
@@ -402,11 +304,7 @@ export class MiningScene extends Phaser.Scene {
       if (homeIcon) c.add(homeIcon);
       c.setSize(190, 60);
       c.setInteractive(new Phaser.Geom.Rectangle(0, 0, 190, 60), Phaser.Geom.Rectangle.Contains);
-      c.on("pointerdown", () => {
-        if (this.keyA.isDown) return this.goAdventure(h);
-        if (this.keyH.isDown) return this.toggleHouse(h);
-        return this.toggleHero(h);
-      });
+      c.on("pointerdown", () => this.openHeroPanel(h));
       return c;
     });
   }
@@ -438,6 +336,64 @@ export class MiningScene extends Phaser.Scene {
     } catch (err) {
       this.statusText.setText(`error: ${(err as Error).message}`);
     }
+  }
+
+  private closeHeroPanel() {
+    this.heroPanel?.destroy();
+    this.heroPanel = undefined;
+  }
+
+  /** Centered hero action panel: work/rest, shelter, adventure — no keyboard. */
+  private openHeroPanel(h: HeroDto) {
+    this.closeHeroPanel();
+    const px = 260;
+    const py = 150;
+    const pw = 340;
+    const ph = 300;
+    const panel = this.add.container(0, 0).setDepth(100);
+
+    const bg = this.add.graphics();
+    bg.fillStyle(0x000000, 0.5);
+    bg.fillRect(0, 0, 800, 600); // dim backdrop
+    bg.setInteractive(new Phaser.Geom.Rectangle(0, 0, 800, 600), Phaser.Geom.Rectangle.Contains);
+    bg.on("pointerdown", () => this.closeHeroPanel());
+    panel.add(bg);
+
+    const card = drawPanel(this, px, py, pw, ph);
+    panel.add(card);
+
+    const hero = this.add.image(px + 70, py + 90, `hero-${h.rarity}`).setScale(2.2);
+    const title = this.add.text(px + 130, py + 24, `${RARITY_NAMES[h.rarity]} Hero`, {
+      fontFamily: "monospace", fontSize: "16px", color: "#ffb74d", fontStyle: "bold",
+    });
+    const stats = this.add.text(px + 130, py + 54,
+      `Power    ${h.power}\nSpeed    ${h.speed}\nStamina  ${h.stamina}/${h.staminaMax}`,
+      { fontFamily: "monospace", fontSize: "13px", color: "#eceff1", lineSpacing: 6 });
+    const modeLine = this.add.text(px + 20, py + 150,
+      h.mode === "work" ? "Status: mining" : "Status: resting",
+      { fontFamily: "monospace", fontSize: "12px", color: h.mode === "work" ? "#a5d6a7" : "#90a4ae" });
+    panel.add([hero, title, stats, modeLine]);
+
+    // action buttons
+    const workBtn = makeButton(this, px + 90, py + 195, h.mode === "work" ? "Rest" : "Work", {
+      width: 130, height: 38, color: h.mode === "work" ? 0x546e7a : 0x2e7d32,
+    });
+    workBtn.onClick(async () => { await this.toggleHero(h); this.closeHeroPanel(); });
+
+    const houseBtn = makeButton(this, px + 240, py + 195, h.houseId ? "Leave House" : "Shelter", {
+      width: 150, height: 38, color: 0x00838f, icon: "house", iconScale: 0.4,
+    });
+    houseBtn.onClick(async () => { await this.toggleHouse(h); this.closeHeroPanel(); });
+
+    const advBtn = makeButton(this, px + 90, py + 245,
+      `Adventure`, { width: 130, height: 38, color: 0x6a1b9a, icon: "bomb", iconScale: 0.6 });
+    advBtn.onClick(async () => { await this.goAdventure(h); this.closeHeroPanel(); });
+
+    const closeBtn = makeButton(this, px + 240, py + 245, "Close", { width: 150, height: 38, color: 0x37474f });
+    closeBtn.onClick(() => this.closeHeroPanel());
+
+    panel.add([workBtn.container, houseBtn.container, advBtn.container, closeBtn.container]);
+    this.heroPanel = panel;
   }
 
   /** Cosmetic bomb on a live block — visual feedback between polls. */

@@ -6,6 +6,7 @@ import Phaser from "phaser";
 import { ConnectScene } from "./scenes/ConnectScene";
 import { MiningScene } from "./scenes/MiningScene";
 import { MarketScene } from "./scenes/MarketScene";
+import { ShopScene } from "./scenes/ShopScene";
 
 new Phaser.Game({
   type: Phaser.AUTO,
@@ -14,5 +15,5 @@ new Phaser.Game({
   height: 600,
   backgroundColor: "#10141f",
   pixelArt: true, // keeps sprites crisp when scaling
-  scene: [ConnectScene, MiningScene, MarketScene],
+  scene: [ConnectScene, MiningScene, ShopScene, MarketScene],
 });
