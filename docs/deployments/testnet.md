@@ -46,9 +46,10 @@ Admin/treasury/signer (test only): `0x35Cd3B0e29a6B8739c065Ec2da668272EFbCd7DE`
 - Chest: **0.005 ETH**; promo pack: **10 chests for 0.04 ETH** (20% off).
   All ETH is forwarded to the treasury (used to buy BLAST back / fund the
   vault). Admin-tunable via `setPrices`.
-- In-game rewards run at **7.5x the original rate** (5x for the ETH-pricing
-  shift, then +50%): mining pays 0.15 BLAST per HP and adventure stages pay
-  18.75 / 52.5 / 135 BLAST base. Final calibration after TGE.
+- In-game rewards run at **3.75x the original rate** (5x for the ETH-pricing
+  shift, +50%, then halved in the 2026-07 rebalance along with the claim
+  limits): mining pays 0.075 BLAST per HP and adventure stages pay
+  9.375 / 26.25 / 67.5 BLAST base. Final calibration after TGE.
 - The old BLAST-priced gacha (`0x74F8...Bb85`) had its MINTER_ROLE revoked.
 
 ## Withdrawal (claim) rules
@@ -58,12 +59,12 @@ On-chain in the vault and mirrored by the server (`MIN_CLAIM_BLAST`,
 
 | Setting | Testnet beta | Production recommendation |
 |---|---|---|
-| Minimum per withdrawal | 750 BLAST | **60,000 BLAST** (owner's target +50%; ~2-3 days at current rates) |
+| Minimum per withdrawal | 375 BLAST | **30,000 BLAST** (~2-3 days at current rates) |
 | Cooldown between withdrawals | 1 h | **24 h** |
-| Global daily payout cap | 500,000 BLAST | tune from beta data |
+| Global daily payout cap | 250,000 BLAST | tune from beta data |
 
-At current rates a starter team earns roughly 750–1,100 BLAST/hour of
-active play, keeping the 60,000 production target reachable in ~2–3 days
+At current rates a starter team earns roughly 375–550 BLAST/hour of
+active play, keeping the 30,000 production target reachable in ~2–3 days
 of engaged play. It remains a one-transaction admin change (`setMinClaim`).
 
 ## Verified on-chain (v2)
@@ -74,7 +75,8 @@ of engaged play. It remains a one-transaction admin change (`setMinClaim`).
 - Claim of 2.36 BLAST paid **from the vault balance** (no minting):
   tx `0x1cf6423079edbf3e7d4df8e7e02eb00431ba7a90bbb1fa02b6e9287c9ba78862`;
   vault balance moved 45,000,000 → 44,999,997.64.
-- Beta limits left active: minClaim 750 BLAST, cooldown 3600s.
+- Beta limits left active: minClaim 375 BLAST, cooldown 3600s, daily cap
+  250,000 BLAST (halved on-chain in the 2026-07 rebalance).
 
 ## Arbitrum/Orbit gotcha (important)
 
@@ -95,7 +97,7 @@ VAULT_ADDRESS=0x612B9718efB3e3760e9868b2eaf8F50A2c4F372C
 HEROES_ADDRESS=0x3DfF06CAFaD28459c694eEf39Fc5a96d137e6387
 HOUSES_ADDRESS=0xd93506b0A2176a08158E5D088F2535adada41364
 SIGNER_KEY=<key with SIGNER_ROLE — never commit>
-MIN_CLAIM_BLAST=750
+MIN_CLAIM_BLAST=375
 CLAIM_COOLDOWN_HOURS=1
 NODE_USE_ENV_PROXY=1   # only needed behind an env proxy
 ```

@@ -15,12 +15,12 @@ const RARITY_NAMES = ["Common", "Rare", "S.Rare", "Epic", "Legend", "Mythic"];
 
 // Display-only earnings estimate — MUST mirror server/src/game/engine.ts
 // (BOMB_BASE_INTERVAL_MS and REWARD_MICRO_PER_HP). A working hero throws a
-// bomb every 4000/(1+speed/100) ms and earns power * 0.15 BLAST per bomb:
-// BLAST/hour = 135 * power * (1 + speed/100).
+// bomb every 4000/(1+speed/100) ms and earns power * 0.075 BLAST per bomb:
+// BLAST/hour = 67.5 * power * (1 + speed/100).
 const teamBlastPerHour = (heroes: HeroDto[]): number =>
   heroes
     .filter((h) => h.mode === "work")
-    .reduce((sum, h) => sum + 135 * h.power * (1 + h.speed / 100), 0);
+    .reduce((sum, h) => sum + 67.5 * h.power * (1 + h.speed / 100), 0);
 
 /**
  * Main mining screen. All simulation happens on the server; this scene
@@ -404,7 +404,7 @@ export class MiningScene extends Phaser.Scene {
 
     const ribbon = drawRibbon(this, px + pw / 2, py + 4, `${RARITY_NAMES[h.rarity]} Hero`, 200);
     const hero = this.add.image(px + 70, py + 88, `hero-${h.rarity}`).setScale(2.0);
-    const heroRate = Math.round(135 * h.power * (1 + h.speed / 100));
+    const heroRate = Math.round(67.5 * h.power * (1 + h.speed / 100));
     const stats = this.add.text(px + 150, py + 46,
       `Power    ${h.power}\nSpeed    ${h.speed}\nStamina  ${h.stamina}/${h.staminaMax}\n` +
         `Mines    ~${heroRate.toLocaleString("en-US")} BLAST/h`,

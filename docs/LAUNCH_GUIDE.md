@@ -60,7 +60,7 @@ pnpm --filter @minerblast/server build
 #   CHAIN_ID=46630
 #   RPC_URL=<testnet RPC (Alchemy recommended)>
 #   VAULT_ADDRESS / HEROES_ADDRESS / HOUSES_ADDRESS = current testnet addresses
-#   MIN_CLAIM_BLAST=750  CLAIM_COOLDOWN_HOURS=1   <- MUST mirror the vault
+#   MIN_CLAIM_BLAST=375  CLAIM_COOLDOWN_HOURS=1   <- MUST mirror the vault
 #   DATABASE_PATH=/data/minerblast.db            <- on the persistent volume
 
 pnpm --filter @minerblast/server start   # behind systemd/PM2 + auto-restart
@@ -142,7 +142,7 @@ pnpm --filter @minerblast/client build   # deploy client/dist to Pages/Vercel
 ```bash
 # 1. deploy game contracts pointing at the REAL token
 TOKEN_ADDRESS=<launchpad BLAST> \
-MIN_CLAIM=60000 CLAIM_COOLDOWN_S=86400 DAILY_MINT_CAP=<affordable> \
+MIN_CLAIM=30000 CLAIM_COOLDOWN_S=86400 DAILY_MINT_CAP=<affordable> \
 CHEST_PRICE_ETH=0.005 PACK_PRICE_ETH=0.04 PACK_SIZE=10 \
 TREASURY=<treasury Safe> \
 npx hardhat run script/deploy.ts --network robinhoodMainnet
@@ -167,7 +167,7 @@ npx hardhat run script/deploy.ts --network robinhoodMainnet
 #      VITE_BLAST_CA = official launchpad $BLAST address
 #      VITE_TOKEN/VAULT/GACHA/HEROES/HOUSES/MARKET_ADDRESS = mainnet deploy
 #      VITE_SERVER_URL = https://api.<domain>
-#    Server env: MIN_CLAIM_BLAST=60000, CLAIM_COOLDOWN_HOURS=24 (mirror the
+#    Server env: MIN_CLAIM_BLAST=30000, CLAIM_COOLDOWN_HOURS=24 (mirror the
 #    vault), SIGNER_KEY from the secret manager, fresh JWT_SECRET/ADMIN_KEY
 
 # 6. dry run with the team: buy chest -> mine -> adventure -> claim ->
