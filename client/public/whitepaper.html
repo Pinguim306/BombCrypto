@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MinerBlast — Whitepaper</title>
+  <link rel="stylesheet" href="/site.css" />
+</head>
+<body>
+  <header>
+    <a href="/">MINER<span>BLAST</span></a>
+    <a class="back" href="/">← Back to the game</a>
+  </header>
+  <main>
+    <h1>Whitepaper</h1>
+    <p class="muted">MinerBlast — an explosive play-to-earn mining game built on Robinhood Chain.</p>
+
+    <h2>1. Overview</h2>
+    <div class="card">
+      <p>MinerBlast is a 2D pixel-art idle mining game. Players collect <b>miner hero NFTs</b>
+      that dig through ore blocks with bombs, earning <b>$BLAST</b> — the game's utility
+      token. All game logic that decides rewards runs on an authoritative server, and every
+      asset (heroes, houses, rewards) settles on-chain on Robinhood Chain.</p>
+    </div>
+
+    <h2>2. Heroes</h2>
+    <p>Heroes are ERC-721 NFTs with on-chain attributes: <b>Power</b> (mining damage),
+    <b>Speed</b> (bombing rate), <b>Stamina</b> (energy), blast range, bomb count and
+    special abilities. There are six rarity tiers:</p>
+    <p>
+      <span class="pill">Common — 52%</span>
+      <span class="pill">Rare — 26%</span>
+      <span class="pill">Super Rare — 12%</span>
+      <span class="pill">Epic — 6.5%</span>
+      <span class="pill">Legend — 3%</span>
+      <span class="pill">Mythic — 0.5%</span>
+    </p>
+    <p>Heroes come from <b>chests</b> bought in the Shop with ETH. The odds above are
+    published on-chain in the gacha contract. Heroes can be fused (burning a same-rarity
+    sacrifice plus a $BLAST fee) to level up, and traded on the in-game Market.</p>
+
+    <h2>3. Game modes</h2>
+    <table>
+      <tr><th>Mode</th><th>Description</th></tr>
+      <tr><td>Treasure Mining</td><td>Idle mode: heroes mine ore blocks automatically, spending stamina and earning $BLAST — even while the game is closed.</td></tr>
+      <tr><td>Adventure</td><td>Send a hero on an expedition (3 stages of rising difficulty). Success chance scales with hero power; up to 10 attempts per day.</td></tr>
+      <tr><td>Houses</td><td>Stamina houses (ERC-721) shelter heroes so they recover energy faster. Bought with $BLAST.</td></tr>
+      <tr><td>Market</td><td>Player-to-player trading of heroes and houses, paid in $BLAST with a 4% fee (half of it burned).</td></tr>
+    </table>
+
+    <h2>4. The $BLAST token</h2>
+    <div class="card">
+      <ul>
+        <li><b>Fixed supply of 1 billion</b>, issued via launchpad — the game contracts can never mint more.</li>
+        <li>The reward vault is <b>pre-funded</b>: the project deposits a share of supply and launchpad creator fees keep topping it up.</li>
+        <li>All in-game burns (gacha share, house purchases, upgrade fees, market fee share) go to the dead address <code>0x…dEaD</code>.</li>
+        <li>Chest revenue in ETH goes to the treasury, which buys $BLAST back to refill the vault.</li>
+      </ul>
+    </div>
+
+    <h2>5. Earning and withdrawing</h2>
+    <p>Rewards accrue in-game and are withdrawn on-chain with a server-signed voucher
+    (EIP-712). Withdrawal rules protect the economy:</p>
+    <table>
+      <tr><th>Rule</th><th>Testnet beta</th><th>Production target</th></tr>
+      <tr><td>Minimum per withdrawal</td><td>750 $BLAST</td><td>60,000 $BLAST</td></tr>
+      <tr><td>Cooldown between withdrawals</td><td>1 hour</td><td>24 hours</td></tr>
+      <tr><td>Global daily payout cap</td><td colspan="2">Admin-tuned from live economy data</td></tr>
+    </table>
+
+    <h2>6. Roadmap</h2>
+    <ul>
+      <li>✅ Testnet beta on Robinhood Chain — live now (all assets are test assets)</li>
+      <li>🔜 $BLAST launch (TGE) via launchpad + vault funding</li>
+      <li>🔜 External smart-contract audit and Chainlink VRF for the gacha</li>
+      <li>🔜 Mainnet launch alongside the Robinhood Chain mainnet</li>
+      <li>🔮 PVP arena, seasons and world events</li>
+    </ul>
+
+    <p class="muted">This document describes a game in testnet phase. Nothing here is
+    financial advice; testnet rewards and NFTs have no monetary value.</p>
+  </main>
+  <footer><b>MinerBlast</b> — built on Robinhood Chain</footer>
+</body>
+</html>

@@ -68,6 +68,19 @@
       }
       #wallet-chip.connected { color: #a5d6a7; border-color: #2e7d32; }
 
+      /* ---------- $BLAST contract strip ---------- */
+      #blast-ca {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 7px 10px; cursor: pointer; font-size: 13px;
+        background: rgba(232,149,47,.08);
+        border-bottom: 1px solid var(--border);
+        color: var(--muted); letter-spacing: .4px;
+      }
+      #blast-ca:hover { background: rgba(232,149,47,.16); }
+      #blast-ca .ca-label { color: var(--orange-lt); font-weight: bold; }
+      #blast-ca #blast-ca-text { color: var(--text); font-weight: bold; }
+      #blast-ca .ca-copy { color: var(--muted); }
+
       /* ---------- stage ---------- */
       main { display: flex; justify-content: center; padding: 26px 14px 40px; }
       #frame {
@@ -117,14 +130,21 @@
         <span class="wordmark">MINER<span>BLAST</span></span>
       </a>
       <nav>
-        <a href="https://github.com/Pinguim306/BombCrypto/blob/claude/bombcrypto-robinhood-chain-b3bal2/docs/DEVELOPMENT_PLAN.md" target="_blank" rel="noopener">WHITEPAPER</a>
-        <a href="https://github.com/Pinguim306/BombCrypto/blob/claude/bombcrypto-robinhood-chain-b3bal2/docs/LAUNCH_GUIDE.md" target="_blank" rel="noopener">GUIDE</a>
+        <a href="/whitepaper.html">WHITEPAPER</a>
+        <a href="/guide.html">GUIDE</a>
+        <button data-nav="heroes">HEROES</button>
         <button data-nav="market">MARKET</button>
         <button data-nav="shop">SHOP</button>
-        <button id="wallet-chip" type="button">WALLET</button>
+        <button id="wallet-chip" type="button" title="Click to disconnect">WALLET</button>
         <button class="btn-play" data-nav="play" type="button">PLAY</button>
       </nav>
     </header>
+
+    <div id="blast-ca" style="display:none" title="Click to copy the contract address">
+      <span class="ca-label">$BLAST CA:</span>
+      <span id="blast-ca-text"></span>
+      <span class="ca-copy">⧉</span>
+    </div>
 
     <main>
       <div id="frame"><div id="game"></div></div>
@@ -145,6 +165,13 @@
         const a = e.detail;
         chip.textContent = a.slice(0, 6) + "…" + a.slice(-4);
         chip.classList.add("connected");
+      });
+      document.getElementById("wallet-chip").addEventListener("click", () => {
+        const chip = document.getElementById("wallet-chip");
+        if (!chip.classList.contains("connected")) return; // nothing to disconnect
+        if (confirm("Disconnect this wallet from MinerBlast?")) {
+          window.dispatchEvent(new CustomEvent("mb-disconnect"));
+        }
       });
     </script>
     <script type="module" src="/src/main.ts"></script>

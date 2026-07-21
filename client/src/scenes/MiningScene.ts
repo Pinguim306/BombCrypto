@@ -293,14 +293,14 @@ export class MiningScene extends Phaser.Scene {
       } else {
         pick.setAngle(15).setAlpha(0.55);
       }
-      const name = this.add.text(54, 0, `${RARITY_NAMES[h.rarity]} P${h.power} S${h.speed}`, {
+      const name = this.add.text(64, 0, `${RARITY_NAMES[h.rarity]} P${h.power} S${h.speed}`, {
         fontFamily: "monospace",
         fontSize: "12px",
         color: "#eceff1",
       });
       const housed = h.houseId ? " ⌂" : "";
       const mode = this.add.text(
-        54,
+        64,
         16,
         (h.mode === "work" ? "⛏ mining" : "zZz resting") + housed,
         {
@@ -309,11 +309,11 @@ export class MiningScene extends Phaser.Scene {
           color: h.mode === "work" ? "#a5d6a7" : "#90a4ae",
         }
       );
-      const barBg = this.add.rectangle(54, 36, 130, 8, 0x263238).setOrigin(0);
+      const barBg = this.add.rectangle(64, 36, 124, 8, 0x263238).setOrigin(0);
       const bar = this.add
-        .rectangle(54, 36, 130 * (h.stamina / h.staminaMax), 8, 0x4fc3f7)
+        .rectangle(64, 36, 124 * (h.stamina / h.staminaMax), 8, 0x4fc3f7)
         .setOrigin(0);
-      const stamina = this.add.text(54, 48, `stamina ${h.stamina}/${h.staminaMax}`, {
+      const stamina = this.add.text(64, 48, `stamina ${h.stamina}/${h.staminaMax}`, {
         fontFamily: "monospace",
         fontSize: "11px",
         color: "#90a4ae",

@@ -31,6 +31,9 @@ function makeTexture(
   });
   g.generateTexture(key, width * pixelSize, rows.length * pixelSize);
   g.destroy();
+  // keep sprites blocky when scaled while global antialiasing stays on
+  // (text renders smooth; only these generated textures use NEAREST)
+  scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
 }
 
 function shade(color: number, factor: number): number {

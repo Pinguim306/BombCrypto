@@ -1,6 +1,19 @@
-import { createPublicClient, http, keccak256, toHex } from "viem";
+import { createPublicClient, http, keccak256, toHex, parseEventLogs } from "viem";
 import { GACHA_ADDRESS, RPC_URL, GACHA_ENABLED } from "../config";
 import { walletClient, connectedAddress } from "./wallet";
+
+const CHEST_OPENED_EVENT = [
+  {
+    type: "event",
+    name: "ChestOpened",
+    inputs: [
+      { indexed: true, name: "chestId", type: "uint256" },
+      { indexed: true, name: "buyer", type: "address" },
+      { indexed: false, name: "heroId", type: "uint256" },
+      { indexed: false, name: "rarity", type: "uint8" },
+    ],
+  },
+] as const;
 
 const GACHA_ABI = [
   {
@@ -175,4 +188,23 @@ export async function openChest(chestId: bigint): Promise<`0x${string}`> {
     account,
     chain: null,
   });
+}
+
+export interface RevealedHero {
+  heroId: bigint;
+  rarity: number;
+}
+
+/**
+ * Opens a chest and waits for the transaction to confirm, then decodes the
+ * ChestOpened event so the UI can reveal which hero was minted.
+ */
+export async function openChestAndReveal(chestId: bigint): Promise<RevealedHero> {
+  if (!publicClient) throw new Error("gacha requires a configured chain");
+  const hash = await openChest(chestId);
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  const logs = parseEventLogs({ abi: CHEST_OPENED_EVENT, logs: receipt.logs });
+  const ev = logs.find((l) => l.eventName === "ChestOpened");
+  if (!ev) throw new Error("chest opened but the reveal event was not found");
+  return { heroId: ev.args.heroId, rarity: Number(ev.args.rarity) };
 }

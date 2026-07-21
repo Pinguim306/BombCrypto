@@ -7,12 +7,22 @@ import { ConnectScene } from "./scenes/ConnectScene";
 import { MiningScene } from "./scenes/MiningScene";
 import { MarketScene } from "./scenes/MarketScene";
 import { ShopScene } from "./scenes/ShopScene";
+import { HeroesScene } from "./scenes/HeroesScene";
+import { TOKEN_ADDRESS } from "./config";
+
+// Crisp text: render every Text object at 2x internal resolution so glyphs
+// stay sharp when Scale.FIT upsizes the 800x600 stage. (Sprites keep their
+// pixel look via per-texture NEAREST filtering in art/pixelart.ts.)
+const factoryProto = Phaser.GameObjects.GameObjectFactory.prototype as any;
+const originalText = factoryProto.text;
+factoryProto.text = function (x: number, y: number, content?: any, style?: any) {
+  return originalText.call(this, x, y, content, { resolution: 2, ...(style ?? {}) });
+};
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: "game",
   backgroundColor: "#10141f",
-  pixelArt: true, // keeps sprites crisp when scaling
   scale: {
     // FIT scales the whole 800x600 stage to the window, so nothing is
     // ever cropped on small screens (the canvas shrinks instead).
@@ -21,11 +31,11 @@ const game = new Phaser.Game({
     width: 800,
     height: 600,
   },
-  scene: [ConnectScene, MiningScene, ShopScene, MarketScene],
+  scene: [ConnectScene, MiningScene, ShopScene, MarketScene, HeroesScene],
 });
 
 // Site header -> in-game navigation. Ignored until the player logs in.
-const GAME_SCENES = ["mining", "shop", "market"];
+const GAME_SCENES = ["mining", "shop", "market", "heroes"];
 let navLock = false; // two nav clicks in one frame would leave two scenes active
 window.addEventListener("mb-nav", (e) => {
   if (navLock) return;
@@ -40,3 +50,31 @@ window.addEventListener("mb-nav", (e) => {
     game.scene.getScene(current).scene.start(dest);
   }
 });
+
+// Wallet chip -> disconnect: clear the session and reload to the connect screen.
+window.addEventListener("mb-disconnect", () => {
+  sessionStorage.removeItem("mb.jwt");
+  location.reload();
+});
+
+// $BLAST contract address chip in the header (set VITE_BLAST_CA at deploy
+// time — e.g. on Vercel — once the launchpad token goes live).
+const ca = (import.meta.env.VITE_BLAST_CA as string | undefined) ?? TOKEN_ADDRESS;
+const caChip = document.getElementById("blast-ca");
+if (caChip && ca && !/^0x0{40}$/.test(ca)) {
+  const caText = document.getElementById("blast-ca-text");
+  if (caText) caText.textContent = `${ca.slice(0, 8)}…${ca.slice(-6)}`;
+  caChip.style.display = "";
+  caChip.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(ca);
+      if (caText) {
+        const prev = caText.textContent;
+        caText.textContent = "copied!";
+        setTimeout(() => (caText.textContent = prev), 1200);
+      }
+    } catch {
+      /* clipboard unavailable; the address is still visible */
+    }
+  });
+}

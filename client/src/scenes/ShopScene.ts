@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { formatEther } from "viem";
-import { gachaPrices, buyChest, buyPack, myUnopenedChests, canOpen, openChest } from "../web3/gacha";
+import {
+  gachaPrices, buyChest, buyPack, myUnopenedChests, canOpen, openChestAndReveal,
+} from "../web3/gacha";
 import { housePrices, buyHouse, blastBalance } from "../web3/houses";
 import { GACHA_ENABLED, MARKET_ENABLED } from "../config";
 import { registerPixelArt, RARITY_COLORS } from "../art/pixelart";
@@ -12,6 +14,8 @@ const RARITY_NAMES = ["Common", "Rare", "S.Rare", "Epic", "Legend", "Mythic"];
 export class ShopScene extends Phaser.Scene {
   private status!: Phaser.GameObjects.Text;
   private balanceText!: Phaser.GameObjects.Text;
+  private overlay?: Phaser.GameObjects.Container;
+  private pendingBtn?: ReturnType<typeof makeButton>;
 
   constructor() {
     super("shop");
@@ -19,6 +23,14 @@ export class ShopScene extends Phaser.Scene {
 
   create() {
     registerPixelArt(this);
+    if (!this.anims.exists("boom")) {
+      this.anims.create({
+        key: "boom",
+        frames: [{ key: "boom-0" }, { key: "boom-1" }, { key: "boom-2" }],
+        frameRate: 14,
+        hideOnComplete: true,
+      });
+    }
     this.add.tileSprite(0, 0, 800, 600, "cave").setOrigin(0).setAlpha(0.5);
 
     drawRibbon(this, 400, 34, "SHOP", 180);
@@ -29,8 +41,10 @@ export class ShopScene extends Phaser.Scene {
       fontFamily: "monospace", fontSize: "13px", color: "#90a4ae", wordWrap: { width: 750 },
     });
 
+    this.overlay = undefined;
     this.buildChests();
     this.buildHouses();
+    if (GACHA_ENABLED) this.checkPendingChests();
   }
 
   // ---------- CHESTS (ETH) ----------
@@ -79,32 +93,121 @@ export class ShopScene extends Phaser.Scene {
     try {
       this.status.setColor("#90a4ae").setText("Confirm the purchase in your wallet...");
       await (pack ? buyPack(valueWei) : buyChest(valueWei));
-      this.status.setColor("#ffcc80").setText("Chest bought! Waiting for the reveal window (~30s)...");
-      await this.openPendingChests();
+      this.status.setText("");
+      this.openRevealOverlay();
     } catch (err) {
       this.status.setColor("#ef9a9a").setText(`Purchase failed: ${(err as Error).message}`);
     }
   }
 
-  private async openPendingChests() {
-    for (let attempt = 0; attempt < 24; attempt++) {
-      if (!this.sys.settings.active) return; // player left the shop
+  /** Shows the pending-chests pill if the player still has unopened chests. */
+  private async checkPendingChests() {
+    const pending = await myUnopenedChests().catch(() => [] as bigint[]);
+    if (!this.sys.settings.active || pending.length === 0) return;
+    this.pendingBtn?.container.destroy();
+    this.pendingBtn = makeButton(this, 640, 222, `Open ${pending.length} chest${pending.length > 1 ? "s" : ""}`, {
+      width: 200, height: 40, color: 0x8d6e13, icon: "chest", iconScale: 0.4,
+    });
+    this.pendingBtn.onClick(() => this.openRevealOverlay());
+  }
+
+  /**
+   * Chest-opening ceremony: a modal that walks the player through each
+   * pending chest — reveal countdown, OPEN button, wallet confirmation and
+   * the hero reveal with rarity colors. No more silent transactions.
+   */
+  private async openRevealOverlay() {
+    if (this.overlay) return;
+    const panel = this.add.container(0, 0).setDepth(200);
+    this.overlay = panel;
+
+    const dim = this.add.graphics();
+    dim.fillStyle(0x000000, 0.72);
+    dim.fillRect(0, 0, 800, 600);
+    dim.setInteractive(new Phaser.Geom.Rectangle(0, 0, 800, 600), Phaser.Geom.Rectangle.Contains);
+    panel.add(dim);
+
+    const px = 220, py = 120, pw = 360, ph = 340;
+    panel.add(drawPanel(this, px, py, pw, ph, 0x141b2c));
+    panel.add(drawRibbon(this, 400, py + 4, "CHEST OPENING", 230));
+
+    const chest = this.add.image(400, py + 130, "chest").setScale(1.8);
+    const glow = this.add.image(400, py + 130, "spark").setScale(0.7).setAlpha(0.6);
+    this.tweens.add({ targets: glow, angle: 360, duration: 5000, repeat: -1 });
+    const info = this.add.text(400, py + 216, "", {
+      fontFamily: "monospace", fontSize: "13px", color: "#eceff1", align: "center",
+      wordWrap: { width: pw - 40 },
+    }).setOrigin(0.5, 0);
+    panel.add([chest, glow, info]);
+
+    const openBtn = makeButton(this, 400, py + 292, "OPEN CHEST", {
+      width: 200, height: 44, color: 0x2e7d32, icon: "chest", iconScale: 0.45, fontSize: "15px",
+    });
+    const closeBtn = makeButton(this, px + pw - 24, py + 22, "X", { width: 34, height: 30, color: 0x37474f });
+    let closed = false;
+    closeBtn.onClick(() => { closed = true; panel.destroy(); this.overlay = undefined; this.checkPendingChests(); });
+    panel.add([openBtn.container, closeBtn.container]);
+    openBtn.setEnabled(false);
+
+    const shake = () =>
+      this.tweens.add({ targets: chest, angle: { from: -4, to: 4 }, duration: 90, yoyo: true, repeat: 5, onComplete: () => chest.setAngle(0) });
+
+    // walk through every pending chest, one at a time
+    let opened = 0;
+    while (!closed && this.sys.settings.active) {
       const pending = await myUnopenedChests().catch(() => [] as bigint[]);
+      if (closed || !this.sys.settings.active) return;
       if (pending.length === 0) {
-        this.status.setColor("#a5d6a7").setText("All chests opened! Your new heroes appear on the mining screen (~1 min).");
+        info.setColor("#a5d6a7").setText(
+          opened > 0
+            ? "All chests opened! Your heroes appear on the mining screen in ~1 min."
+            : "No unopened chests."
+        );
+        openBtn.setEnabled(false);
         return;
       }
-      const ready: bigint[] = [];
-      for (const id of pending) if (await canOpen(id)) ready.push(id);
-      for (const id of ready) {
-        this.status.setColor("#90a4ae").setText(`Opening chest #${id} — confirm in wallet...`);
-        await openChest(id).catch((err) =>
-          this.status.setColor("#ef9a9a").setText(`Open failed: ${(err as Error).message}`)
-        );
+      const id = pending[0];
+      const left = pending.length;
+      info.setColor("#ffcc80").setText(`Chest #${id} (${left} left)\nThe chest is being prepared... ~30s`);
+      openBtn.setEnabled(false);
+
+      // wait for the on-chain reveal window
+      while (!closed && this.sys.settings.active && !(await canOpen(id))) {
+        shake();
+        await new Promise((r) => setTimeout(r, 4000));
       }
-      if (ready.length === 0) await new Promise((r) => setTimeout(r, 5000));
+      if (closed || !this.sys.settings.active) return;
+
+      info.setColor("#eceff1").setText(`Chest #${id} is ready!`);
+      openBtn.setEnabled(true);
+      await new Promise<void>((resolve) => openBtn.onClick(resolve));
+      if (closed || !this.sys.settings.active) return;
+      openBtn.setEnabled(false);
+      info.setColor("#90a4ae").setText("Confirm the transaction in your wallet...");
+
+      try {
+        const revealed = await openChestAndReveal(id);
+        if (closed || !this.sys.settings.active) return;
+        opened++;
+        // reveal ceremony: boom + hero pops out of the chest
+        const boom = this.add.sprite(400, py + 130, "boom-0").setDepth(201).setScale(1.6);
+        boom.play("boom");
+        boom.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => boom.destroy());
+        const heroImg = this.add.image(400, py + 130, `hero-${revealed.rarity}`).setDepth(201).setScale(0.4);
+        panel.add(heroImg);
+        this.tweens.add({ targets: heroImg, scale: 1.9, duration: 450, ease: "Back.easeOut" });
+        const color = "#" + (RARITY_COLORS[revealed.rarity] ?? 0xffffff).toString(16).padStart(6, "0");
+        info.setColor(color).setText(
+          `${RARITY_NAMES[revealed.rarity].toUpperCase()} HERO #${revealed.heroId}!`
+        );
+        await new Promise((r) => setTimeout(r, 2600));
+        heroImg.destroy();
+      } catch (err) {
+        if (closed || !this.sys.settings.active) return;
+        info.setColor("#ef9a9a").setText(`Open failed: ${(err as Error).message}\nYou can try again.`);
+        await new Promise((r) => setTimeout(r, 3000));
+      }
     }
-    this.status.setColor("#ffcc80").setText("Some chests are still pending — reopen the shop later to finish opening them.");
   }
 
   // ---------- HOUSES (BLAST) ----------

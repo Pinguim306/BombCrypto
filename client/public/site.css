@@ -1,0 +1,36 @@
+:root {
+  --bg-0: #0b0f1a; --bg-1: #131a2b; --panel: #161d2e; --border: #2a3550;
+  --orange: #e8952f; --orange-lt: #ffb74d; --text: #eceff1; --muted: #90a4ae;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0; min-height: 100%;
+  font-family: "Courier New", monospace; color: var(--text);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(232,149,47,.07), transparent 42%),
+    radial-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(160deg, var(--bg-1) 0%, var(--bg-0) 60%, #080b13 100%);
+  background-size: auto, 26px 26px, auto;
+}
+header {
+  display: flex; align-items: center; gap: 14px; padding: 10px 22px;
+  background: linear-gradient(180deg, #1a2336, var(--panel));
+  border-bottom: 2px solid var(--border);
+}
+header a { color: var(--orange-lt); font-weight: bold; font-size: 20px; text-decoration: none; letter-spacing: 1px; }
+header a span { color: #4fc3f7; }
+header .back { margin-left: auto; font-size: 13px; color: var(--text); border: 2px solid var(--border); border-radius: 8px; padding: 8px 14px; }
+header .back:hover { background: rgba(255,255,255,.06); }
+main { max-width: 860px; margin: 0 auto; padding: 30px 18px 60px; }
+h1 { color: var(--orange-lt); font-size: 28px; margin: 8px 0 4px; }
+h2 { color: var(--orange-lt); font-size: 18px; margin-top: 34px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+p, li { line-height: 1.65; font-size: 14px; }
+.card { background: var(--panel); border: 2px solid var(--border); border-radius: 12px; padding: 18px 22px; margin-top: 14px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+th { background: #1a2336; color: var(--orange-lt); }
+.muted { color: var(--muted); }
+b, strong { color: var(--orange-lt); }
+code { background: #101624; border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 12px; }
+.pill { display: inline-block; background: #101624; border: 1px solid var(--border); border-radius: 14px; padding: 3px 12px; font-size: 12px; color: var(--muted); margin: 2px; }
+footer { text-align: center; color: var(--muted); font-size: 12px; padding: 20px; }

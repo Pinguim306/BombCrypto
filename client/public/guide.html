@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MinerBlast — How to Play</title>
+  <link rel="stylesheet" href="/site.css" />
+</head>
+<body>
+  <header>
+    <a href="/">MINER<span>BLAST</span></a>
+    <a class="back" href="/">← Back to the game</a>
+  </header>
+  <main>
+    <h1>How to Play</h1>
+    <p class="muted">From zero to mining in five steps.</p>
+
+    <h2>1. Set up your wallet</h2>
+    <div class="card">
+      <p>Install an EVM wallet extension (e.g. MetaMask or Rabby), then add the network:</p>
+      <table>
+        <tr><th>Field</th><th>Value</th></tr>
+        <tr><td>Network name</td><td>Robinhood Chain Testnet</td></tr>
+        <tr><td>RPC URL</td><td><code>https://rpc.testnet.chain.robinhood.com/rpc</code></td></tr>
+        <tr><td>Chain ID</td><td><code>46630</code></td></tr>
+        <tr><td>Currency symbol</td><td>ETH</td></tr>
+      </table>
+      <p>You need a little testnet ETH for gas and chest purchases.</p>
+    </div>
+
+    <h2>2. Connect and sign in</h2>
+    <p>Click <b>Connect wallet</b> on the game screen, approve the connection, then sign
+    the login message (free — it is a signature, not a transaction). The wallet chip in
+    the header shows your address; click it any time to <b>disconnect</b>.</p>
+
+    <h2>3. Get heroes</h2>
+    <p>Open the <b>SHOP</b> and buy a chest (<b>0.005 ETH</b>) or the 10-pack
+    (<b>0.04 ETH</b>, 20% off). After buying, the <b>chest-opening screen</b> appears:
+    wait ~30 seconds while the chest is prepared, press <b>OPEN CHEST</b>, confirm in your
+    wallet and watch the reveal — the rarity colors tell you how lucky you got. New heroes
+    appear on the mining screen within a minute.</p>
+
+    <h2>4. Mine and manage stamina</h2>
+    <ul>
+      <li>Click a hero → <b>Work</b> to start mining. Each bomb breaks ore and earns $BLAST.</li>
+      <li>Stamina drains while mining; at zero the hero rests automatically.</li>
+      <li>Buy a <b>house</b> in the Shop (paid in $BLAST) and use <b>Shelter</b> on a hero to speed up recovery.</li>
+      <li>Try <b>Adventure</b> for bigger one-shot rewards — success scales with hero power, 10 tries per day.</li>
+      <li>See your full roster on the <b>HEROES</b> page in the header.</li>
+    </ul>
+
+    <h2>5. Withdraw your $BLAST</h2>
+    <p>Your earnings accumulate in the pill counter at the top of the mining screen. Once
+    you reach the minimum (<b>750 $BLAST</b> on testnet), the <b>Claim</b> button unlocks:
+    press it, confirm the transaction, and the tokens are transferred to your wallet
+    on-chain. One withdrawal per hour on testnet.</p>
+
+    <h2>Tips</h2>
+    <div class="card">
+      <ul>
+        <li>Higher-rarity heroes mine faster, hit harder and have far more stamina.</li>
+        <li>Fusing two same-rarity heroes levels one up (+10% attributes per level).</li>
+        <li>Blocks show cracks as they get close to breaking; harder ore pays more.</li>
+        <li>Everything on testnet is a test asset with no real value — play, break things, tell us what you find!</li>
+      </ul>
+    </div>
+  </main>
+  <footer><b>MinerBlast</b> — built on Robinhood Chain</footer>
+</body>
+</html>
