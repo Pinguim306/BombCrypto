@@ -71,7 +71,8 @@
       /* ---------- stage ---------- */
       main { display: flex; justify-content: center; padding: 26px 14px 40px; }
       #frame {
-        width: min(96vw, 980px);
+        /* also bound by viewport height so the game never sinks below the fold */
+        width: min(96vw, 980px, calc((100vh - 150px) * 4 / 3));
         padding: 10px;
         background: var(--panel);
         border: 2px solid var(--border);

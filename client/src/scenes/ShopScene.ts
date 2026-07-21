@@ -88,6 +88,7 @@ export class ShopScene extends Phaser.Scene {
 
   private async openPendingChests() {
     for (let attempt = 0; attempt < 24; attempt++) {
+      if (!this.sys.settings.active) return; // player left the shop
       const pending = await myUnopenedChests().catch(() => [] as bigint[]);
       if (pending.length === 0) {
         this.status.setColor("#a5d6a7").setText("All chests opened! Your new heroes appear on the mining screen (~1 min).");

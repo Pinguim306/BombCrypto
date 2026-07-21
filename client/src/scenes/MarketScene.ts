@@ -68,6 +68,10 @@ export class MarketScene extends Phaser.Scene {
       this.renderMyHeroes(state.heroes);
       this.status.setText("");
     } catch (err) {
+      if ((err as Error).message === "session expired") {
+        this.scene.start("connect");
+        return;
+      }
       this.status.setColor("#ef9a9a").setText(`Error: ${(err as Error).message}`);
     }
   }
