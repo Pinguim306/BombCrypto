@@ -5,6 +5,9 @@
 export const SERVER_URL = (import.meta.env.VITE_SERVER_URL ?? "").trim() || "http://localhost:3000";
 export const CHAIN_ID = Number((import.meta.env.VITE_CHAIN_ID ?? "").trim() || 4663);
 export const RPC_URL = (import.meta.env.VITE_RPC_URL ?? "").trim() || "https://rpc.mainnet.chain.robinhood.com";
+/** Block explorer base (no trailing slash) — links on the public stats page. */
+export const EXPLORER_URL =
+  ((import.meta.env.VITE_EXPLORER_URL ?? "").trim() || "https://robinhoodchain.blockscout.com").replace(/\/$/, "");
 
 const ZERO = "0x0000000000000000000000000000000000000000" as const;
 

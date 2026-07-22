@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MinerBlast — Transparency</title>
+  <meta name="description" content="Live, on-chain proof of the MinerBlast economy: vault backing, BLAST paid to players, heroes minted and chests opened — all verifiable on Robinhood Chain." />
+  <link rel="stylesheet" href="/site.css" />
+  <style>
+    .hero-note { color: #90a4ae; margin: 0 0 22px; max-width: 720px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .card { background: #161d2e; border: 1px solid #2a3550; border-radius: 12px; padding: 22px 18px; text-align: center; }
+    .card.anchor { border-color: #e8952f; background: linear-gradient(180deg, #1e2438, #161d2e); }
+    .card .n { color: #ffca28; font-family: monospace; font-weight: bold; font-size: 30px; line-height: 1.1; word-break: break-word; }
+    .card.anchor .n { color: #ffb74d; font-size: 34px; }
+    .card .sub { color: #66bb6a; font-family: monospace; font-size: 12px; margin-top: 4px; min-height: 14px; }
+    .card .l { color: #90a4ae; font-size: 13px; margin-top: 10px; }
+    .card .tag { display: inline-block; margin-top: 8px; font-size: 10px; color: #4fc3f7; border: 1px solid #29455a; border-radius: 20px; padding: 2px 10px; }
+    h2.sec { color: #eceff1; font-size: 16px; margin: 34px 0 14px; }
+    .contracts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .contract { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      background: #101624; border: 1px solid #2a3550; border-radius: 8px; padding: 12px 14px;
+      font-family: monospace; color: #b0bec5; text-decoration: none; }
+    .contract:hover { border-color: #3a4a6b; }
+    .contract .name { color: #eceff1; }
+    .contract .addr { color: #607d8b; font-size: 12px; }
+    .contract .go { color: #4fc3f7; }
+    .foot { color: #607d8b; font-size: 12px; margin-top: 22px; font-family: monospace; }
+    .foot #updated { color: #90a4ae; }
+    @media (max-width: 640px) { .grid, .contracts { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/">MINER<span>BLAST</span></a>
+    <a class="back" href="/">← Back to the game</a>
+  </header>
+  <main>
+    <h1>Transparency</h1>
+    <p class="hero-note">Every number below is read <b>live from Robinhood Chain</b> — no wallet needed, nothing
+      to take on trust. This is the state of the MinerBlast economy right now.</p>
+
+    <div class="grid">
+      <div class="card anchor">
+        <div class="n" id="vault">—</div>
+        <div class="sub" id="vault-sub">&nbsp;</div>
+        <div class="l">Vault balance (BLAST)</div>
+        <div class="tag">backs every withdrawal · on-chain</div>
+      </div>
+      <div class="card">
+        <div class="n" id="paid">—</div>
+        <div class="sub">&nbsp;</div>
+        <div class="l">BLAST paid to players</div>
+        <div class="tag">on-chain</div>
+      </div>
+      <div class="card">
+        <div class="n" id="miners">—</div>
+        <div class="sub">&nbsp;</div>
+        <div class="l">Miners</div>
+      </div>
+      <div class="card">
+        <div class="n" id="heroes">—</div>
+        <div class="sub">&nbsp;</div>
+        <div class="l">Heroes minted</div>
+        <div class="tag">on-chain</div>
+      </div>
+      <div class="card">
+        <div class="n" id="chests">—</div>
+        <div class="sub">&nbsp;</div>
+        <div class="l">Chests opened</div>
+        <div class="tag">on-chain</div>
+      </div>
+      <div class="card">
+        <div class="n" id="supply">—</div>
+        <div class="sub">&nbsp;</div>
+        <div class="l">$BLAST total supply</div>
+        <div class="tag">on-chain</div>
+      </div>
+    </div>
+
+    <h2 class="sec">Contracts — verified on-chain</h2>
+    <div class="contracts" id="contracts"></div>
+
+    <p class="foot">Auto-refreshes every 30s · last updated <span id="updated">—</span>
+      · <span id="stat-status"></span></p>
+  </main>
+  <script type="module" src="/src/stats.ts"></script>
+</body>
+</html>

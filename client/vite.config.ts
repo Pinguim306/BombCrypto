@@ -16,6 +16,7 @@ export default defineConfig({
         admin: resolve(__dirname, "admin.html"),
         referrals: resolve(__dirname, "referrals.html"),
         migrate: resolve(__dirname, "migrate.html"),
+        stats: resolve(__dirname, "stats.html"),
       },
     },
   },
