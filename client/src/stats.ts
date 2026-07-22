@@ -32,24 +32,6 @@ const VAULT_FUNDED = {
 const HEROES_ABI = [
   { type: "function", name: "totalSupply", stateMutability: "view", inputs: [], outputs: [{ type: "uint256" }] },
 ] as const;
-const REWARD_CLAIMED = {
-  type: "event", name: "RewardClaimed",
-  inputs: [
-    { indexed: true, name: "player", type: "address" },
-    { indexed: false, name: "amount", type: "uint256" },
-    { indexed: false, name: "nonce", type: "uint256" },
-  ],
-} as const;
-const CHEST_OPENED = {
-  type: "event", name: "ChestOpened",
-  inputs: [
-    { indexed: true, name: "chestId", type: "uint256" },
-    { indexed: true, name: "buyer", type: "address" },
-    { indexed: false, name: "heroId", type: "uint256" },
-    { indexed: false, name: "rarity", type: "uint8" },
-  ],
-} as const;
-
 /** Compact formatting: 46,000,000 → "46.0M", 12,500 → "12.5K". */
 function compact(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 1 : 2)}M`;
@@ -99,18 +81,6 @@ async function loadChain() {
     set("heroes", compact(Number(minted)));
   } catch { set("heroes", "—"); }
 
-  // chests opened + total BLAST paid — from event logs (guarded; some RPCs cap ranges)
-  try {
-    const logs = await client.getLogs({ address: GACHA_ADDRESS, event: CHEST_OPENED, fromBlock: 0n, toBlock: "latest" });
-    set("chests", compact(logs.length));
-  } catch { set("chests", "—"); }
-
-  try {
-    const logs = await client.getLogs({ address: VAULT_ADDRESS, event: REWARD_CLAIMED, fromBlock: 0n, toBlock: "latest" });
-    const total = logs.reduce((s, l) => s + ((l.args as { amount?: bigint }).amount ?? 0n), 0n);
-    set("paid", compact(toBlast(total)));
-  } catch { set("paid", "—"); }
-
   return token;
 }
 
@@ -118,8 +88,8 @@ async function loadServer() {
   try {
     const r = await fetch(`${SERVER_URL}/stats`);
     const s = await r.json();
-    set("miners", compact(Number(s.players ?? 0)));
-  } catch { set("miners", "—"); }
+    set("players", compact(Number(s.players ?? 0)));
+  } catch { set("players", "—"); }
 }
 
 function renderContracts(token: string) {

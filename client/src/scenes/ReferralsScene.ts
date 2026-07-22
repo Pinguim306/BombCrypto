@@ -62,9 +62,11 @@ export class ReferralsScene extends Phaser.Scene {
     this.linkText = this.add.text(80, 172, "connect to load...", {
       fontFamily: "monospace", fontSize: "14px", color: "#4fc3f7", wordWrap: { width: 640 },
     });
-    const copy = makeButton(this, 200, 224, "Copy link", { width: 200, height: 32, color: 0x2e7d32 });
+    // the pair is centered on the panel (cx=400): 200 + 20 gap + 240 spans
+    // 170..630, midpoint 400.
+    const copy = makeButton(this, 270, 224, "Copy link", { width: 200, height: 32, color: 0x2e7d32 });
     copy.onClick(() => this.copyLink(copy));
-    this.nameBtn = makeButton(this, 470, 224, "Set custom name", { width: 240, height: 32, color: 0x1565c0 });
+    this.nameBtn = makeButton(this, 510, 224, "Set custom name", { width: 240, height: 32, color: 0x1565c0 });
     this.nameBtn.onClick(() => this.setAlias());
 
     // --- earnings panel ---
@@ -72,7 +74,8 @@ export class ReferralsScene extends Phaser.Scene {
     this.add.text(80, 288, "YOUR EARNINGS", {
       fontFamily: "monospace", fontSize: "12px", color: "#78909c", fontStyle: "bold",
     });
-    this.earnedText = this.stat(150, 340, "ETH earned", "#ffca28");
+    // three columns spaced symmetrically around the panel center (400)
+    this.earnedText = this.stat(170, 340, "ETH earned", "#ffca28");
     this.invitesText = this.stat(400, 340, "Invites", "#eceff1");
     this.pendingText = this.stat(630, 340, "Pending", "#81c784");
 
