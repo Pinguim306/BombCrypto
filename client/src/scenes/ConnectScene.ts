@@ -18,12 +18,13 @@ export class ConnectScene extends Phaser.Scene {
     this.add.tileSprite(0, 0, width, height, "cave").setOrigin(0).setAlpha(0.6);
     drawPanel(this, width / 2 - 260, height * 0.18, 520, 330);
 
-    // showcase of heroes of the 6 rarities under the title, bobbing gently
+    // showcase of heroes of the 6 rarities under the title, bobbing gently.
+    // Kept below the tagline (0.46) so the 64px sprites never rise into it.
     for (let r = 0; r < 6; r++) {
-      const hero = this.add.image(width / 2 + (r - 2.5) * 70, height * 0.44, `hero-${r}`);
+      const hero = this.add.image(width / 2 + (r - 2.5) * 70, height * 0.46, `hero-${r}`);
       this.tweens.add({
         targets: hero,
-        y: height * 0.44 - 6,
+        y: height * 0.46 - 6,
         duration: 700 + r * 90,
         yoyo: true,
         repeat: -1,
@@ -70,7 +71,7 @@ export class ConnectScene extends Phaser.Scene {
     }
 
     const button = this.add
-      .text(width / 2, height * 0.55, "[ Connect wallet ]", {
+      .text(width / 2, height * 0.58, "[ Connect wallet ]", {
         fontFamily: "monospace",
         fontSize: "24px",
         color: "#4fc3f7",
@@ -81,7 +82,7 @@ export class ConnectScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
 
     const status = this.add
-      .text(width / 2, height * 0.68, "", {
+      .text(width / 2, height * 0.72, "", {
         fontFamily: "monospace",
         fontSize: "14px",
         color: "#ef9a9a",

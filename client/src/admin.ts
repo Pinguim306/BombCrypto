@@ -68,6 +68,9 @@ $("connect").addEventListener("click", async () => {
     $("acct").textContent = account.slice(0, 8) + "…" + account.slice(-6);
     ($("approve") as HTMLButtonElement).disabled = false;
     ($("fund") as HTMLButtonElement).disabled = false;
+    const cb = $("connect") as HTMLButtonElement;
+    cb.disabled = true;
+    cb.textContent = "Connected ✓";
     status("connected — check the balances, then Approve and Fund", "ok");
     await refresh();
   } catch (err) {

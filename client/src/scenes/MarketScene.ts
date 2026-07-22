@@ -91,21 +91,24 @@ export class MarketScene extends Phaser.Scene {
       const col = i % 5;
       const row = Math.floor(i / 5);
       const x = 40 + col * 146;
-      const y = 100 + row * 122;
+      const y = 96 + row * 126;
       const mine = l.seller.toLowerCase() === me;
       const isHero = l.collection.toLowerCase() === HEROES_ADDRESS.toLowerCase();
+      const cx = x + 69;
 
-      drawPanel(this, x, y, 138, 112, 0x1c2536);
-      this.cards.push(this.add.image(x + 69, y + 30, isHero ? "hero-2" : "house").setScale(0.85));
-      this.cards.push(this.add.text(x + 69, y + 62, `${isHero ? "Hero" : "House"} #${l.tokenId}`, {
+      drawPanel(this, x, y, 138, 122, 0x1c2536);
+      this.cards.push(this.add.image(cx, y + 34, isHero ? "hero-2" : "house").setScale(0.8));
+      this.cards.push(this.add.text(cx, y + 62, `${isHero ? "Hero" : "House"} #${l.tokenId}`, {
         fontFamily: "monospace", fontSize: "11px", color: "#eceff1",
       }).setOrigin(0.5));
-      this.cards.push(this.add.image(x + 30, y + 80, "coin").setScale(0.45));
-      this.cards.push(this.add.text(x + 44, y + 74, Number(formatEther(l.price)).toLocaleString("en-US"), {
+      // centered coin + price pair
+      const priceText = this.add.text(cx + 9, y + 78, Number(formatEther(l.price)).toLocaleString("en-US"), {
         fontFamily: "monospace", fontSize: "11px", color: "#ffca28",
-      }));
+      }).setOrigin(0.5);
+      this.cards.push(priceText);
+      this.cards.push(this.add.image(cx + 9 - priceText.width / 2 - 12, y + 78, "coin").setScale(0.45));
 
-      const btn = makeButton(this, x + 69, y + 98, mine ? "Cancel" : "Buy", {
+      const btn = makeButton(this, cx, y + 96, mine ? "Cancel" : "Buy", {
         width: 120, height: 22, color: mine ? 0xc62828 : 0x2e7d32, fontSize: "11px",
       });
       btn.onClick(() => (mine ? this.onCancel(l) : this.onBuy(l)));
@@ -125,17 +128,18 @@ export class MarketScene extends Phaser.Scene {
     chainHeroes.slice(0, 5).forEach((h, i) => {
       const tokenId = BigInt(h.id.slice("chain-".length));
       const x = 40 + i * 146;
-      const y = 408;
-      drawPanel(this, x, y, 138, 118, 0x1c2536);
-      this.cards.push(this.add.image(x + 69, y + 30, `hero-${h.rarity}`).setScale(0.85));
-      this.cards.push(this.add.text(x + 69, y + 64, `#${tokenId} ${RARITY_NAMES[h.rarity]}`, {
+      const y = 404;
+      const cx = x + 69;
+      drawPanel(this, x, y, 138, 130, 0x1c2536);
+      this.cards.push(this.add.image(cx, y + 34, `hero-${h.rarity}`).setScale(0.8));
+      this.cards.push(this.add.text(cx, y + 64, `#${tokenId} ${RARITY_NAMES[h.rarity]}`, {
         fontFamily: "monospace", fontSize: "10px", color: "#eceff1",
       }).setOrigin(0.5));
-      this.cards.push(this.add.text(x + 69, y + 80, `pwr ${h.power}`, {
+      this.cards.push(this.add.text(cx, y + 80, `pwr ${h.power}`, {
         fontFamily: "monospace", fontSize: "10px", color: "#90a4ae",
       }).setOrigin(0.5));
 
-      const btn = makeButton(this, x + 69, y + 102, "Sell", {
+      const btn = makeButton(this, cx, y + 104, "Sell", {
         width: 120, height: 24, color: 0x3949ab, fontSize: "11px",
       });
       btn.onClick(() => this.onList(tokenId));

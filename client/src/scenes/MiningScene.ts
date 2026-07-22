@@ -92,7 +92,7 @@ export class MiningScene extends Phaser.Scene {
     this.rateText = drawPill(this, 30, 20, 216, "pick", "...");
 
     // Shop/Market moved to the site header; only Claim stays in-game
-    this.claimBtn = makeButton(this, 708, 46, "Claim", {
+    this.claimBtn = makeButton(this, 708, 34, "Claim", {
       width: 124, height: 36, color: 0x3949ab, icon: "coin", iconScale: 0.55,
     });
     this.claimBtn.onClick(() => this.onClaim());
@@ -155,7 +155,7 @@ export class MiningScene extends Phaser.Scene {
       fontStyle: "bold",
     });
 
-    this.housesText = this.add.text(38, 430, "", {
+    this.housesText = this.add.text(40, 436, "", {
       fontFamily: "monospace",
       fontSize: "11px",
       color: "#b0bec5",
@@ -260,6 +260,10 @@ export class MiningScene extends Phaser.Scene {
             color: selected ? "#ffb74d" : "#b0bec5",
             backgroundColor: "#1c2333",
             padding: { x: 8, y: 6 },
+            // fixed size so the three cards keep even gutters on the 178 pitch,
+            // regardless of text length or the ▶ selection prefix
+            fixedWidth: 162,
+            fixedHeight: 40,
           }
         )
         .setInteractive({ useHandCursor: true });
@@ -329,7 +333,7 @@ export class MiningScene extends Phaser.Scene {
       const y = 128 + i * 74;
       const c = this.add.container(38, y);
       // rarity-framed portrait
-      const frame = this.add.rectangle(-3, -7, 58, 58, 0x101624)
+      const frame = this.add.rectangle(-3, -7, 58, 62, 0x101624)
         .setOrigin(0)
         .setStrokeStyle(2, RARITY_COLORS[h.rarity] ?? 0xffffff);
       c.add(frame);

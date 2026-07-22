@@ -158,7 +158,7 @@ export class ShopScene extends Phaser.Scene {
     const openBtn = makeButton(this, 400, py + 292, "OPEN CHEST", {
       width: 200, height: 44, color: 0x2e7d32, icon: "chest", iconScale: 0.45, fontSize: "15px",
     });
-    const closeBtn = makeButton(this, px + pw - 24, py + 22, "X", { width: 34, height: 30, color: 0x37474f });
+    const closeBtn = makeButton(this, px + pw - 30, py + 28, "X", { width: 34, height: 30, color: 0x37474f });
     let closed = false;
     closeBtn.onClick(() => { closed = true; panel.destroy(); this.overlay = undefined; this.checkPendingChests(); });
     panel.add([openBtn.container, closeBtn.container]);
@@ -272,9 +272,11 @@ export class ShopScene extends Phaser.Scene {
         const boom = this.add.sprite(400, py + 130, "boom-0").setDepth(201).setScale(1.6);
         boom.play("boom");
         boom.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => boom.destroy());
-        const heroImg = this.add.image(400, py + 130, `hero-${revealed.rarity}`).setDepth(201).setScale(0.4);
+        // Base scale is already large so the hero is visible even if the pop
+        // tween drops frames; it just bounces a bit bigger on capable devices.
+        const heroImg = this.add.image(400, py + 116, `hero-${revealed.rarity}`).setDepth(202).setScale(1.7);
         panel.add(heroImg);
-        this.tweens.add({ targets: heroImg, scale: 1.9, duration: 450, ease: "Back.easeOut" });
+        this.tweens.add({ targets: heroImg, scale: { from: 1.1, to: 1.7 }, duration: 400, ease: "Back.easeOut" });
         const color = "#" + (RARITY_COLORS[revealed.rarity] ?? 0xffffff).toString(16).padStart(6, "0");
         info.setColor(color).setText(
           `${RARITY_NAMES[revealed.rarity].toUpperCase()} HERO #${revealed.heroId}!`
@@ -338,29 +340,29 @@ export class ShopScene extends Phaser.Scene {
       drawPanel(this, x, y, cardW, 190, 0x1c2536);
       const cx = x + cardW / 2;
 
-      const house = this.add.image(cx, y + 46, "house").setScale(1.7);
+      const house = this.add.image(cx, y + 40, "house").setScale(1.7);
       house.setTint(RARITY_COLORS[rarity]);
 
-      this.add.text(cx, y + 88, RARITY_NAMES[rarity], {
+      this.add.text(cx, y + 80, RARITY_NAMES[rarity], {
         fontFamily: "monospace", fontSize: "12px", color: "#eceff1", fontStyle: "bold",
       }).setOrigin(0.5);
 
       const capacity = 2 + rarity * 2;
       const regen = 20 + rarity * 15;
-      this.add.text(cx, y + 108, `+${regen}% regen`, {
+      this.add.text(cx, y + 100, `+${regen}% regen`, {
         fontFamily: "monospace", fontSize: "10px", color: "#a5d6a7",
       }).setOrigin(0.5);
-      this.add.text(cx, y + 122, `${capacity} hero slots`, {
+      this.add.text(cx, y + 114, `${capacity} hero slots`, {
         fontFamily: "monospace", fontSize: "10px", color: "#90a4ae",
       }).setOrigin(0.5);
 
       const priceLabel = Number(formatEther(priceWei)).toLocaleString("en-US", { maximumFractionDigits: 0 });
-      const price = this.add.text(cx + 10, y + 144, priceLabel, {
+      const price = this.add.text(cx + 10, y + 134, priceLabel, {
         fontFamily: "monospace", fontSize: "12px", color: "#ffca28",
       }).setOrigin(0.5);
-      this.add.image(cx + 10 - price.width / 2 - 14, y + 144, "coin").setScale(0.55);
+      this.add.image(cx + 10 - price.width / 2 - 14, y + 134, "coin").setScale(0.55);
 
-      const buy = makeButton(this, cx, y + 170, "Buy", { width: cardW - 16, height: 30, color: 0x3949ab, fontSize: "12px" });
+      const buy = makeButton(this, cx, y + 160, "Buy", { width: cardW - 16, height: 26, color: 0x3949ab, fontSize: "12px" });
       buy.onClick(() => this.onBuyHouse(rarity, priceWei));
     });
   }
