@@ -8,10 +8,14 @@ const HEROES_ABI = [
   "function attributesOf(uint256 tokenId) view returns (tuple(uint8 rarity, uint8 level, uint16 power, uint16 speed, uint16 stamina, uint8 blastRange, uint8 bombCount, uint16 abilities))",
 ];
 
+// Houses is a plain ERC721 (NOT Enumerable): owned tokens are discovered
+// through Transfer logs and confirmed with ownerOf — tokenOfOwnerByIndex
+// does not exist on this contract.
 const HOUSES_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
-  "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)",
+  "function ownerOf(uint256 tokenId) view returns (address)",
   "function attributesOf(uint256 tokenId) view returns (tuple(uint8 rarity, uint8 capacity, uint16 regenBoostBps))",
+  "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)",
 ];
 
 export interface ChainHouse {
@@ -77,9 +81,17 @@ export class ChainService {
   async housesOf(owner: string): Promise<ChainHouse[]> {
     if (!this.houses) return [];
     const balance = Number(await this.houses.balanceOf(owner));
+    if (balance === 0) return [];
+
+    // every house ever sent to this owner, then confirm current ownership
+    // (covers marketplace resales and outgoing transfers)
+    const logs = await this.houses.queryFilter(this.houses.filters.Transfer(null, owner), 0, "latest");
+    const ids = [...new Set(logs.map((l) => (l as any).args.tokenId as bigint))];
+
     const result: ChainHouse[] = [];
-    for (let i = 0; i < balance; i++) {
-      const tokenId = (await this.houses.tokenOfOwnerByIndex(owner, i)) as bigint;
+    for (const tokenId of ids) {
+      const current = (await this.houses.ownerOf(tokenId).catch(() => "")) as string;
+      if (current.toLowerCase() !== owner.toLowerCase()) continue;
       const a = await this.houses.attributesOf(tokenId);
       result.push({
         id: `house-${tokenId}`,
@@ -87,6 +99,7 @@ export class ChainService {
         capacity: Number(a.capacity),
         regenBoostBps: Number(a.regenBoostBps),
       });
+      if (result.length === balance) break;
     }
     return result;
   }

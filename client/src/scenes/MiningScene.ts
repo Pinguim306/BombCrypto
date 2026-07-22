@@ -97,9 +97,10 @@ export class MiningScene extends Phaser.Scene {
     });
     this.claimBtn.onClick(() => this.onClaim());
 
-    // one click sends the whole team to the blocks
-    const workAll = makeButton(this, 582, 46, "Work all", {
-      width: 112, height: 36, color: 0x2e7d32, icon: "pick", iconScale: 0.5,
+    // one click sends the whole team to the blocks — lives right on top of
+    // the hero list so the connection is obvious
+    const workAll = makeButton(this, 138, 92, "Mine all", {
+      width: 200, height: 24, color: 0x2e7d32, icon: "pick", iconScale: 0.4, fontSize: "12px",
     });
     workAll.onClick(async () => {
       try {
@@ -147,10 +148,11 @@ export class MiningScene extends Phaser.Scene {
       this.blockBars.push(bar);
     }
 
-    this.add.text(38, 70, "HEROES — click for actions", {
+    this.add.text(38, 66, "HEROES", {
       fontFamily: "monospace",
       fontSize: "11px",
       color: "#90a4ae",
+      fontStyle: "bold",
     });
 
     this.housesText = this.add.text(38, 430, "", {
@@ -307,14 +309,14 @@ export class MiningScene extends Phaser.Scene {
 
     // pager (only when the roster does not fit on one page)
     if (pages > 1) {
-      const prev = this.add.text(168, 68, "◀", {
+      const prev = this.add.text(168, 62, "◀", {
         fontFamily: "monospace", fontSize: "14px", color: this.heroPage > 0 ? "#4fc3f7" : "#37474f",
       }).setInteractive({ useHandCursor: true });
       prev.on("pointerdown", () => { if (this.heroPage > 0) { this.heroPage--; this.render(); } });
-      const label = this.add.text(188, 69, `${this.heroPage + 1}/${pages}`, {
+      const label = this.add.text(188, 63, `${this.heroPage + 1}/${pages}`, {
         fontFamily: "monospace", fontSize: "12px", color: "#90a4ae",
       });
-      const next = this.add.text(220, 68, "▶", {
+      const next = this.add.text(220, 62, "▶", {
         fontFamily: "monospace", fontSize: "14px",
         color: this.heroPage < pages - 1 ? "#4fc3f7" : "#37474f",
       }).setInteractive({ useHandCursor: true });
@@ -324,7 +326,7 @@ export class MiningScene extends Phaser.Scene {
 
     const visible = heroes.slice(this.heroPage * PER_PAGE, this.heroPage * PER_PAGE + PER_PAGE);
     this.heroRows = visible.map((h, i) => {
-      const y = 100 + i * 78;
+      const y = 112 + i * 78;
       const c = this.add.container(38, y);
       // rarity-framed portrait
       const frame = this.add.rectangle(-3, -7, 58, 58, 0x101624)
