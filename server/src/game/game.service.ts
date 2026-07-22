@@ -51,13 +51,19 @@ export class GameService {
         player.adventure ??= { day: currentDay(Date.now()), attemptsToday: 0 };
       } else {
         const seed = this.seedCounter++;
+        // Free demo heroes exist ONLY for local development. In production
+        // (NODE_ENV=production and no DEMO_MODE=1 override) a new account
+        // starts empty until it owns on-chain heroes — otherwise a public
+        // pre-launch server would hand out heroes and accrue fake balances.
+        const demo = !this.chain.enabled &&
+          (process.env.DEMO_MODE === "1" || process.env.NODE_ENV !== "production");
         player = {
           address,
           mining: newMiningState(
-            this.chain.enabled ? [] : this.devHeroes(seed),
+            demo ? this.devHeroes(seed) : [],
             seed * 1000 + Date.now() % 997
           ),
-          houses: this.chain.enabled ? [] : [DEV_HOUSE],
+          houses: demo ? [DEV_HOUSE] : [],
           adventure: { day: currentDay(Date.now()), attemptsToday: 0 },
           syncedAt: 0,
         };
