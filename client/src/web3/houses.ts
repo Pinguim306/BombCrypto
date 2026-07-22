@@ -101,7 +101,9 @@ export async function buyHouse(rarity: number, priceWei: bigint): Promise<`0x${s
   })) as bigint;
 
   if (allowance < priceWei) {
-    await client.writeContract({
+    // the approve MUST be mined before buyHouse, or the purchase reverts
+    // with an insufficient-allowance error
+    const approveHash = await client.writeContract({
       address: TOKEN_ADDRESS,
       abi: ERC20_ABI,
       functionName: "approve",
@@ -109,8 +111,10 @@ export async function buyHouse(rarity: number, priceWei: bigint): Promise<`0x${s
       account,
       chain: null,
     });
+    const rc = await publicClient.waitForTransactionReceipt({ hash: approveHash, timeout: 240_000 });
+    if (rc.status !== "success") throw new Error("the BLAST approve transaction reverted");
   }
-  return client.writeContract({
+  const buyHash = await client.writeContract({
     address: HOUSES_ADDRESS,
     abi: HOUSES_ABI,
     functionName: "buyHouse",
@@ -118,4 +122,7 @@ export async function buyHouse(rarity: number, priceWei: bigint): Promise<`0x${s
     account,
     chain: null,
   });
+  const buyRc = await publicClient.waitForTransactionReceipt({ hash: buyHash, timeout: 240_000 });
+  if (buyRc.status !== "success") throw new Error("the house purchase reverted on-chain");
+  return buyHash;
 }

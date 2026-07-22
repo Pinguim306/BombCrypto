@@ -127,11 +127,18 @@ function requireWallet() {
   return { client, account };
 }
 
+/** Waits for a tx to be mined and confirms it did not revert. */
+async function awaitTx(hash: `0x${string}`, what: string): Promise<void> {
+  if (!publicClient) throw new Error("marketplace requires a configured chain");
+  const rc = await publicClient.waitForTransactionReceipt({ hash, timeout: 240_000 });
+  if (rc.status !== "success") throw new Error(`the ${what} transaction reverted on-chain`);
+}
+
 /** Approves the NFT and creates the listing (2 transactions). */
 export async function listNft(collection: Address, tokenId: bigint, priceWei: bigint) {
   const { client, account } = requireWallet();
   await ensureChain();
-  await client.writeContract({
+  const approveHash = await client.writeContract({
     address: collection,
     abi: ERC721_ABI,
     functionName: "approve",
@@ -139,7 +146,8 @@ export async function listNft(collection: Address, tokenId: bigint, priceWei: bi
     account,
     chain: null,
   });
-  return client.writeContract({
+  await awaitTx(approveHash, "NFT approve"); // must mine before list()
+  const listHash = await client.writeContract({
     address: MARKET_ADDRESS,
     abi: MARKET_ABI,
     functionName: "list",
@@ -147,6 +155,8 @@ export async function listNft(collection: Address, tokenId: bigint, priceWei: bi
     account,
     chain: null,
   });
+  await awaitTx(listHash, "listing");
+  return listHash;
 }
 
 /** Ensures BLAST allowance and buys the listing. */
@@ -163,7 +173,7 @@ export async function buyListing(listing: MarketListing) {
   })) as bigint;
 
   if (allowance < listing.price) {
-    await client.writeContract({
+    const approveHash = await client.writeContract({
       address: TOKEN_ADDRESS,
       abi: ERC20_ABI,
       functionName: "approve",
@@ -171,8 +181,9 @@ export async function buyListing(listing: MarketListing) {
       account,
       chain: null,
     });
+    await awaitTx(approveHash, "BLAST approve"); // must mine before buy()
   }
-  return client.writeContract({
+  const buyHash = await client.writeContract({
     address: MARKET_ADDRESS,
     abi: MARKET_ABI,
     functionName: "buy",
@@ -180,6 +191,8 @@ export async function buyListing(listing: MarketListing) {
     account,
     chain: null,
   });
+  await awaitTx(buyHash, "purchase");
+  return buyHash;
 }
 
 export async function cancelListing(id: bigint) {
