@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MinerBlast — Referrals</title>
+  <link rel="stylesheet" href="/site.css" />
+  <style>
+    .ref-card { background: #161d2e; border: 2px solid #2a3550; border-radius: 10px; padding: 22px; margin: 18px 0; }
+    .ref-card h2 { color: #eceff1; font-size: 17px; margin: 0 0 14px; }
+    .ref-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 10px 0; color: #b0bec5; font-family: monospace; }
+    .ref-row b { color: #ffca28; font-size: 18px; }
+    .link-box { display: flex; gap: 8px; margin-top: 8px; }
+    .link-box input { flex: 1; background: #101624; color: #4fc3f7; border: 1px solid #2a3550; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 14px; }
+    button.act { background: #2e7d32; color: #fff; border: 0; border-radius: 8px; padding: 12px 20px; font-family: monospace; font-weight: bold; cursor: pointer; }
+    button.act:disabled { opacity: .45; cursor: default; }
+    button.blue { background: #3949ab; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .stat { background: #101624; border: 1px solid #2a3550; border-radius: 8px; padding: 16px; text-align: center; }
+    .stat .n { color: #ffca28; font-size: 24px; font-family: monospace; font-weight: bold; }
+    .stat .l { color: #90a4ae; font-size: 12px; margin-top: 4px; }
+    #ref-status { font-family: monospace; font-size: 13px; color: #90a4ae; margin-top: 12px; }
+    #ref-status.ok { color: #a5d6a7; } #ref-status.err { color: #ef9a9a; }
+    ol.how li { margin: 8px 0; color: #b0bec5; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/">MINER<span>BLAST</span></a>
+    <a class="back" href="/">← Back to the game</a>
+  </header>
+  <main>
+    <h1>Invite &amp; Earn</h1>
+    <p class="muted">Earn <b id="ref-pct">15%</b> — in ETH — of every chest your invites buy on
+    Robinhood Chain. Paid <b>instantly by the contract</b>, straight to your wallet. No caps on how much you can earn.</p>
+
+    <div class="ref-card">
+      <h2>Your referral link</h2>
+      <div id="ref-connected" style="display:none">
+        <div class="link-box">
+          <input id="ref-link" readonly />
+          <button class="act" id="ref-copy">Copy</button>
+        </div>
+        <div class="stat-grid" style="margin-top:18px">
+          <div class="stat"><div class="n" id="ref-earned">—</div><div class="l">ETH earned</div></div>
+          <div class="stat"><div class="n" id="ref-invites">—</div><div class="l">players invited</div></div>
+          <div class="stat"><div class="n" id="ref-pending">—</div><div class="l">ETH to claim</div></div>
+        </div>
+        <div id="ref-claim-wrap" style="display:none; margin-top:14px">
+          <button class="act blue" id="ref-claim">Claim pending ETH</button>
+        </div>
+      </div>
+      <div id="ref-disconnected">
+        <p class="muted">Connect your wallet to get your personal referral link and see your earnings.</p>
+        <button class="act blue" id="ref-connect">Connect wallet</button>
+      </div>
+      <div id="ref-status"></div>
+    </div>
+
+    <div class="ref-card">
+      <h2>How it works</h2>
+      <ol class="how">
+        <li>Connect your wallet and copy your referral link above.</li>
+        <li>Share it. Anyone who opens the game through your link is tied to you on their first chest purchase — permanently.</li>
+        <li>Every chest (single or 10-pack) they ever buy pays you <b id="ref-pct2">15%</b> of the ETH, on the spot.</li>
+        <li>Payouts arrive straight in your wallet. If a transfer can't be delivered automatically, it waits here as claimable ETH.</li>
+      </ol>
+      <p class="muted">Self-referral (buying through your own link) pays nothing — it just goes to the treasury as usual.</p>
+    </div>
+  </main>
+  <script type="module" src="/src/referrals.ts"></script>
+</body>
+</html>

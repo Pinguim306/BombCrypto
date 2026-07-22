@@ -14,6 +14,7 @@ export default defineConfig({
         whitepaper: resolve(__dirname, "whitepaper.html"),
         guide: resolve(__dirname, "guide.html"),
         admin: resolve(__dirname, "admin.html"),
+        referrals: resolve(__dirname, "referrals.html"),
       },
     },
   },

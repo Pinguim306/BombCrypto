@@ -8,7 +8,10 @@ import { MiningScene } from "./scenes/MiningScene";
 import { MarketScene } from "./scenes/MarketScene";
 import { ShopScene } from "./scenes/ShopScene";
 import { HeroesScene } from "./scenes/HeroesScene";
-import { TOKEN_ADDRESS } from "./config";
+import { TOKEN_ADDRESS, captureReferralFromUrl } from "./config";
+
+// Store a ?ref=0x... referral link (first link wins) before anything else.
+captureReferralFromUrl();
 
 // Crisp text: render every Text object at 2x internal resolution so glyphs
 // stay sharp when Scale.FIT upsizes the 800x600 stage. (Sprites keep their

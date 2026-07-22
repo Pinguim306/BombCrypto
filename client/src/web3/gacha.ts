@@ -1,5 +1,5 @@
 import { createPublicClient, http, keccak256, toHex, parseEventLogs } from "viem";
-import { GACHA_ADDRESS, RPC_URL, GACHA_ENABLED } from "../config";
+import { GACHA_ADDRESS, RPC_URL, GACHA_ENABLED, storedReferrer } from "../config";
 import { walletClient, connectedAddress, ensureChain } from "./wallet";
 
 const CHEST_OPENED_EVENT = [
@@ -70,14 +70,14 @@ const GACHA_ABI = [
     type: "function",
     name: "buyChest",
     stateMutability: "payable",
-    inputs: [{ name: "salt", type: "bytes32" }],
+    inputs: [{ name: "salt", type: "bytes32" }, { name: "referrer", type: "address" }],
     outputs: [{ type: "uint256" }],
   },
   {
     type: "function",
     name: "buyPack",
     stateMutability: "payable",
-    inputs: [{ name: "salt", type: "bytes32" }],
+    inputs: [{ name: "salt", type: "bytes32" }, { name: "referrer", type: "address" }],
     outputs: [{ type: "uint256" }],
   },
   {
@@ -94,7 +94,44 @@ const GACHA_ABI = [
     inputs: [{ name: "chestId", type: "uint256" }],
     outputs: [],
   },
+  {
+    type: "function",
+    name: "referralEarned",
+    stateMutability: "view",
+    inputs: [{ name: "referrer", type: "address" }],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "pendingReferral",
+    stateMutability: "view",
+    inputs: [{ name: "referrer", type: "address" }],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "referralBps",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ type: "uint16" }],
+  },
+  {
+    type: "function",
+    name: "claimReferral",
+    stateMutability: "nonpayable",
+    inputs: [],
+    outputs: [],
+  },
 ] as const;
+
+const REFERRER_BOUND_EVENT = {
+  type: "event",
+  name: "ReferrerBound",
+  inputs: [
+    { indexed: true, name: "player", type: "address" },
+    { indexed: true, name: "referrer", type: "address" },
+  ],
+} as const;
 
 const publicClient = GACHA_ENABLED ? createPublicClient({ transport: http(RPC_URL) }) : null;
 
@@ -154,7 +191,7 @@ export async function buyChest(valueWei: bigint): Promise<void> {
     address: GACHA_ADDRESS,
     abi: GACHA_ABI,
     functionName: "buyChest",
-    args: [randomSalt()],
+    args: [randomSalt(), storedReferrer()],
     value: valueWei,
     account,
     chain: null,
@@ -169,7 +206,7 @@ export async function buyPack(valueWei: bigint): Promise<void> {
     address: GACHA_ADDRESS,
     abi: GACHA_ABI,
     functionName: "buyPack",
-    args: [randomSalt()],
+    args: [randomSalt(), storedReferrer()],
     value: valueWei,
     account,
     chain: null,
@@ -198,6 +235,47 @@ async function unopenedFromIds(ids: bigint[], me: string): Promise<bigint[]> {
     });
   }
   return unopened.sort((a, b) => (a < b ? -1 : 1));
+}
+
+export interface ReferralStats {
+  earnedWei: bigint; // lifetime referral ETH earned
+  pendingWei: bigint; // referral ETH owed but not yet pushed (claimable)
+  invites: number; // players bound to this referrer
+  bps: number; // current referral share in basis points
+}
+
+/** Reads the connected wallet's referral stats from the gacha contract. */
+export async function referralStats(): Promise<ReferralStats> {
+  if (!publicClient) throw new Error("gacha requires a configured chain");
+  const account = connectedAddress();
+  if (!account) return { earnedWei: 0n, pendingWei: 0n, invites: 0, bps: 1500 };
+  const [earned, pending, bps] = await Promise.all([
+    publicClient.readContract({ address: GACHA_ADDRESS, abi: GACHA_ABI, functionName: "referralEarned", args: [account] }),
+    publicClient.readContract({ address: GACHA_ADDRESS, abi: GACHA_ABI, functionName: "pendingReferral", args: [account] }),
+    publicClient.readContract({ address: GACHA_ADDRESS, abi: GACHA_ABI, functionName: "referralBps" }),
+  ]);
+  let invites = 0;
+  try {
+    const logs = await publicClient.getLogs({
+      address: GACHA_ADDRESS, event: REFERRER_BOUND_EVENT,
+      args: { referrer: account }, fromBlock: 0n, toBlock: "latest",
+    });
+    invites = new Set(logs.map((l) => l.args.player!.toLowerCase())).size;
+  } catch {
+    /* log range unsupported: leave invites at 0 */
+  }
+  return { earnedWei: earned as bigint, pendingWei: pending as bigint, invites, bps: Number(bps) };
+}
+
+/** Withdraws referral ETH that could not be pushed automatically. */
+export async function claimReferral(): Promise<`0x${string}`> {
+  const { client, account } = requireWallet();
+  await ensureChain();
+  const hash = await client.writeContract({
+    address: GACHA_ADDRESS, abi: GACHA_ABI, functionName: "claimReferral", account, chain: null,
+  });
+  await confirmTx(hash, "referral claim");
+  return hash;
 }
 
 /** The player's unopened chest ids, via the indexed ChestBought event —

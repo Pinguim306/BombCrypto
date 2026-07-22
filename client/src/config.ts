@@ -24,3 +24,29 @@ export const MARKET_ENABLED = RPC_URL !== "" && MARKET_ADDRESS !== ZERO && TOKEN
 
 /** Gacha requires a configured chain (RPC + address). */
 export const GACHA_ENABLED = RPC_URL !== "" && GACHA_ADDRESS !== ZERO;
+
+/**
+ * Referral capture: a `?ref=0x...` link parameter is stored once (first link
+ * wins, matching the contract's bind-once) and passed with every chest buy
+ * until the referrer is bound on-chain. Ignores malformed and self addresses.
+ */
+const REF_KEY = "mb.ref";
+export function captureReferralFromUrl(): void {
+  try {
+    const ref = new URLSearchParams(window.location.search).get("ref");
+    if (ref && /^0x[0-9a-fA-F]{40}$/.test(ref) && !localStorage.getItem(REF_KEY)) {
+      localStorage.setItem(REF_KEY, ref);
+    }
+  } catch {
+    /* no storage / no window */
+  }
+}
+export function storedReferrer(): `0x${string}` {
+  try {
+    const ref = localStorage.getItem(REF_KEY);
+    if (ref && /^0x[0-9a-fA-F]{40}$/.test(ref)) return ref as `0x${string}`;
+  } catch {
+    /* ignore */
+  }
+  return ZERO;
+}
