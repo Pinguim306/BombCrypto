@@ -72,6 +72,13 @@ export class PersistenceService implements OnApplicationShutdown {
       .run(address.toLowerCase(), stateJson, Date.now());
   }
 
+  /** All stored player states (for leaderboards). */
+  allPlayerStates(): { address: string; state: string }[] {
+    return this.db
+      .prepare("SELECT address, state FROM players")
+      .all() as { address: string; state: string }[];
+  }
+
   playerCount(): number {
     const row = this.db.prepare("SELECT COUNT(*) AS n FROM players").get() as { n: number };
     return row.n;

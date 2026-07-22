@@ -107,6 +107,13 @@ export interface VoucherDto {
   chainId: number;
 }
 
+export interface MinerRow {
+  address: string;
+  alias: string | null;
+  heroes: number;
+  power: number;
+}
+
 export const api = {
   nonce: (address: string) =>
     request<{ nonce: string }>("/auth/nonce", { method: "POST", body: JSON.stringify({ address }) }),
@@ -137,4 +144,5 @@ export const api = {
       body: JSON.stringify({ houseId }),
     }),
   voucher: () => request<VoucherDto>("/rewards/voucher", { method: "POST" }),
+  topMiners: () => request<{ miners: MinerRow[] }>("/leaderboard/miners"),
 };

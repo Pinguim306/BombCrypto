@@ -267,6 +267,45 @@ export async function referralStats(): Promise<ReferralStats> {
   return { earnedWei: earned as bigint, pendingWei: pending as bigint, invites, bps: Number(bps) };
 }
 
+export interface ReferrerRow {
+  address: string;
+  earnedWei: bigint;
+  invites: number;
+}
+
+/** Top referrers by ETH earned, computed from ReferrerBound events + the
+ *  on-chain referralEarned totals. Small-scale scan; indexer later. */
+export async function topReferrers(limit = 15): Promise<ReferrerRow[]> {
+  if (!publicClient) return [];
+  let logs;
+  try {
+    logs = await publicClient.getLogs({
+      address: GACHA_ADDRESS, event: REFERRER_BOUND_EVENT, fromBlock: 0n, toBlock: "latest",
+    });
+  } catch {
+    return []; // RPC without usable log ranges
+  }
+  const invitesBy = new Map<string, Set<string>>();
+  for (const l of logs) {
+    const ref = (l.args.referrer as string).toLowerCase();
+    const player = (l.args.player as string).toLowerCase();
+    if (!invitesBy.has(ref)) invitesBy.set(ref, new Set());
+    invitesBy.get(ref)!.add(player);
+  }
+  const refs = [...invitesBy.keys()];
+  const earned = await Promise.all(
+    refs.map((r) =>
+      publicClient!.readContract({
+        address: GACHA_ADDRESS, abi: GACHA_ABI, functionName: "referralEarned", args: [r as `0x${string}`],
+      }) as Promise<bigint>
+    )
+  );
+  return refs
+    .map((address, i) => ({ address, earnedWei: earned[i], invites: invitesBy.get(address)!.size }))
+    .sort((a, b) => (b.earnedWei > a.earnedWei ? 1 : b.earnedWei < a.earnedWei ? -1 : b.invites - a.invites))
+    .slice(0, limit);
+}
+
 /** Withdraws referral ETH that could not be pushed automatically. */
 export async function claimReferral(): Promise<`0x${string}`> {
   const { client, account } = requireWallet();

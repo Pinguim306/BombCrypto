@@ -121,6 +121,7 @@ export interface Button {
   container: Phaser.GameObjects.Container;
   setEnabled(on: boolean): void;
   setLabel(text: string): void;
+  setColor(color: number): void;
   onClick(fn: () => void): void;
 }
 
@@ -144,7 +145,7 @@ export function makeButton(
 ): Button {
   const w = opts.width ?? 150;
   const h = opts.height ?? 40;
-  const color = opts.color ?? 0x2e7d32;
+  let color = opts.color ?? 0x2e7d32;
   const edge = 4; // 3D bottom edge
   const container = scene.add.container(x, y);
 
@@ -226,6 +227,10 @@ export function makeButton(
     setLabel(t: string) {
       text.setText(t);
       layout();
+    },
+    setColor(c: number) {
+      color = c;
+      draw(color, false, enabled ? 1 : 0.4);
     },
     onClick(fn: () => void) {
       handler = fn;

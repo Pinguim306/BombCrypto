@@ -4,10 +4,11 @@ import { GameModule } from "./game/game.module";
 import { RewardsModule } from "./rewards/rewards.module";
 import { AdminModule } from "./admin/admin.module";
 import { ReferralsModule } from "./referrals/referrals.module";
+import { LeaderboardModule } from "./leaderboard/leaderboard.module";
 import { HealthController } from "./health.controller";
 
 @Module({
-  imports: [AuthModule, GameModule, RewardsModule, AdminModule, ReferralsModule],
+  imports: [AuthModule, GameModule, RewardsModule, AdminModule, ReferralsModule, LeaderboardModule],
   controllers: [HealthController],
 })
 export class AppModule {}
