@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>MinerBlast — Gacha v2 Migration</title>
+  <link rel="stylesheet" href="/site.css" />
+  <style>
+    .wrap { max-width: 680px; margin: 40px auto; padding: 0 16px; font-family: monospace; }
+    .card { background: #161d2e; border: 2px solid #2a3550; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    .card h2 { color: #eceff1; font-size: 16px; margin: 0 0 12px; }
+    .row { display: flex; justify-content: space-between; margin: 6px 0; color: #b0bec5; font-size: 13px; gap: 10px; }
+    .row b { color: #ffca28; word-break: break-all; text-align: right; }
+    .ok-badge { color: #a5d6a7; } .bad-badge { color: #ef9a9a; }
+    button { background: #2e7d32; color: #fff; border: 0; border-radius: 8px; padding: 12px 18px; font-family: monospace; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
+    button.blue { background: #3949ab; } button.red { background: #c62828; }
+    button:disabled { opacity: .45; cursor: default; }
+    #status { color: #90a4ae; font-size: 13px; margin-top: 12px; word-break: break-all; }
+    #status.err { color: #ef9a9a; } #status.ok { color: #a5d6a7; }
+    .muted { color: #78909c; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 style="color:#eceff1;font-family:monospace">🔄 Gacha v2 Migration</h1>
+    <p class="muted">Points hero minting at the referral-enabled GachaV2. Must be
+    signed by the owner/admin wallet. Two transactions; run them in order.</p>
+
+    <div class="card">
+      <h2>Status</h2>
+      <div class="row"><span>Connected wallet</span><b id="acct">—</b></div>
+      <div class="row"><span>Is Heroes admin?</span><b id="is-admin">—</b></div>
+      <div class="row"><span>GachaV2 can mint?</span><b id="v2-minter">—</b></div>
+      <div class="row"><span>GachaV1 can mint?</span><b id="v1-minter">—</b></div>
+      <button id="connect" class="blue">Connect wallet</button>
+    </div>
+
+    <div class="card">
+      <h2>Step 1 · Let GachaV2 mint heroes</h2>
+      <p class="muted">grantRole(MINTER_ROLE, GachaV2) on the Heroes contract.</p>
+      <button id="grant" disabled>Grant MINTER to GachaV2</button>
+    </div>
+
+    <div class="card">
+      <h2>Step 2 · Stop GachaV1 minting</h2>
+      <p class="muted">revokeRole(MINTER_ROLE, GachaV1). Safe now — there are no
+      unopened v1 chests.</p>
+      <button id="revoke" class="red" disabled>Revoke MINTER from GachaV1</button>
+    </div>
+
+    <div id="status"></div>
+    <p class="muted">After both succeed, tell the site to use GachaV2 (env flip + redeploy).</p>
+  </div>
+  <script type="module" src="/src/migrate.ts"></script>
+</body>
+</html>
