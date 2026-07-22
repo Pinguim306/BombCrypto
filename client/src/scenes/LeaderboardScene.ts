@@ -31,10 +31,11 @@ export class LeaderboardScene extends Phaser.Scene {
     const back = makeButton(this, 740, 34, "Back", { width: 90, height: 34, color: 0x37474f });
     back.onClick(() => this.scene.start("mining"));
 
-    // board switch tabs
-    this.tabMiners = makeButton(this, 250, 84, "Top Miners", { width: 190, height: 36, color: 0x2e7d32 });
+    // board switch tabs — the pair is centered on the panel (cx=400): two
+    // 190px buttons with a 20px gap span 200..600, midpoint 400.
+    this.tabMiners = makeButton(this, 295, 84, "Top Miners", { width: 190, height: 36, color: 0x2e7d32 });
     this.tabMiners.onClick(() => this.select("miners"));
-    this.tabRefs = makeButton(this, 470, 84, "Top Referrers", { width: 190, height: 36, color: 0x37474f });
+    this.tabRefs = makeButton(this, 505, 84, "Top Referrers", { width: 190, height: 36, color: 0x37474f });
     this.tabRefs.onClick(() => this.select("referrers"));
 
     drawPanel(this, 60, 118, 680, 420);
