@@ -73,7 +73,15 @@ export class GameService {
     }
 
     if (this.chain.enabled && Date.now() - player.syncedAt > CHAIN_SYNC_INTERVAL_MS) {
-      await this.syncFromChain(player);
+      try {
+        await this.syncFromChain(player);
+      } catch (err) {
+        // A transient RPC failure (or a redeploy-window blip) must never
+        // surface as a 500 to the player — serve the last-known state and
+        // retry the sync shortly.
+        player.syncedAt = Date.now() - CHAIN_SYNC_INTERVAL_MS + 15_000;
+        console.warn(`chain sync failed for ${player.address}: ${(err as Error).message}`);
+      }
     }
     return player;
   }
