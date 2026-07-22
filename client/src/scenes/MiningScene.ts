@@ -385,8 +385,10 @@ export class MiningScene extends Phaser.Scene {
         : null;
       c.add([body, pick, name, mode, barBg, bar, stamina]);
       if (homeIcon) c.add(homeIcon);
+      // children are top-left anchored; Phaser adds displayOrigin (95,30) to
+      // the local pointer, so the hit rect is offset to cover local (0..190).
       c.setSize(190, 60);
-      c.setInteractive(new Phaser.Geom.Rectangle(0, 0, 190, 60), Phaser.Geom.Rectangle.Contains);
+      c.setInteractive(new Phaser.Geom.Rectangle(95, 30, 190, 60), Phaser.Geom.Rectangle.Contains);
       c.on("pointerdown", () => this.openHeroPanel(h));
       return c;
     });

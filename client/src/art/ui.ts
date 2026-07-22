@@ -190,9 +190,13 @@ export function makeButton(
   let enabled = true;
   let handler: (() => void) | null = null;
 
+  // Phaser adds the container's displayOrigin (w/2, (h+edge)/2) to the local
+  // pointer before the hit test, so the hit area must use a (0,0) top-left —
+  // a centered (-w/2,-h/2) rectangle double-counts the offset and only the
+  // top-left quadrant stays clickable.
   container.setSize(w, h + edge);
   container.setInteractive(
-    new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h + edge),
+    new Phaser.Geom.Rectangle(0, 0, w, h + edge),
     Phaser.Geom.Rectangle.Contains
   );
   container.on("pointerover", () => {
