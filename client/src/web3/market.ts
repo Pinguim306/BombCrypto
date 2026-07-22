@@ -1,6 +1,6 @@
 import { createPublicClient, http, type Address } from "viem";
 import { MARKET_ADDRESS, TOKEN_ADDRESS, RPC_URL, MARKET_ENABLED } from "../config";
-import { walletClient, connectedAddress } from "./wallet";
+import { walletClient, connectedAddress, ensureChain } from "./wallet";
 
 const MARKET_ABI = [
   {
@@ -130,6 +130,7 @@ function requireWallet() {
 /** Approves the NFT and creates the listing (2 transactions). */
 export async function listNft(collection: Address, tokenId: bigint, priceWei: bigint) {
   const { client, account } = requireWallet();
+  await ensureChain();
   await client.writeContract({
     address: collection,
     abi: ERC721_ABI,
@@ -151,6 +152,7 @@ export async function listNft(collection: Address, tokenId: bigint, priceWei: bi
 /** Ensures BLAST allowance and buys the listing. */
 export async function buyListing(listing: MarketListing) {
   const { client, account } = requireWallet();
+  await ensureChain();
   if (!publicClient) throw new Error("marketplace requires a configured chain");
 
   const allowance = (await publicClient.readContract({
@@ -182,6 +184,7 @@ export async function buyListing(listing: MarketListing) {
 
 export async function cancelListing(id: bigint) {
   const { client, account } = requireWallet();
+  await ensureChain();
   return client.writeContract({
     address: MARKET_ADDRESS,
     abi: MARKET_ABI,

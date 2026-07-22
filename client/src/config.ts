@@ -15,6 +15,10 @@ export const HEROES_ADDRESS = (import.meta.env.VITE_HEROES_ADDRESS ?? ZERO) as `
 export const HOUSES_ADDRESS = (import.meta.env.VITE_HOUSES_ADDRESS ?? ZERO) as `0x${string}`;
 export const GACHA_ADDRESS = (import.meta.env.VITE_GACHA_ADDRESS ?? ZERO) as `0x${string}`;
 
+/** WalletConnect Cloud (Reown) project id — mobile wallets. Optional:
+ *  without it the connect screen only offers browser-extension wallets. */
+export const WC_PROJECT_ID = ((import.meta.env.VITE_WC_PROJECT_ID as string | undefined) ?? "").trim();
+
 /** Marketplace requires a configured chain (RPC + addresses). */
 export const MARKET_ENABLED = RPC_URL !== "" && MARKET_ADDRESS !== ZERO && TOKEN_ADDRESS !== ZERO;
 

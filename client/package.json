@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@walletconnect/ethereum-provider": "^2.23.10",
     "buffer": "^6.0.3",
     "phaser": "^3.87.0",
     "siwe": "^2.3.2",

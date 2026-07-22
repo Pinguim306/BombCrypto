@@ -1,6 +1,6 @@
 import { createPublicClient, http, keccak256, toHex, parseEventLogs } from "viem";
 import { GACHA_ADDRESS, RPC_URL, GACHA_ENABLED } from "../config";
-import { walletClient, connectedAddress } from "./wallet";
+import { walletClient, connectedAddress, ensureChain } from "./wallet";
 
 const CHEST_OPENED_EVENT = [
   {
@@ -149,6 +149,7 @@ export async function gachaPrices(): Promise<GachaPrices> {
  *  can immediately query the new chest on-chain. */
 export async function buyChest(valueWei: bigint): Promise<void> {
   const { client, account } = requireWallet();
+  await ensureChain();
   const hash = await client.writeContract({
     address: GACHA_ADDRESS,
     abi: GACHA_ABI,
@@ -163,6 +164,7 @@ export async function buyChest(valueWei: bigint): Promise<void> {
 
 export async function buyPack(valueWei: bigint): Promise<void> {
   const { client, account } = requireWallet();
+  await ensureChain();
   const hash = await client.writeContract({
     address: GACHA_ADDRESS,
     abi: GACHA_ABI,
@@ -261,6 +263,7 @@ export async function chestStatus(chestId: bigint): Promise<ChestStatus> {
 /** Renews an expired chest's reveal block (Gacha.reroll). Resolves when mined. */
 export async function rerollChest(chestId: bigint): Promise<void> {
   const { client, account } = requireWallet();
+  await ensureChain();
   const hash = await client.writeContract({
     address: GACHA_ADDRESS,
     abi: GACHA_ABI,
@@ -274,6 +277,7 @@ export async function rerollChest(chestId: bigint): Promise<void> {
 
 export async function openChest(chestId: bigint): Promise<`0x${string}`> {
   const { client, account } = requireWallet();
+  await ensureChain();
   return client.writeContract({
     address: GACHA_ADDRESS,
     abi: GACHA_ABI,

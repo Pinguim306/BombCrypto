@@ -1,6 +1,6 @@
 import { createPublicClient, http } from "viem";
 import { HOUSES_ADDRESS, TOKEN_ADDRESS, RPC_URL, MARKET_ENABLED } from "../config";
-import { walletClient, connectedAddress } from "./wallet";
+import { walletClient, connectedAddress, ensureChain } from "./wallet";
 
 const HOUSES_ABI = [
   {
@@ -90,6 +90,7 @@ export async function blastBalance(): Promise<bigint> {
 /** Ensures BLAST allowance, then buys a house of the given rarity. */
 export async function buyHouse(rarity: number, priceWei: bigint): Promise<`0x${string}`> {
   const { client, account } = requireWallet();
+  await ensureChain();
   if (!publicClient) throw new Error("houses require a configured chain");
 
   const allowance = (await publicClient.readContract({
