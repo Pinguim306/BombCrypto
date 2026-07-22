@@ -185,20 +185,31 @@ export class ShopScene extends Phaser.Scene {
         return;
       }
       const id = pending[0];
-      const left = pending.length;
-      info.setColor("#ffcc80").setText(`Chest #${id} (${left} left)\nThe chest is being prepared... ~30s`);
+      const remaining = pending.length;
+      info.setColor("#ffcc80").setText(`Chest #${id} (${remaining} left)\nFair draw in progress...`);
       openBtn.setEnabled(false);
       openBtn.setLabel("OPEN CHEST");
 
-      // wait for the on-chain reveal window (bounded; ~3 min per cycle)
+      // Wait for the on-chain reveal window with an honest countdown.
+      // The draw block does not exist yet at purchase time (that is the
+      // fairness guarantee), which takes ~2 parent-chain blocks (~25s).
+      const EXPECTED_S = 25;
       let status = await chestStatus(id);
-      let polls = 0;
-      while (!dead() && status === "waiting" && polls < 45) {
-        shake();
-        await sleep(4000);
+      let waited = 0;
+      while (!dead() && status === "waiting" && waited < 180) {
+        const eta = EXPECTED_S - waited;
+        info.setColor("#ffcc80").setText(
+          `Chest #${id} (${remaining} left)\n` +
+            (eta > 0
+              ? `Fair draw in progress... ~${eta}s`
+              : "Almost there — finalizing the draw...")
+        );
+        if (waited % 4 === 0) shake();
+        await sleep(1000);
         if (dead()) return;
-        status = await chestStatus(id);
-        polls++;
+        waited++;
+        // ask the chain every 3s; the button unlocks the moment it is ready
+        if (waited % 3 === 0) status = await chestStatus(id);
       }
       if (dead()) return;
 
