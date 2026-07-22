@@ -59,6 +59,20 @@ export async function ensureChain(): Promise<void> {
   }
 }
 
+let watching = false;
+/** Logs the session out the moment the wallet switches to another account —
+ *  purchases must always come from the account the game is showing. */
+function watchAccountChanges() {
+  if (watching || typeof provider?.on !== "function") return;
+  watching = true;
+  provider.on("accountsChanged", (accs: string[]) => {
+    const next = accs?.[0]?.toLowerCase();
+    if (!next || (account && next !== account.toLowerCase())) {
+      window.dispatchEvent(new Event("mb-disconnect"));
+    }
+  });
+}
+
 export async function connectWallet(): Promise<Address> {
   if (!window.ethereum) {
     throw new Error("No wallet found. Install an EVM wallet (e.g. Rabby/MetaMask).");
@@ -68,6 +82,7 @@ export async function connectWallet(): Promise<Address> {
   const [addr] = await client.requestAddresses();
   account = addr;
   await ensureChain(); // land on Robinhood Chain from the very start
+  watchAccountChanges();
   // update the site header's wallet chip
   window.dispatchEvent(new CustomEvent("mb-wallet", { detail: addr }));
   return addr;
@@ -87,6 +102,7 @@ export async function reconnectSilently(): Promise<Address | null> {
     provider = window.ethereum;
     client = createWalletClient({ transport: custom(provider) });
     account = accounts[0] as Address;
+    watchAccountChanges();
     window.dispatchEvent(new CustomEvent("mb-wallet", { detail: account }));
     return account;
   } catch {

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { connectWallet, signIn, reconnectSilently } from "../web3/wallet";
-import { hasToken } from "../net/api";
+import { hasToken, clearToken, tokenAddress } from "../net/api";
 import { registerPixelArt } from "../art/pixelart";
 import { drawPanel } from "../art/ui";
 
@@ -53,9 +53,19 @@ export class ConnectScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     if (hasToken()) {
-      // page reload with a live session: silently re-attach the wallet so
-      // claims and marketplace ownership keep working, then jump in
-      reconnectSilently().finally(() => this.scene.start("mining"));
+      // Page reload with a live session: silently re-attach the wallet.
+      // CRITICAL: only enter if the wallet's current account matches the
+      // account the session was issued for — otherwise purchases would go
+      // out from one account while the game shows another one's heroes.
+      reconnectSilently().then((addr) => {
+        const sessionAddr = tokenAddress();
+        if (addr && sessionAddr && addr.toLowerCase() !== sessionAddr.toLowerCase()) {
+          clearToken(); // wallet switched accounts: force a fresh login
+          this.scene.restart();
+        } else {
+          this.scene.start("mining"); // matching account, or wallet locked (view-only)
+        }
+      });
       return;
     }
 

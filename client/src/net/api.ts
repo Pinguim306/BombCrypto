@@ -11,6 +11,23 @@ export function hasToken(): boolean {
   return jwt !== null;
 }
 
+export function clearToken(): void {
+  jwt = null;
+  sessionStorage.removeItem("mb.jwt");
+}
+
+/** The wallet address this session's JWT was issued for (its `sub` claim),
+ *  or null. Lets the client detect a wallet-account/session mismatch. */
+export function tokenAddress(): string | null {
+  if (!jwt) return null;
+  try {
+    const payload = JSON.parse(atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return typeof payload.sub === "string" ? payload.sub : null;
+  } catch {
+    return null;
+  }
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`${SERVER_URL}${path}`, {
     ...init,
