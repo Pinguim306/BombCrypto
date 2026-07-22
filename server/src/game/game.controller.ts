@@ -12,6 +12,14 @@ export class GameController {
     return this.game.state(req.player!);
   }
 
+  @Post("team/mode")
+  setTeamMode(@Req() req: AuthedRequest, @Body() body: { mode?: string }) {
+    if (body?.mode !== "work" && body?.mode !== "rest") {
+      throw new BadRequestException("mode must be work or rest");
+    }
+    return this.game.setTeamMode(req.player!, body.mode);
+  }
+
   @Post("heroes/:id/mode")
   setMode(@Req() req: AuthedRequest, @Param("id") id: string, @Body() body: { mode?: string }) {
     if (body?.mode !== "work" && body?.mode !== "rest") {

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  setAllHeroesMode,
   advance,
   bombIntervalMs,
   generateMap,
@@ -30,6 +31,20 @@ function hero(overrides: Partial<EngineHero> = {}): EngineHero {
 }
 
 describe("engine", () => {
+  it("setAllHeroesMode puts every rested hero to work, skipping the exhausted", () => {
+    const heroes = [
+      hero({ id: "a", mode: "rest", stamina: 10 }),
+      hero({ id: "b", mode: "rest", stamina: 0 }), // exhausted: must be skipped
+      hero({ id: "c", mode: "work", stamina: 10 }), // already working: unchanged
+    ];
+    const state = newMiningState(heroes, 1);
+    const changed = setAllHeroesMode(state, "work", T0);
+    expect(changed).toBe(1);
+    expect(state.heroes.find((h) => h.id === "a")!.mode).toBe("work");
+    expect(state.heroes.find((h) => h.id === "b")!.mode).toBe("rest");
+    expect(state.heroes.find((h) => h.id === "c")!.mode).toBe("work");
+  });
+
   it("generates deterministic maps with correct dimensions", () => {
     const a = generateMap(42);
     const b = generateMap(42);

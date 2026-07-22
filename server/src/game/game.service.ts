@@ -7,6 +7,7 @@ import {
   bombIntervalMs,
   newMiningState,
   setHeroMode,
+  setAllHeroesMode,
   rng,
 } from "./engine";
 import { PersistenceService } from "../storage/persistence.service";
@@ -163,6 +164,15 @@ export class GameService {
         bombIntervalMs: Math.round(bombIntervalMs(h)),
       })),
     };
+  }
+
+  /** "Work all" / "rest all": flips the whole team in one call. */
+  async setTeamMode(address: string, mode: HeroMode) {
+    const player = await this.getOrCreate(address);
+    const changed = setAllHeroesMode(player.mining, mode, Date.now());
+    this.persist(player);
+    const state = await this.state(address);
+    return { ...state, changed };
   }
 
   async setMode(address: string, heroId: string, mode: HeroMode) {

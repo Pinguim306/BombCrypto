@@ -149,6 +149,25 @@ export function setHeroMode(state: MiningState, heroId: string, mode: HeroMode, 
   hero.simulatedTo = now;
 }
 
+/**
+ * Switches every hero to `mode` at once ("work all" button). Heroes without
+ * stamina are skipped instead of erroring, so one exhausted hero never
+ * blocks the rest of the team. Returns how many heroes changed mode.
+ */
+export function setAllHeroesMode(state: MiningState, mode: HeroMode, now: number): number {
+  advance(state, now);
+  let changed = 0;
+  for (const hero of state.heroes) {
+    if (mode === "work" && hero.stamina < 1) continue;
+    if (hero.mode !== mode) {
+      hero.mode = mode;
+      hero.simulatedTo = now;
+      changed++;
+    }
+  }
+  return changed;
+}
+
 export function newMiningState(heroes: EngineHero[], seed: number): MiningState {
   return {
     heroes,

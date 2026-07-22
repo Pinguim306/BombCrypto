@@ -121,6 +121,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ mode }),
     }),
+  setTeamMode: (mode: "work" | "rest") =>
+    request<GameStateDto & { changed: number }>("/game/team/mode", {
+      method: "POST",
+      body: JSON.stringify({ mode }),
+    }),
   adventure: (heroId: string, stageId: number) =>
     request<AdventureResultDto>(`/game/heroes/${heroId}/adventure`, {
       method: "POST",

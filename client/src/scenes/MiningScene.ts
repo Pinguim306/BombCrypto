@@ -97,6 +97,30 @@ export class MiningScene extends Phaser.Scene {
     });
     this.claimBtn.onClick(() => this.onClaim());
 
+    // one click sends the whole team to the blocks
+    const workAll = makeButton(this, 582, 46, "Work all", {
+      width: 112, height: 36, color: 0x2e7d32, icon: "pick", iconScale: 0.5,
+    });
+    workAll.onClick(async () => {
+      try {
+        workAll.setEnabled(false);
+        const state = await api.setTeamMode("work");
+        if (!this.sys.settings.active) return;
+        this.state = state;
+        this.render();
+        this.statusText.setColor("#a5d6a7").setText(
+          state.changed > 0
+            ? `${state.changed} hero${state.changed > 1 ? "es" : ""} sent to work! ⛏`
+            : "everyone is already mining (or out of stamina)"
+        );
+      } catch (err) {
+        if (!this.sys.settings.active) return;
+        this.statusText.setColor("#ef9a9a").setText(`error: ${(err as Error).message}`);
+      } finally {
+        if (this.sys.settings.active) workAll.setEnabled(true);
+      }
+    });
+
     this.statusText = this.add.text(38, 560, "", {
       fontFamily: "monospace",
       fontSize: "13px",
