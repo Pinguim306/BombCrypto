@@ -36,11 +36,12 @@
         background: linear-gradient(180deg, #1a2336, var(--panel));
         border-bottom: 2px solid var(--border);
         box-shadow: 0 4px 18px rgba(0,0,0,.45);
-        flex-wrap: wrap;
+        flex-wrap: wrap; justify-content: space-between;
       }
-      /* three-zone header: logo (left) · PLAY (center) · nav (right).
-         Equal flex-grow on the logo and nav keeps PLAY centered. */
-      .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex: 1 1 0; min-width: max-content; }
+      /* three-zone header: logo (left) · PLAY (middle) · nav (right).
+         space-between on the header balances PLAY between the logo and the
+         nav, and the nav keeps its natural width so it never wraps on desktop. */
+      .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex: 0 0 auto; }
       .logo svg { image-rendering: pixelated; }
       .wordmark {
         font-size: 22px; font-weight: bold; letter-spacing: 1px;
@@ -48,13 +49,13 @@
         text-shadow: 0 2px 0 #7a4a00, 0 4px 10px rgba(0,0,0,.6);
       }
       .wordmark span { color: #4fc3f7; }
-      nav { display: flex; align-items: center; gap: 6px; flex: 1 1 0; justify-content: flex-end; flex-wrap: wrap; }
+      nav { display: flex; align-items: center; gap: 3px; flex: 0 1 auto; justify-content: flex-end; flex-wrap: wrap; }
       nav a, nav button {
-        font-family: inherit; font-size: 13px; font-weight: bold;
+        font-family: inherit; font-size: 12.5px; font-weight: bold;
         color: var(--text); background: transparent;
         border: 2px solid transparent; border-radius: 8px;
-        padding: 8px 12px; cursor: pointer; text-decoration: none;
-        letter-spacing: .5px;
+        padding: 8px 9px; cursor: pointer; text-decoration: none;
+        letter-spacing: .3px; white-space: nowrap;
       }
       nav a:hover, nav button:hover { border-color: var(--border); background: rgba(255,255,255,.05); }
       .btn-play {
@@ -63,7 +64,7 @@
         border-radius: 8px; cursor: pointer;
         background: linear-gradient(180deg, #ffb74d, var(--orange)) !important;
         color: #221400 !important; border: 2px solid #7a4a00 !important;
-        font-size: 18px !important; padding: 11px 40px !important;
+        font-size: 16px !important; padding: 9px 30px !important;
         box-shadow: 0 3px 0 #7a4a00;
       }
       .btn-play:active { transform: translateY(2px); box-shadow: 0 1px 0 #7a4a00; }
@@ -72,6 +73,22 @@
         color: var(--muted); border-radius: 20px; padding: 8px 14px;
       }
       #wallet-chip.connected { color: #a5d6a7; border-color: #2e7d32; }
+
+      /* ---------- Docs dropdown ---------- */
+      .dropdown { position: relative; display: inline-flex; }
+      .docs-menu {
+        position: absolute; right: 0; top: calc(100% + 8px);
+        display: none; flex-direction: column; min-width: 168px;
+        background: #161d2e; border: 2px solid var(--border);
+        border-radius: 10px; padding: 6px; z-index: 60;
+        box-shadow: 0 12px 34px rgba(0,0,0,.55);
+      }
+      .dropdown.open .docs-menu { display: flex; }
+      nav .docs-menu a {
+        display: block; width: 100%; text-align: left;
+        padding: 10px 12px; border-radius: 6px; border: 2px solid transparent;
+      }
+      nav .docs-menu a:hover { background: rgba(255,255,255,.06); border-color: var(--border); }
 
       /* ---------- $BLAST contract strip ---------- */
       #blast-ca {
@@ -143,9 +160,14 @@
         <button data-nav="market">MARKET</button>
         <button data-nav="shop">SHOP</button>
         <button id="wallet-chip" type="button" title="Click to disconnect">WALLET</button>
-        <a href="/stats.html">STATS</a>
-        <a href="/whitepaper.html">WHITEPAPER</a>
-        <a href="/guide.html">GUIDE</a>
+        <div class="dropdown" id="docs-dd">
+          <button class="docs-btn" id="docs-btn" type="button" aria-haspopup="true" aria-expanded="false">DOCS ▾</button>
+          <div class="docs-menu">
+            <a href="/stats.html">STATS</a>
+            <a href="/whitepaper.html">WHITEPAPER</a>
+            <a href="/guide.html">GUIDE</a>
+          </div>
+        </div>
       </nav>
     </header>
 
@@ -169,6 +191,19 @@
       document.querySelectorAll("[data-nav]").forEach((b) =>
         b.addEventListener("click", () => nav(b.dataset.nav))
       );
+
+      // Docs dropdown (STATS / WHITEPAPER / GUIDE): toggle on click, close on outside click
+      const docsDd = document.getElementById("docs-dd");
+      const docsBtn = document.getElementById("docs-btn");
+      docsBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const open = docsDd.classList.toggle("open");
+        docsBtn.setAttribute("aria-expanded", String(open));
+      });
+      document.addEventListener("click", () => {
+        docsDd.classList.remove("open");
+        docsBtn.setAttribute("aria-expanded", "false");
+      });
       window.addEventListener("mb-wallet", (e) => {
         const chip = document.getElementById("wallet-chip");
         const a = e.detail;
