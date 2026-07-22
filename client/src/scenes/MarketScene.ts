@@ -96,7 +96,7 @@ export class MarketScene extends Phaser.Scene {
       const isHero = l.collection.toLowerCase() === HEROES_ADDRESS.toLowerCase();
 
       drawPanel(this, x, y, 138, 112, 0x1c2536);
-      this.cards.push(this.add.image(x + 69, y + 34, isHero ? "hero-2" : "house").setScale(1.1));
+      this.cards.push(this.add.image(x + 69, y + 30, isHero ? "hero-2" : "house").setScale(0.85));
       this.cards.push(this.add.text(x + 69, y + 62, `${isHero ? "Hero" : "House"} #${l.tokenId}`, {
         fontFamily: "monospace", fontSize: "11px", color: "#eceff1",
       }).setOrigin(0.5));
@@ -127,11 +127,11 @@ export class MarketScene extends Phaser.Scene {
       const x = 40 + i * 146;
       const y = 408;
       drawPanel(this, x, y, 138, 118, 0x1c2536);
-      this.cards.push(this.add.image(x + 69, y + 34, `hero-${h.rarity}`).setScale(1.1));
-      this.cards.push(this.add.text(x + 69, y + 62, `#${tokenId} ${RARITY_NAMES[h.rarity]}`, {
+      this.cards.push(this.add.image(x + 69, y + 30, `hero-${h.rarity}`).setScale(0.85));
+      this.cards.push(this.add.text(x + 69, y + 64, `#${tokenId} ${RARITY_NAMES[h.rarity]}`, {
         fontFamily: "monospace", fontSize: "10px", color: "#eceff1",
       }).setOrigin(0.5));
-      this.cards.push(this.add.text(x + 69, y + 78, `pwr ${h.power}`, {
+      this.cards.push(this.add.text(x + 69, y + 80, `pwr ${h.power}`, {
         fontFamily: "monospace", fontSize: "10px", color: "#90a4ae",
       }).setOrigin(0.5));
 

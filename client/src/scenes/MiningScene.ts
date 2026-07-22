@@ -99,7 +99,7 @@ export class MiningScene extends Phaser.Scene {
 
     // one click sends the whole team to the blocks — lives right on top of
     // the hero list so the connection is obvious
-    const workAll = makeButton(this, 138, 86, "Mine all", {
+    const workAll = makeButton(this, 138, 104, "Mine all", {
       width: 200, height: 22, color: 0x2e7d32, icon: "pick", iconScale: 0.4, fontSize: "12px",
     });
     workAll.onClick(async () => {
@@ -148,7 +148,7 @@ export class MiningScene extends Phaser.Scene {
       this.blockBars.push(bar);
     }
 
-    this.add.text(38, 66, "HEROES", {
+    this.add.text(40, 72, "HEROES", {
       fontFamily: "monospace",
       fontSize: "11px",
       color: "#90a4ae",
@@ -309,14 +309,14 @@ export class MiningScene extends Phaser.Scene {
 
     // pager (only when the roster does not fit on one page)
     if (pages > 1) {
-      const prev = this.add.text(168, 64, "◀", {
+      const prev = this.add.text(166, 71, "◀", {
         fontFamily: "monospace", fontSize: "14px", color: this.heroPage > 0 ? "#4fc3f7" : "#37474f",
       }).setInteractive({ useHandCursor: true });
       prev.on("pointerdown", () => { if (this.heroPage > 0) { this.heroPage--; this.render(); } });
-      const label = this.add.text(188, 66, `${this.heroPage + 1}/${pages}`, {
+      const label = this.add.text(188, 73, `${this.heroPage + 1}/${pages}`, {
         fontFamily: "monospace", fontSize: "12px", color: "#90a4ae",
       });
-      const next = this.add.text(220, 64, "▶", {
+      const next = this.add.text(218, 71, "▶", {
         fontFamily: "monospace", fontSize: "14px",
         color: this.heroPage < pages - 1 ? "#4fc3f7" : "#37474f",
       }).setInteractive({ useHandCursor: true });
@@ -326,7 +326,7 @@ export class MiningScene extends Phaser.Scene {
 
     const visible = heroes.slice(this.heroPage * PER_PAGE, this.heroPage * PER_PAGE + PER_PAGE);
     this.heroRows = visible.map((h, i) => {
-      const y = 114 + i * 78;
+      const y = 128 + i * 74;
       const c = this.add.container(38, y);
       // rarity-framed portrait
       const frame = this.add.rectangle(-3, -7, 58, 58, 0x101624)

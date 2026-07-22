@@ -300,9 +300,9 @@ export class ShopScene extends Phaser.Scene {
     this.add.text(44, 312, "Houses let sheltered heroes recover stamina faster. Paid in BLAST.", {
       fontFamily: "monospace", fontSize: "11px", color: "#90a4ae",
     });
-    this.balanceText = this.add.text(540, 292, "", {
+    this.balanceText = this.add.text(756, 292, "", {
       fontFamily: "monospace", fontSize: "12px", color: "#ffca28",
-    });
+    }).setOrigin(1, 0); // right-aligned inside the panel
 
     if (!MARKET_ENABLED) {
       this.add.text(44, 350, "House sales open at the $BLAST launch.", {
@@ -325,14 +325,14 @@ export class ShopScene extends Phaser.Scene {
 
   private async refreshBalance() {
     const bal = await blastBalance().catch(() => 0n);
-    this.balanceText.setText(`Your balance: ${Number(formatEther(bal)).toLocaleString("en-US")} BLAST`);
+    this.balanceText.setText(`Your balance: ${Number(formatEther(bal)).toLocaleString("en-US", { maximumFractionDigits: 0 })} BLAST`);
   }
 
   private renderHouseCards(prices: bigint[]) {
     prices.forEach((priceWei, rarity) => {
       if (priceWei === 0n) return;
-      const cardW = 118;
-      const x = 44 + rarity * (cardW + 6);
+      const cardW = 112; // 6 cards x (112+8) = 720 fits the 752 panel
+      const x = 44 + rarity * (cardW + 8);
       const y = 338;
 
       drawPanel(this, x, y, cardW, 190, 0x1c2536);
@@ -354,11 +354,11 @@ export class ShopScene extends Phaser.Scene {
         fontFamily: "monospace", fontSize: "10px", color: "#90a4ae",
       }).setOrigin(0.5);
 
-      const priceLabel = Number(formatEther(priceWei)).toLocaleString("en-US");
-      this.add.image(cx - 28, y + 144, "coin").setScale(0.55);
-      this.add.text(cx - 14, y + 137, priceLabel, {
+      const priceLabel = Number(formatEther(priceWei)).toLocaleString("en-US", { maximumFractionDigits: 0 });
+      const price = this.add.text(cx + 10, y + 144, priceLabel, {
         fontFamily: "monospace", fontSize: "12px", color: "#ffca28",
-      });
+      }).setOrigin(0.5);
+      this.add.image(cx + 10 - price.width / 2 - 14, y + 144, "coin").setScale(0.55);
 
       const buy = makeButton(this, cx, y + 170, "Buy", { width: cardW - 16, height: 30, color: 0x3949ab, fontSize: "12px" });
       buy.onClick(() => this.onBuyHouse(rarity, priceWei));
