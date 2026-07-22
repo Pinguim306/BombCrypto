@@ -4,11 +4,19 @@
  * contract), and claim any pending referral ETH. Holds no authority.
  */
 import { formatEther } from "viem";
-import { connectWallet, connectedAddress, reconnectSilently } from "./web3/wallet";
+import { connectWallet, connectedAddress, reconnectSilently, signMessage } from "./web3/wallet";
 import { referralStats, claimReferral } from "./web3/gacha";
-import { GACHA_ENABLED } from "./config";
+import { GACHA_ENABLED, SERVER_URL } from "./config";
 
 const $ = (id: string) => document.getElementById(id)!;
+
+/** Alias the connected wallet currently owns (server-side vanity handle). */
+let currentAlias: string | null = null;
+
+/** The message the wallet signs to prove ownership when claiming an alias. */
+function aliasClaimMessage(alias: string, address: string): string {
+  return `MinerBlast referral alias\nalias: ${alias.toLowerCase()}\naddress: ${address.toLowerCase()}`;
+}
 
 function status(msg: string, cls = "") {
   const el = $("ref-status");
@@ -30,8 +38,16 @@ async function render() {
   $("ref-connected").style.display = "";
   $("ref-disconnected").style.display = "none";
 
-  const link = `${location.origin}/?ref=${addr}`;
-  ($("ref-link") as HTMLInputElement).value = link;
+  // load the wallet's current alias so the link can use it
+  try {
+    const r = await fetch(`${SERVER_URL}/referrals/alias/${addr}`);
+    currentAlias = (await r.json()).alias ?? null;
+  } catch {
+    currentAlias = null;
+  }
+  const handle = currentAlias ?? addr;
+  ($("ref-link") as HTMLInputElement).value = `${location.origin}/?ref=${handle}`;
+  if (currentAlias) ($("ref-alias") as HTMLInputElement).value = currentAlias;
 
   if (!GACHA_ENABLED) {
     status("Referral rewards go live with the $BLAST launch — your link already works.", "");
@@ -60,6 +76,36 @@ $("ref-connect").addEventListener("click", async () => {
     await render();
   } catch (e) {
     status(shortErr(e), "err");
+  }
+});
+
+$("ref-set-alias").addEventListener("click", async () => {
+  const addr = connectedAddress();
+  if (!addr) return;
+  const alias = ($("ref-alias") as HTMLInputElement).value.trim();
+  if (!/^[a-zA-Z0-9_-]{3,20}$/.test(alias)) {
+    status("Name must be 3-20 letters, digits, - or _", "err");
+    return;
+  }
+  try {
+    ($("ref-set-alias") as HTMLButtonElement).disabled = true;
+    status("sign the name claim in your wallet...");
+    const signature = await signMessage(aliasClaimMessage(alias, addr));
+    const res = await fetch(`${SERVER_URL}/referrals/alias`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ address: addr, alias, signature }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message ?? `HTTP ${res.status}`);
+    }
+    status(`Your custom link is ready! Share minerblast.fun/?ref=${alias}`, "ok");
+    await render();
+  } catch (e) {
+    status(`Could not set name: ${shortErr(e)}`, "err");
+  } finally {
+    ($("ref-set-alias") as HTMLButtonElement).disabled = false;
   }
 });
 

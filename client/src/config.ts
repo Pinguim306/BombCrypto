@@ -26,27 +26,52 @@ export const MARKET_ENABLED = RPC_URL !== "" && MARKET_ADDRESS !== ZERO && TOKEN
 export const GACHA_ENABLED = RPC_URL !== "" && GACHA_ADDRESS !== ZERO;
 
 /**
- * Referral capture: a `?ref=0x...` link parameter is stored once (first link
- * wins, matching the contract's bind-once) and passed with every chest buy
- * until the referrer is bound on-chain. Ignores malformed and self addresses.
+ * Referral capture: a `?ref=...` link parameter (a 0x address OR a custom
+ * alias like "coolminer") is stored once — first link wins, matching the
+ * contract's bind-once. The raw handle is kept; it is resolved to an address
+ * (via the server for aliases) lazily at purchase time.
  */
-const REF_KEY = "mb.ref";
+const REF_KEY = "mb.ref"; // resolved 0x address, once known
+const REF_HANDLE_KEY = "mb.ref.handle"; // raw handle from the link
+const ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
+const ALIAS_RE = /^[a-zA-Z0-9_-]{3,20}$/;
+
 export function captureReferralFromUrl(): void {
   try {
     const ref = new URLSearchParams(window.location.search).get("ref");
-    if (ref && /^0x[0-9a-fA-F]{40}$/.test(ref) && !localStorage.getItem(REF_KEY)) {
+    if (!ref) return;
+    if (localStorage.getItem(REF_KEY) || localStorage.getItem(REF_HANDLE_KEY)) return; // first link wins
+    if (ADDR_RE.test(ref)) {
       localStorage.setItem(REF_KEY, ref);
+      localStorage.setItem(REF_HANDLE_KEY, ref);
+    } else if (ALIAS_RE.test(ref)) {
+      localStorage.setItem(REF_HANDLE_KEY, ref);
     }
   } catch {
     /* no storage / no window */
   }
 }
-export function storedReferrer(): `0x${string}` {
+
+/**
+ * The referrer address to pass to the gacha contract. Resolves a stored alias
+ * to its address via the server (cached). Returns the zero address when there
+ * is no referral or the alias is unknown.
+ */
+export async function resolveReferrer(): Promise<`0x${string}`> {
   try {
-    const ref = localStorage.getItem(REF_KEY);
-    if (ref && /^0x[0-9a-fA-F]{40}$/.test(ref)) return ref as `0x${string}`;
+    const cached = localStorage.getItem(REF_KEY);
+    if (cached && ADDR_RE.test(cached)) return cached as `0x${string}`;
+    const handle = localStorage.getItem(REF_HANDLE_KEY);
+    if (!handle) return ZERO;
+    if (ADDR_RE.test(handle)) return handle as `0x${string}`;
+    const res = await fetch(`${SERVER_URL}/referrals/resolve/${encodeURIComponent(handle)}`);
+    const { address } = (await res.json()) as { address: string | null };
+    if (address && ADDR_RE.test(address)) {
+      localStorage.setItem(REF_KEY, address); // cache the resolution
+      return address as `0x${string}`;
+    }
   } catch {
-    /* ignore */
+    /* server unreachable / unknown alias: no referral */
   }
   return ZERO;
 }

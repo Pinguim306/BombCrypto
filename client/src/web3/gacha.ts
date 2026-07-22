@@ -1,5 +1,5 @@
 import { createPublicClient, http, keccak256, toHex, parseEventLogs } from "viem";
-import { GACHA_ADDRESS, RPC_URL, GACHA_ENABLED, storedReferrer } from "../config";
+import { GACHA_ADDRESS, RPC_URL, GACHA_ENABLED, resolveReferrer } from "../config";
 import { walletClient, connectedAddress, ensureChain } from "./wallet";
 
 const CHEST_OPENED_EVENT = [
@@ -191,7 +191,7 @@ export async function buyChest(valueWei: bigint): Promise<void> {
     address: GACHA_ADDRESS,
     abi: GACHA_ABI,
     functionName: "buyChest",
-    args: [randomSalt(), storedReferrer()],
+    args: [randomSalt(), await resolveReferrer()],
     value: valueWei,
     account,
     chain: null,
@@ -206,7 +206,7 @@ export async function buyPack(valueWei: bigint): Promise<void> {
     address: GACHA_ADDRESS,
     abi: GACHA_ABI,
     functionName: "buyPack",
-    args: [randomSalt(), storedReferrer()],
+    args: [randomSalt(), await resolveReferrer()],
     value: valueWei,
     account,
     chain: null,

@@ -110,6 +110,12 @@ export async function reconnectSilently(): Promise<Address | null> {
   }
 }
 
+/** Signs an arbitrary message with the connected wallet (personal_sign). */
+export async function signMessage(message: string): Promise<string> {
+  if (!client || !account) throw new Error("wallet not connected");
+  return client.signMessage({ account, message });
+}
+
 /** SIWE login: gets a nonce from the server, signs the message and exchanges it for a JWT. */
 export async function signIn(): Promise<void> {
   if (!client || !account) throw new Error("wallet not connected");

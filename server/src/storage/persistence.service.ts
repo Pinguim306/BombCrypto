@@ -46,6 +46,12 @@ export class PersistenceService implements OnApplicationShutdown {
         player TEXT PRIMARY KEY,
         next_nonce TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS referral_aliases (
+        alias_lower TEXT PRIMARY KEY,   -- lookup key (lowercased)
+        alias TEXT NOT NULL,            -- display casing
+        address TEXT NOT NULL UNIQUE,   -- one alias per address
+        updated_at INTEGER NOT NULL
+      );
     `);
     this.logger.log(`SQLite opened at ${path}`);
   }
@@ -69,6 +75,43 @@ export class PersistenceService implements OnApplicationShutdown {
   playerCount(): number {
     const row = this.db.prepare("SELECT COUNT(*) AS n FROM players").get() as { n: number };
     return row.n;
+  }
+
+  // ---- referral aliases (off-chain vanity handles) ----
+
+  /** Resolves a referral alias to the owner's address, or null. */
+  addressForAlias(alias: string): string | null {
+    const row = this.db
+      .prepare("SELECT address FROM referral_aliases WHERE alias_lower = ?")
+      .get(alias.toLowerCase()) as { address: string } | undefined;
+    return row?.address ?? null;
+  }
+
+  /** The alias currently owned by an address (display casing), or null. */
+  aliasForAddress(address: string): string | null {
+    const row = this.db
+      .prepare("SELECT alias FROM referral_aliases WHERE address = ?")
+      .get(address.toLowerCase()) as { alias: string } | undefined;
+    return row?.alias ?? null;
+  }
+
+  /**
+   * Claims/updates an alias for an address. Returns "ok", "taken" (alias owned
+   * by a different address), or "exists" (no change). One alias per address:
+   * re-claiming replaces the caller's previous alias.
+   */
+  setAlias(address: string, alias: string): "ok" | "taken" {
+    const addr = address.toLowerCase();
+    const owner = this.addressForAlias(alias);
+    if (owner && owner !== addr) return "taken";
+    // free the caller's previous alias, then set the new one
+    this.db.prepare("DELETE FROM referral_aliases WHERE address = ?").run(addr);
+    this.db
+      .prepare(
+        `INSERT INTO referral_aliases (alias_lower, alias, address, updated_at) VALUES (?, ?, ?, ?)`
+      )
+      .run(alias.toLowerCase(), alias, addr, Date.now());
+    return "ok";
   }
 
   saveVoucher(v: VoucherRecord): void {
