@@ -69,8 +69,11 @@ export class ShopScene extends Phaser.Scene {
     this.add.image(150, 190, "spark").setScale(0.5).setAlpha(0.7);
 
     if (!GACHA_ENABLED) {
-      this.add.text(300, 170, "Chain not configured.", {
-        fontFamily: "monospace", fontSize: "13px", color: "#ef9a9a",
+      this.add.text(300, 156, "Chest sales open at the $BLAST launch.", {
+        fontFamily: "monospace", fontSize: "14px", color: "#ffcc80",
+      });
+      this.add.text(300, 180, "Follow the announcements — coming very soon!", {
+        fontFamily: "monospace", fontSize: "12px", color: "#90a4ae",
       });
       return;
     }
@@ -291,8 +294,8 @@ export class ShopScene extends Phaser.Scene {
     });
 
     if (!MARKET_ENABLED) {
-      this.add.text(44, 350, "Chain not configured.", {
-        fontFamily: "monospace", fontSize: "13px", color: "#ef9a9a",
+      this.add.text(44, 350, "House sales open at the $BLAST launch.", {
+        fontFamily: "monospace", fontSize: "13px", color: "#ffcc80",
       });
       return;
     }

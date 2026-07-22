@@ -49,7 +49,7 @@ export class MarketScene extends Phaser.Scene {
     });
 
     if (!MARKET_ENABLED) {
-      this.status.setColor("#ef9a9a").setText("Market unavailable: chain not configured.");
+      this.status.setColor("#ffcc80").setText("The player market opens at the $BLAST launch — coming soon!");
       return;
     }
     this.refresh();
