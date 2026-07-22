@@ -38,7 +38,9 @@
         box-shadow: 0 4px 18px rgba(0,0,0,.45);
         flex-wrap: wrap;
       }
-      .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+      /* three-zone header: logo (left) · PLAY (center) · nav (right).
+         Equal flex-grow on the logo and nav keeps PLAY centered. */
+      .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; flex: 1 1 0; min-width: max-content; }
       .logo svg { image-rendering: pixelated; }
       .wordmark {
         font-size: 22px; font-weight: bold; letter-spacing: 1px;
@@ -46,7 +48,7 @@
         text-shadow: 0 2px 0 #7a4a00, 0 4px 10px rgba(0,0,0,.6);
       }
       .wordmark span { color: #4fc3f7; }
-      nav { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+      nav { display: flex; align-items: center; gap: 6px; flex: 1 1 0; justify-content: flex-end; flex-wrap: wrap; }
       nav a, nav button {
         font-family: inherit; font-size: 13px; font-weight: bold;
         color: var(--text); background: transparent;
@@ -56,9 +58,12 @@
       }
       nav a:hover, nav button:hover { border-color: var(--border); background: rgba(255,255,255,.05); }
       .btn-play {
+        flex: 0 0 auto; /* centered between the two flexible zones */
+        font-family: inherit; font-weight: bold; letter-spacing: .5px;
+        border-radius: 8px; cursor: pointer;
         background: linear-gradient(180deg, #ffb74d, var(--orange)) !important;
         color: #221400 !important; border: 2px solid #7a4a00 !important;
-        font-size: 15px !important; padding: 8px 26px !important;
+        font-size: 18px !important; padding: 11px 40px !important;
         box-shadow: 0 3px 0 #7a4a00;
       }
       .btn-play:active { transform: translateY(2px); box-shadow: 0 1px 0 #7a4a00; }
@@ -129,10 +134,8 @@
         </svg>
         <span class="wordmark">MINER<span>BLAST</span></span>
       </a>
+      <button class="btn-play" data-nav="play" type="button">PLAY</button>
       <nav>
-        <a href="/whitepaper.html">WHITEPAPER</a>
-        <a href="/guide.html">GUIDE</a>
-        <a href="/stats.html">STATS</a>
         <button data-nav="daily">DAILY</button>
         <button data-nav="referrals">REFERRALS</button>
         <button data-nav="leaderboard">RANK</button>
@@ -140,7 +143,9 @@
         <button data-nav="market">MARKET</button>
         <button data-nav="shop">SHOP</button>
         <button id="wallet-chip" type="button" title="Click to disconnect">WALLET</button>
-        <button class="btn-play" data-nav="play" type="button">PLAY</button>
+        <a href="/stats.html">STATS</a>
+        <a href="/whitepaper.html">WHITEPAPER</a>
+        <a href="/guide.html">GUIDE</a>
       </nav>
     </header>
 
