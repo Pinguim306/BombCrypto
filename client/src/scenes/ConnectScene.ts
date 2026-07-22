@@ -1,8 +1,8 @@
 import Phaser from "phaser";
-import { connectWallet, signIn, reconnectSilently } from "../web3/wallet";
+import { connectWallet, signIn, reconnectSilently, MOBILE_WALLET_ENABLED, type WalletKind } from "../web3/wallet";
 import { hasToken, clearToken, tokenAddress } from "../net/api";
 import { registerPixelArt } from "../art/pixelart";
-import { drawPanel } from "../art/ui";
+import { drawPanel, makeButton } from "../art/ui";
 
 /** Initial screen: connect the wallet and sign the SIWE login. */
 export class ConnectScene extends Phaser.Scene {
@@ -70,17 +70,6 @@ export class ConnectScene extends Phaser.Scene {
       return;
     }
 
-    const button = this.add
-      .text(width / 2, height * 0.58, "[ Connect wallet ]", {
-        fontFamily: "monospace",
-        fontSize: "24px",
-        color: "#4fc3f7",
-        backgroundColor: "#1c2333",
-        padding: { x: 18, y: 12 },
-      })
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-
     const status = this.add
       .text(width / 2, height * 0.72, "", {
         fontFamily: "monospace",
@@ -91,16 +80,40 @@ export class ConnectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    button.on("pointerdown", async () => {
+    const connect = async (kind: WalletKind) => {
       try {
-        status.setColor("#90a4ae").setText("connecting...");
-        await connectWallet();
-        status.setText("sign the login message in your wallet...");
+        status.setColor("#90a4ae").setText(kind === "walletconnect" ? "scan the QR with your wallet app..." : "connecting...");
+        await connectWallet(kind);
+        status.setColor("#90a4ae").setText("sign the login message in your wallet...");
         await signIn();
         this.scene.start("mining");
       } catch (err) {
         status.setColor("#ef9a9a").setText((err as Error).message);
       }
-    });
+    };
+
+    // Browser-extension wallet + (when configured) a mobile WalletConnect option
+    if (MOBILE_WALLET_ENABLED) {
+      const browser = makeButton(this, width / 2 - 110, height * 0.58, "Browser Wallet", {
+        width: 200, height: 48, color: 0x1c2333, textColor: "#4fc3f7", fontSize: "16px",
+      });
+      browser.onClick(() => connect("injected"));
+      const mobile = makeButton(this, width / 2 + 110, height * 0.58, "Mobile Wallet", {
+        width: 200, height: 48, color: 0x2e7d32, icon: "coin", iconScale: 0.5, fontSize: "16px",
+      });
+      mobile.onClick(() => connect("walletconnect"));
+      this.add.text(width / 2, height * 0.58 + 42, "browser extension  ·  QR / mobile app", {
+        fontFamily: "monospace", fontSize: "11px", color: "#546e7a",
+      }).setOrigin(0.5);
+    } else {
+      const button = this.add
+        .text(width / 2, height * 0.58, "[ Connect wallet ]", {
+          fontFamily: "monospace", fontSize: "24px", color: "#4fc3f7",
+          backgroundColor: "#1c2333", padding: { x: 18, y: 12 },
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+      button.on("pointerdown", () => connect("injected"));
+    }
   }
 }

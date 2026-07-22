@@ -54,9 +54,12 @@ window.addEventListener("mb-nav", (e) => {
   }
 });
 
-// Wallet chip -> disconnect: clear the session and reload to the connect screen.
-window.addEventListener("mb-disconnect", () => {
+// Wallet chip -> disconnect: tear down the wallet session (WalletConnect
+// included), clear the JWT and reload to the connect screen.
+window.addEventListener("mb-disconnect", async () => {
   sessionStorage.removeItem("mb.jwt");
+  const { disconnectWallet } = await import("./web3/wallet");
+  await disconnectWallet().catch(() => {});
   location.reload();
 });
 

@@ -1,7 +1,7 @@
 import { createWalletClient, custom, type WalletClient, type Address } from "viem";
 import { SiweMessage } from "siwe";
 import { api, setToken } from "../net/api";
-import { CHAIN_ID, RPC_URL, VAULT_ADDRESS } from "../config";
+import { CHAIN_ID, RPC_URL, VAULT_ADDRESS, WC_PROJECT_ID } from "../config";
 import type { VoucherDto } from "../net/api";
 
 declare global {
@@ -10,9 +10,15 @@ declare global {
   }
 }
 
+export type WalletKind = "injected" | "walletconnect";
+/** Whether the WalletConnect (mobile) option is available for this deploy. */
+export const MOBILE_WALLET_ENABLED = WC_PROJECT_ID !== "";
+
 let client: WalletClient | null = null;
 let account: Address | null = null;
 let provider: any = null; // the active EIP-1193 provider
+let providerKind: WalletKind | null = null;
+let wcProvider: any = null; // cached WalletConnect provider instance
 
 export function connectedAddress(): Address | null {
   return account;
@@ -20,6 +26,27 @@ export function connectedAddress(): Address | null {
 
 export function walletClient(): WalletClient | null {
   return client;
+}
+
+/** Lazily creates (and restores the session of) the WalletConnect provider. */
+async function initWalletConnect(): Promise<any> {
+  if (!WC_PROJECT_ID) throw new Error("Mobile wallet is not configured yet.");
+  if (wcProvider) return wcProvider;
+  const { EthereumProvider } = await import("@walletconnect/ethereum-provider");
+  wcProvider = await EthereumProvider.init({
+    projectId: WC_PROJECT_ID,
+    chains: [CHAIN_ID],
+    optionalChains: [CHAIN_ID],
+    showQrModal: true,
+    rpcMap: { [CHAIN_ID]: RPC_URL },
+    metadata: {
+      name: "MinerBlast",
+      description: "Explosive play-to-earn mining on Robinhood Chain",
+      url: window.location.origin,
+      icons: [`${window.location.origin}/favicon.png`],
+    },
+  });
+  return wcProvider;
 }
 
 const CHAIN_HEX = `0x${CHAIN_ID.toString(16)}`;
@@ -73,33 +100,54 @@ function watchAccountChanges() {
   });
 }
 
-export async function connectWallet(): Promise<Address> {
-  if (!window.ethereum) {
-    throw new Error("No wallet found. Install an EVM wallet (e.g. Rabby/MetaMask).");
+/** Connects a browser-extension wallet (default) or a mobile wallet via
+ *  WalletConnect (QR / deeplink). */
+export async function connectWallet(kind: WalletKind = "injected"): Promise<Address> {
+  if (kind === "walletconnect") {
+    const wc = await initWalletConnect();
+    if (!wc.accounts?.length) await wc.connect(); // opens the QR / deeplink modal
+    provider = wc;
+  } else {
+    if (!window.ethereum) {
+      throw new Error("No wallet found. Install an EVM wallet (e.g. MetaMask/Rabby) or use Mobile.");
+    }
+    provider = window.ethereum;
   }
-  provider = window.ethereum;
+  providerKind = kind;
   client = createWalletClient({ transport: custom(provider) });
   const [addr] = await client.requestAddresses();
   account = addr;
   await ensureChain(); // land on Robinhood Chain from the very start
   watchAccountChanges();
-  // update the site header's wallet chip
+  localStorage.setItem("mb.provider", kind);
   window.dispatchEvent(new CustomEvent("mb-wallet", { detail: addr }));
   return addr;
 }
 
 /**
  * Re-attaches the wallet after a page reload with a live session (JWT saved).
- * Uses eth_accounts (no popup); returns null if the site is not authorized.
- * Without this, claims/marketplace would fail with "wallet not connected"
- * after any reload.
+ * Restores whichever provider was last used (injected via eth_accounts, or a
+ * persisted WalletConnect session). Returns null if nothing is authorized.
  */
 export async function reconnectSilently(): Promise<Address | null> {
-  if (!window.ethereum) return null;
+  const last = (() => { try { return localStorage.getItem("mb.provider"); } catch { return null; } })();
   try {
+    if (last === "walletconnect" && WC_PROJECT_ID) {
+      const wc = await initWalletConnect();
+      if (!wc.accounts?.length) return null; // session expired
+      provider = wc;
+      providerKind = "walletconnect";
+      client = createWalletClient({ transport: custom(provider) });
+      account = wc.accounts[0] as Address;
+      watchAccountChanges();
+      window.dispatchEvent(new CustomEvent("mb-wallet", { detail: account }));
+      return account;
+    }
+    if (!window.ethereum) return null;
     const accounts: string[] = await window.ethereum.request({ method: "eth_accounts" });
     if (!accounts || accounts.length === 0) return null;
     provider = window.ethereum;
+    providerKind = "injected";
     client = createWalletClient({ transport: custom(provider) });
     account = accounts[0] as Address;
     watchAccountChanges();
@@ -108,6 +156,23 @@ export async function reconnectSilently(): Promise<Address | null> {
   } catch {
     return null;
   }
+}
+
+/** Tears down the active session (WalletConnect included) before a reload. */
+export async function disconnectWallet(): Promise<void> {
+  try {
+    if (providerKind === "walletconnect" && wcProvider?.disconnect) {
+      await wcProvider.disconnect();
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    localStorage.removeItem("mb.provider");
+  } catch {
+    /* ignore */
+  }
+  client = account = provider = providerKind = wcProvider = null;
 }
 
 /** Signs an arbitrary message with the connected wallet (personal_sign). */
