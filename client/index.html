@@ -31,6 +31,7 @@
 
       /* ---------- header ---------- */
       header {
+        position: relative; /* anchor for the absolutely-centered PLAY */
         display: flex; align-items: center; gap: 18px;
         padding: 10px 22px;
         background: linear-gradient(180deg, #1a2336, var(--panel));
@@ -59,15 +60,24 @@
       }
       nav a:hover, nav button:hover { border-color: var(--border); background: rgba(255,255,255,.05); }
       .btn-play {
-        flex: 0 0 auto; /* centered between the two flexible zones */
+        /* Pinned to the exact horizontal center of the screen, out of the
+           flex flow, so it never pushes the nav onto a second line. */
+        position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+        z-index: 20;
         font-family: inherit; font-weight: bold; letter-spacing: .5px;
         border-radius: 8px; cursor: pointer;
         background: linear-gradient(180deg, #ffb74d, var(--orange)) !important;
         color: #221400 !important; border: 2px solid #7a4a00 !important;
-        font-size: 16px !important; padding: 9px 30px !important;
+        font-size: 15px !important; padding: 8px 28px !important;
         box-shadow: 0 3px 0 #7a4a00;
       }
-      .btn-play:active { transform: translateY(2px); box-shadow: 0 1px 0 #7a4a00; }
+      .btn-play:active { transform: translate(-50%, -50%) translateY(2px); box-shadow: 0 1px 0 #7a4a00; }
+      /* On narrower screens the nav would reach the center, so drop PLAY back
+         into the normal flow (between logo and nav) to avoid any overlap. */
+      @media (max-width: 1360px) {
+        .btn-play { position: static; transform: none; }
+        .btn-play:active { transform: translateY(2px); }
+      }
       #wallet-chip {
         border: 2px solid var(--border); background: #101624;
         color: var(--muted); border-radius: 20px; padding: 8px 14px;
