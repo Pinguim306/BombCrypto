@@ -97,6 +97,20 @@ export class MiningScene extends Phaser.Scene {
     });
     this.claimBtn.onClick(() => this.onClaim());
 
+    // daily-streak entry point, with a pulsing badge when a claim is ready
+    const daily = makeButton(this, 585, 34, "Daily", {
+      width: 110, height: 36, color: 0x00695c, fontSize: "13px",
+    });
+    daily.onClick(() => this.scene.start("daily"));
+    api.dailyStatus().then((d) => {
+      if (!this.sys.settings.active || !d.canClaim) return;
+      const badge = this.add.circle(636, 18, 7, 0xff5252).setStrokeStyle(2, 0x0a0e18);
+      const ping = this.add.text(636, 18, "!", {
+        fontFamily: "monospace", fontSize: "11px", color: "#ffffff", fontStyle: "bold",
+      }).setOrigin(0.5);
+      this.tweens.add({ targets: [badge, ping], scale: 1.25, duration: 600, yoyo: true, repeat: -1 });
+    }).catch(() => {});
+
     // one click sends the whole team to the blocks — lives right on top of
     // the hero list so the connection is obvious
     const workAll = makeButton(this, 138, 104, "Mine all", {

@@ -114,6 +114,29 @@ export interface MinerRow {
   power: number;
 }
 
+export interface DailyStatusDto {
+  claimedToday: boolean;
+  streak: number; // consecutive days already claimed (0 if lapsed)
+  nextDay: number; // cycle day (1..7) the next claim lands on
+  hasHero: boolean;
+  canClaim: boolean;
+  rewards: number[]; // BLAST per cycle day
+  jackpotChance: number; // % chance of the day-7 jackpot
+  jackpotBlast: number; // jackpot bonus in BLAST
+}
+
+export interface DailyClaimDto {
+  claim: {
+    count: number;
+    baseBlast: number;
+    jackpot: boolean;
+    jackpotBlast: number;
+    totalBlast: number;
+    rewardMicro: number;
+  };
+  state: GameStateDto;
+}
+
 export const api = {
   nonce: (address: string) =>
     request<{ nonce: string }>("/auth/nonce", { method: "POST", body: JSON.stringify({ address }) }),
@@ -145,4 +168,6 @@ export const api = {
     }),
   voucher: () => request<VoucherDto>("/rewards/voucher", { method: "POST" }),
   topMiners: () => request<{ miners: MinerRow[] }>("/leaderboard/miners"),
+  dailyStatus: () => request<DailyStatusDto>("/game/daily"),
+  claimDaily: () => request<DailyClaimDto>("/game/daily/claim", { method: "POST" }),
 };

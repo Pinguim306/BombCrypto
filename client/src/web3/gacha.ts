@@ -410,6 +410,41 @@ export interface RevealedHero {
   rarity: number;
 }
 
+export interface RecentPull {
+  buyer: string;
+  heroId: bigint;
+  rarity: number;
+  block: bigint;
+}
+
+/**
+ * Recent hero pulls across all players, from the ChestOpened event — powers
+ * the live activity feed. Most recent first. Returns [] when the chain is not
+ * configured or the RPC can't serve log ranges (so the UI just hides).
+ */
+export async function recentPulls(limit = 20): Promise<RecentPull[]> {
+  if (!publicClient) return [];
+  try {
+    const logs = await publicClient.getLogs({
+      address: GACHA_ADDRESS,
+      event: CHEST_OPENED_EVENT[0],
+      fromBlock: 0n,
+      toBlock: "latest",
+    });
+    return logs
+      .map((l) => ({
+        buyer: l.args.buyer as string,
+        heroId: l.args.heroId as bigint,
+        rarity: Number(l.args.rarity),
+        block: l.blockNumber ?? 0n,
+      }))
+      .sort((a, b) => (b.block > a.block ? 1 : b.block < a.block ? -1 : 0))
+      .slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Opens a chest and waits for the transaction to confirm, then decodes the
  * ChestOpened event so the UI can reveal which hero was minted.

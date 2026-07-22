@@ -12,6 +12,16 @@ export class GameController {
     return this.game.state(req.player!);
   }
 
+  @Get("daily")
+  dailyStatus(@Req() req: AuthedRequest) {
+    return this.game.dailyStatus(req.player!);
+  }
+
+  @Post("daily/claim")
+  claimDaily(@Req() req: AuthedRequest) {
+    return this.game.claimDaily(req.player!);
+  }
+
   @Post("team/mode")
   setTeamMode(@Req() req: AuthedRequest, @Body() body: { mode?: string }) {
     if (body?.mode !== "work" && body?.mode !== "rest") {

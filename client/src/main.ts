@@ -10,6 +10,7 @@ import { ShopScene } from "./scenes/ShopScene";
 import { HeroesScene } from "./scenes/HeroesScene";
 import { LeaderboardScene } from "./scenes/LeaderboardScene";
 import { ReferralsScene } from "./scenes/ReferralsScene";
+import { DailyScene } from "./scenes/DailyScene";
 import { TOKEN_ADDRESS, captureReferralFromUrl } from "./config";
 
 // Store a ?ref=0x... referral link (first link wins) before anything else.
@@ -36,11 +37,11 @@ const game = new Phaser.Game({
     width: 800,
     height: 600,
   },
-  scene: [ConnectScene, MiningScene, ShopScene, MarketScene, HeroesScene, LeaderboardScene, ReferralsScene],
+  scene: [ConnectScene, MiningScene, ShopScene, MarketScene, HeroesScene, LeaderboardScene, ReferralsScene, DailyScene],
 });
 
 // Site header -> in-game navigation. Ignored until the player logs in.
-const GAME_SCENES = ["mining", "shop", "market", "heroes", "leaderboard", "referrals"];
+const GAME_SCENES = ["mining", "shop", "market", "heroes", "leaderboard", "referrals", "daily"];
 let navLock = false; // two nav clicks in one frame would leave two scenes active
 window.addEventListener("mb-nav", (e) => {
   if (navLock) return;

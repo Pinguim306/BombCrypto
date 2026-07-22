@@ -13,6 +13,14 @@ import {
 import { PersistenceService } from "../storage/persistence.service";
 import { ChainService, ChainHouse } from "./chain.service";
 import { AdventureTracker, STAGES, currentDay, runAdventure } from "./adventure";
+import {
+  StreakState,
+  STREAK_BLAST,
+  JACKPOT_CHANCE,
+  JACKPOT_BLAST,
+  claimedToday,
+  resolveDailyClaim,
+} from "./streak";
 import { MIN_CLAIM_BLAST, CLAIM_COOLDOWN_HOURS } from "../config";
 import { randomInt } from "node:crypto";
 
@@ -21,6 +29,8 @@ export interface PlayerState {
   mining: MiningState;
   houses: ChainHouse[];
   adventure: AdventureTracker;
+  /** daily login streak (undefined until the first claim) */
+  streak?: StreakState;
   /** last on-chain sync (ms) */
   syncedAt: number;
 }
@@ -241,6 +251,44 @@ export class GameService {
     } catch (err) {
       throw new BadRequestException((err as Error).message);
     }
+  }
+
+  /** Daily-streak status for the UI (no state change). */
+  async dailyStatus(address: string, now = Date.now()) {
+    const player = await this.getOrCreate(address);
+    const claimed = claimedToday(player.streak, now);
+    // days already claimed in the active cycle (0 once the streak has lapsed)
+    const streak = player.streak && player.streak.day >= currentDay(now) - 1 ? player.streak.count : 0;
+    // the cycle day the next claim lands on (rand=0 keeps it side-effect free)
+    const nextDay = claimed ? player.streak!.count : resolveDailyClaim(player.streak, now, 0).count;
+    return {
+      claimedToday: claimed,
+      streak,
+      nextDay,
+      hasHero: player.mining.heroes.length > 0,
+      canClaim: !claimed && player.mining.heroes.length > 0,
+      rewards: STREAK_BLAST,
+      jackpotChance: Math.round(JACKPOT_CHANCE * 100),
+      jackpotBlast: JACKPOT_BLAST,
+    };
+  }
+
+  /** Claims the daily-streak reward, crediting pending BLAST. */
+  async claimDaily(address: string, now = Date.now()) {
+    const player = await this.getOrCreate(address);
+    if (player.mining.heroes.length === 0) {
+      throw new BadRequestException("you need at least one hero to claim the daily reward");
+    }
+    if (claimedToday(player.streak, now)) {
+      throw new BadRequestException("daily reward already claimed today — come back tomorrow");
+    }
+    const rand = randomInt(1_000_000) / 1_000_000;
+    const claim = resolveDailyClaim(player.streak, now, rand);
+    advance(player.mining, now);
+    player.mining.pendingMicroBlast += claim.rewardMicro;
+    player.streak = { day: currentDay(now), count: claim.count };
+    this.persist(player);
+    return { claim, state: await this.state(address, now) };
   }
 
   /** Debits the pending balance when issuing a voucher. Returns the debited micro-BLAST. */

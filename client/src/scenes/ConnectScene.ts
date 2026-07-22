@@ -3,6 +3,7 @@ import { connectWallet, signIn, reconnectSilently, MOBILE_WALLET_ENABLED, type W
 import { hasToken, clearToken, tokenAddress } from "../net/api";
 import { registerPixelArt } from "../art/pixelart";
 import { drawPanel, makeButton } from "../art/ui";
+import { attachPullTicker } from "./pullTicker";
 
 /** Initial screen: connect the wallet and sign the SIWE login. */
 export class ConnectScene extends Phaser.Scene {
@@ -115,5 +116,10 @@ export class ConnectScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
       button.on("pointerdown", () => connect("injected"));
     }
+
+    // live activity ticker — recent hero pulls across all players (social proof)
+    attachPullTicker(this, width / 2, height * 0.92, 560, {
+      emptyText: "Be the first to pull a Legendary hero!",
+    });
   }
 }
