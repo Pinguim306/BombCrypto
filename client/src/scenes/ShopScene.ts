@@ -8,6 +8,7 @@ import { GACHA_ENABLED, MARKET_ENABLED } from "../config";
 import { registerPixelArt, RARITY_COLORS } from "../art/pixelart";
 import { drawPanel, drawRibbon, makeButton } from "../art/ui";
 import { sleep, shortError } from "../util";
+import { shareHeroPull } from "../share";
 
 const RARITY_NAMES = ["Common", "Rare", "S.Rare", "Epic", "Legend", "Mythic"];
 
@@ -142,7 +143,7 @@ export class ShopScene extends Phaser.Scene {
     dim.setInteractive(new Phaser.Geom.Rectangle(0, 0, 800, 600), Phaser.Geom.Rectangle.Contains);
     panel.add(dim);
 
-    const px = 220, py = 120, pw = 360, ph = 340;
+    const px = 220, py = 120, pw = 360, ph = 380; // room for the Share button
     panel.add(drawPanel(this, px, py, pw, ph, 0x141b2c));
     panel.add(drawRibbon(this, 400, py + 4, "CHEST OPENING", 230));
 
@@ -161,7 +162,17 @@ export class ShopScene extends Phaser.Scene {
     const closeBtn = makeButton(this, px + pw - 30, py + 28, "X", { width: 34, height: 30, color: 0x37474f });
     let closed = false;
     closeBtn.onClick(() => { closed = true; panel.destroy(); this.overlay = undefined; this.checkPendingChests(); });
-    panel.add([openBtn.container, closeBtn.container]);
+
+    // "Share your pull" — hidden until a hero is revealed; shares the best
+    // pull of the session (turns lucky drops into free marketing)
+    let best: { rarity: number; heroId: bigint } | null = null;
+    const shareBtn = makeButton(this, 400, py + 345, "Share", {
+      width: 200, height: 32, color: 0x1da1f2, icon: "spark", iconScale: 0.4, fontSize: "13px",
+    });
+    shareBtn.container.setVisible(false);
+    shareBtn.onClick(() => { if (best) shareHeroPull(best.rarity, best.heroId); });
+
+    panel.add([openBtn.container, closeBtn.container, shareBtn.container]);
     openBtn.setEnabled(false);
 
     const shake = () =>
@@ -281,6 +292,12 @@ export class ShopScene extends Phaser.Scene {
         info.setColor(color).setText(
           `${RARITY_NAMES[revealed.rarity].toUpperCase()} HERO #${revealed.heroId}!`
         );
+        // keep the best pull of the session for the share card
+        if (!best || revealed.rarity > best.rarity) {
+          best = { rarity: revealed.rarity, heroId: revealed.heroId };
+          shareBtn.setLabel(`Share ${RARITY_NAMES[revealed.rarity]}`);
+          shareBtn.container.setVisible(true);
+        }
         await sleep(2600);
         if (dead()) return;
         heroImg.destroy();
