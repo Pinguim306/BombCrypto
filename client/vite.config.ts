@@ -13,6 +13,7 @@ export default defineConfig({
         main: resolve(__dirname, "index.html"),
         whitepaper: resolve(__dirname, "whitepaper.html"),
         guide: resolve(__dirname, "guide.html"),
+        admin: resolve(__dirname, "admin.html"),
       },
     },
   },

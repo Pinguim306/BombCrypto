@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>MinerBlast — Vault Admin</title>
+  <link rel="stylesheet" href="/site.css" />
+  <style>
+    .admin-wrap { max-width: 680px; margin: 40px auto; padding: 0 16px; font-family: monospace; }
+    .card { background: #161d2e; border: 2px solid #2a3550; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    .card h2 { color: #eceff1; font-size: 16px; margin: 0 0 12px; }
+    .row { display: flex; justify-content: space-between; margin: 6px 0; color: #b0bec5; font-size: 14px; }
+    .row b { color: #ffca28; }
+    input { background: #101624; color: #eceff1; border: 1px solid #2a3550; border-radius: 6px; padding: 10px; width: 100%; box-sizing: border-box; font-family: monospace; font-size: 15px; }
+    button { background: #2e7d32; color: #fff; border: 0; border-radius: 8px; padding: 12px 18px; font-family: monospace; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
+    button.blue { background: #3949ab; }
+    button:disabled { opacity: .45; cursor: default; }
+    #status { color: #90a4ae; font-size: 13px; margin-top: 12px; word-break: break-all; }
+    #status.err { color: #ef9a9a; } #status.ok { color: #a5d6a7; }
+    .muted { color: #78909c; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="admin-wrap">
+    <h1 style="color:#eceff1;font-family:monospace">🔐 Vault Admin</h1>
+    <p class="muted">Funding panel for the MinerBlast reward vault. Every action must be
+    signed by the owner wallet — this page has no power by itself.</p>
+
+    <div class="card">
+      <h2>Status</h2>
+      <div class="row"><span>Connected wallet</span><b id="acct">—</b></div>
+      <div class="row"><span>Your BLAST balance</span><b id="bal">—</b></div>
+      <div class="row"><span>Vault BLAST balance</span><b id="vault">—</b></div>
+      <div class="row"><span>Current allowance → vault</span><b id="allow">—</b></div>
+      <button id="connect" class="blue">Connect wallet</button>
+    </div>
+
+    <div class="card">
+      <h2>Fund the vault</h2>
+      <label class="muted">Amount (BLAST)</label>
+      <input id="amount" value="60000000" inputmode="numeric" />
+      <button id="approve" disabled>1 · Approve</button>
+      <button id="fund" disabled>2 · Fund</button>
+      <div id="status"></div>
+    </div>
+  </div>
+  <script type="module" src="/src/admin.ts"></script>
+</body>
+</html>
