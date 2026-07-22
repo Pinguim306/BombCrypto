@@ -1,6 +1,10 @@
-export const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? "http://localhost:3000";
-export const CHAIN_ID = Number(import.meta.env.VITE_CHAIN_ID ?? 31337);
-export const RPC_URL = import.meta.env.VITE_RPC_URL ?? "";
+// Defaults are the public Robinhood Chain MAINNET parameters, so a deploy
+// with no env configured still targets the right network. Each deployment
+// (local dev, testnet beta) overrides via VITE_* env. `||` on purpose:
+// a present-but-empty env var must still fall back.
+export const SERVER_URL = (import.meta.env.VITE_SERVER_URL ?? "").trim() || "http://localhost:3000";
+export const CHAIN_ID = Number((import.meta.env.VITE_CHAIN_ID ?? "").trim() || 4663);
+export const RPC_URL = (import.meta.env.VITE_RPC_URL ?? "").trim() || "https://rpc.mainnet.chain.robinhood.com";
 
 const ZERO = "0x0000000000000000000000000000000000000000" as const;
 
