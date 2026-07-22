@@ -18,6 +18,8 @@ export class HeroesScene extends Phaser.Scene {
   }
 
   create() {
+    this.cards = []; // scene instances are reused across restarts
+    this.page = 0;
     registerPixelArt(this);
     this.add.tileSprite(0, 0, 800, 600, "cave").setOrigin(0).setAlpha(0.5);
 

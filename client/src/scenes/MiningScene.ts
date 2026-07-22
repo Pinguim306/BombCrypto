@@ -51,6 +51,19 @@ export class MiningScene extends Phaser.Scene {
   }
 
   create() {
+    // Scene instances are reused across restarts (header navigation), so
+    // every GameObject list must start empty — stale entries would point at
+    // destroyed objects and crash render() ("reading 'sys'").
+    this.blockSprites = [];
+    this.blockCracks = [];
+    this.blockBars = [];
+    this.heroRows = [];
+    this.stageButtons = [];
+    this.pageWidgets = [];
+    this.heroPanel = undefined;
+    this.state = undefined;
+    this.heroPage = 0;
+
     registerPixelArt(this);
     if (!this.anims.exists("boom")) {
       this.anims.create({
