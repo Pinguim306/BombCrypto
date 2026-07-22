@@ -12,6 +12,20 @@ const config: HardhatUserConfig = {
   paths: {
     sources: "./src",
   },
+  etherscan: {
+    // Blockscout ignores the key but the plugin requires a value
+    apiKey: { robinhoodMainnet: "blockscout", robinhoodTestnet: "blockscout" },
+    customChains: [
+      {
+        network: "robinhoodMainnet",
+        chainId: 4663,
+        urls: {
+          apiURL: "https://robinhoodchain.blockscout.com/api",
+          browserURL: "https://robinhoodchain.blockscout.com",
+        },
+      },
+    ],
+  },
   networks: {
     robinhoodTestnet: {
       url: process.env.ROBINHOOD_TESTNET_RPC ?? "https://rpc.testnet.chain.robinhood.com/rpc",
