@@ -1,0 +1,4 @@
+# Godot editor/import cache — regenerated on open/import
+.godot/
+# Web export output lives in client/public/godot (built artifact)
+export/

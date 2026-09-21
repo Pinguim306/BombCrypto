@@ -1,0 +1,222 @@
+{
+  "generatedFrom": "client/src/art/pixelart.ts",
+  "generator": "godot/tools/gen-sprites.mjs",
+  "sprites": {
+    "hero_0": {
+      "file": "hero_0.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "HERO_MAP"
+    },
+    "hero_1": {
+      "file": "hero_1.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "HERO_MAP"
+    },
+    "hero_2": {
+      "file": "hero_2.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "HERO_MAP"
+    },
+    "hero_3": {
+      "file": "hero_3.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "HERO_MAP"
+    },
+    "hero_4": {
+      "file": "hero_4.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "HERO_MAP"
+    },
+    "hero_5": {
+      "file": "hero_5.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "HERO_MAP"
+    },
+    "block_0": {
+      "file": "block_0.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "BLOCK_MAP"
+    },
+    "block_1": {
+      "file": "block_1.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "BLOCK_MAP"
+    },
+    "block_2": {
+      "file": "block_2.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "BLOCK_MAP"
+    },
+    "block_dead": {
+      "file": "block_dead.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "DEAD_BLOCK_MAP"
+    },
+    "block_dead2": {
+      "file": "block_dead2.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "DEAD_CRYSTAL_MAP"
+    },
+    "bomb": {
+      "file": "bomb.png",
+      "width": 28,
+      "height": 28,
+      "scale": 2,
+      "nativeWidth": 14,
+      "nativeHeight": 14,
+      "source": "BOMB_MAP"
+    },
+    "house": {
+      "file": "house.png",
+      "width": 28,
+      "height": 24,
+      "scale": 2,
+      "nativeWidth": 14,
+      "nativeHeight": 12,
+      "source": "HOUSE_MAP"
+    },
+    "spark": {
+      "file": "spark.png",
+      "width": 18,
+      "height": 18,
+      "scale": 2,
+      "nativeWidth": 9,
+      "nativeHeight": 9,
+      "source": "SPARK_MAP"
+    },
+    "chest": {
+      "file": "chest.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "CHEST_MAP"
+    },
+    "coin": {
+      "file": "coin.png",
+      "width": 36,
+      "height": 36,
+      "scale": 3,
+      "nativeWidth": 12,
+      "nativeHeight": 12,
+      "source": "COIN_MAP"
+    },
+    "eth": {
+      "file": "eth.png",
+      "width": 30,
+      "height": 30,
+      "scale": 3,
+      "nativeWidth": 10,
+      "nativeHeight": 10,
+      "source": "ETH_MAP"
+    },
+    "pick": {
+      "file": "pick.png",
+      "width": 30,
+      "height": 30,
+      "scale": 3,
+      "nativeWidth": 10,
+      "nativeHeight": 10,
+      "source": "PICK_MAP"
+    },
+    "crack_1": {
+      "file": "crack_1.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "CRACK_LIGHT_MAP"
+    },
+    "crack_2": {
+      "file": "crack_2.png",
+      "width": 64,
+      "height": 64,
+      "scale": 4,
+      "nativeWidth": 16,
+      "nativeHeight": 16,
+      "source": "CRACK_HEAVY_MAP"
+    },
+    "boom_0": {
+      "file": "boom_0.png",
+      "width": 21,
+      "height": 21,
+      "scale": 3,
+      "nativeWidth": 7,
+      "nativeHeight": 7,
+      "source": "BOOM_FRAMES[0]"
+    },
+    "boom_1": {
+      "file": "boom_1.png",
+      "width": 33,
+      "height": 33,
+      "scale": 3,
+      "nativeWidth": 11,
+      "nativeHeight": 11,
+      "source": "BOOM_FRAMES[1]"
+    },
+    "boom_2": {
+      "file": "boom_2.png",
+      "width": 45,
+      "height": 45,
+      "scale": 3,
+      "nativeWidth": 15,
+      "nativeHeight": 15,
+      "source": "BOOM_FRAMES[2]"
+    },
+    "cave": {
+      "file": "cave.png",
+      "width": 64,
+      "height": 64,
+      "scale": 2,
+      "nativeWidth": 32,
+      "nativeHeight": 32,
+      "source": "caveRows() seed 77"
+    }
+  }
+}
