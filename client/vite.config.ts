@@ -17,6 +17,9 @@ export default defineConfig({
         referrals: resolve(__dirname, "referrals.html"),
         migrate: resolve(__dirname, "migrate.html"),
         stats: resolve(__dirname, "stats.html"),
+        // Godot v2 host page (parallel to the Phaser client; engine + pck
+        // are served verbatim from public/godot, never bundled)
+        play2: resolve(__dirname, "play2.html"),
       },
     },
   },

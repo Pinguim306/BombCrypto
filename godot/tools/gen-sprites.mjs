@@ -451,3 +451,58 @@ for (const s of SPRITES) {
 }
 writeFileSync(join(OUT, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
 console.log(`\n${SPRITES.length} sprites → ${OUT}`);
+
+// ---------------------------------------------------------------- FX textures
+// Procedural helper textures for the Godot effects layer (particles, glows,
+// rings). Always regenerated — deterministic, so a re-run leaves git clean;
+// `--fx` is accepted for compatibility with the tool scripts.
+
+const FX_OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "assets", "fx");
+mkdirSync(FX_OUT, { recursive: true });
+
+/** Builds a W×H RGBA buffer from a per-pixel function returning [r, g, b, a] (0..255). */
+function pixels(W, H, fn) {
+  const px = Buffer.alloc(W * H * 4);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const [r, g, b, a] = fn(x, y);
+      const i = (y * W + x) * 4;
+      px[i] = r; px[i + 1] = g; px[i + 2] = b; px[i + 3] = a;
+    }
+  }
+  return px;
+}
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+/** Soft radial white blob: alpha = (1 - d/r)^power. */
+const radial = (size, power) => pixels(size, size, (x, y) => {
+  const c = (size - 1) / 2;
+  const d = Math.hypot(x - c, y - c) / (size / 2);
+  return [255, 255, 255, Math.round(255 * Math.pow(clamp01(1 - d), power))];
+});
+
+const FX = [
+  ["px_1", 1, 1, () => [255, 255, 255, 255]],
+  ["debris_4", 4, 4, (x, y) => (x === 3 && y === 3 ? [200, 200, 200, 255] : [255, 255, 255, 255])],
+  ["dust_8", 8, 8, (x, y) => [255, 255, 255,
+    Math.round(255 * Math.pow(clamp01(1 - Math.hypot(x - 3.5, y - 3.5) / 4), 1.5))]],
+  // ~2 px soft ring at radius 29 (of 32) — scaled up by the explosion tween
+  ["ring_64", 64, 64, (x, y) => [255, 255, 255,
+    Math.round(255 * clamp01(1 - Math.abs(Math.hypot(x - 31.5, y - 31.5) - 29) / 1.5))]],
+];
+for (const [name, W, H, fn] of FX) {
+  writeFileSync(join(FX_OUT, `${name}.png`), encodePng(W, H, pixels(W, H, fn)));
+}
+writeFileSync(join(FX_OUT, "glow_64.png"), encodePng(64, 64, radial(64, 1.8)));
+writeFileSync(join(FX_OUT, "glow_128.png"), encodePng(128, 128, radial(128, 1.8)));
+{
+  // native-size coin for particle bursts
+  const { W, H, px } = render(COIN_MAP, { K: 0x8d6a10, G: 0xffca28, g: 0xf9a825, H: 0xfff59d, B: 0x6d4c00 }, 1);
+  writeFileSync(join(FX_OUT, "coin_small.png"), encodePng(W, H, px));
+}
+{
+  // "z" glyph for resting heroes (replaces the ⛏/⌂-style text glyphs)
+  const ZZZ = ["ZZZZZ..", "....Z..", "...Z...", "..Z....", ".Z.....", "ZZZZZ..", "......."];
+  const { W, H, px } = render(ZZZ, { Z: 0x90a4ae }, 1);
+  writeFileSync(join(FX_OUT, "zzz.png"), encodePng(W, H, px));
+}
+console.log(`8 fx textures → ${FX_OUT}`);

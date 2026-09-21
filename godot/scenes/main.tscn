@@ -1,0 +1,66 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/ui/net_banner.gd" id="2_net"]
+
+[node name="Main" type="Node"]
+script = ExtResource("1_main")
+
+[node name="Screens" type="Node" parent="."]
+
+[node name="Waiting" type="Control" parent="Screens"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Label" type="Label" parent="Screens/Waiting"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.565, 0.643, 0.682, 1)
+theme_override_font_sizes/font_size = 15
+text = "connect your wallet above to start mining"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Loader" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="Dim" type="ColorRect" parent="Loader"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.0627, 0.0784, 0.1216, 1)
+
+[node name="Label" type="Label" parent="Loader"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.565, 0.643, 0.682, 1)
+theme_override_font_sizes/font_size = 15
+text = "loading the mine…"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Overlay" type="CanvasLayer" parent="."]
+layer = 30
+
+[node name="NetBanner" type="Control" parent="Overlay"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 800.0
+offset_bottom = 22.0
+mouse_filter = 2
+script = ExtResource("2_net")

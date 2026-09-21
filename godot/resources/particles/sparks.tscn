@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/fx/px_1.png" id="1_px"]
+
+[sub_resource type="Gradient" id="Gradient_sparks"]
+offsets = PackedFloat32Array(0, 0.6, 1)
+colors = PackedColorArray(1, 0.976, 0.769, 1, 1, 0.655, 0.149, 1, 1, 0.655, 0.149, 0)
+
+[node name="Sparks" type="CPUParticles2D"]
+emitting = false
+amount = 14
+lifetime = 0.35
+one_shot = true
+explosiveness = 1.0
+texture = ExtResource("1_px")
+spread = 180.0
+gravity = Vector2(0, 300)
+initial_velocity_min = 200.0
+initial_velocity_max = 420.0
+scale_amount_min = 2.0
+scale_amount_max = 3.0
+color_ramp = SubResource("Gradient_sparks")

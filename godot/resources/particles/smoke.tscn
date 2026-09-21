@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/fx/dust_8.png" id="1_dust"]
+
+[sub_resource type="Gradient" id="Gradient_smoke"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.565, 0.643, 0.682, 0.35, 0.565, 0.643, 0.682, 0)
+
+[node name="Smoke" type="CPUParticles2D"]
+emitting = false
+amount = 6
+lifetime = 0.9
+one_shot = true
+explosiveness = 0.8
+texture = ExtResource("1_dust")
+direction = Vector2(0, -1)
+spread = 40.0
+gravity = Vector2(0, -60)
+initial_velocity_min = 20.0
+initial_velocity_max = 60.0
+scale_amount_min = 2.0
+scale_amount_max = 4.0
+color_ramp = SubResource("Gradient_smoke")

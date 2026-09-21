@@ -1,0 +1,5 @@
+# Binary assets — never diff/merge or normalise line endings
+*.png binary
+*.wasm binary
+*.pck binary
+*.ttf binary
