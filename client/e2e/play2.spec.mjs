@@ -82,6 +82,15 @@ function initScript({ fixture, loggedIn }) {
   window.__mbTestOverrides = {
     apiState: async () => fixture,
     apiSetTeamMode: async () => ({ ...fixture, changed: 2 }),
+    // GameState also polls the daily streak and the host calls reconnect():
+    // fake both so no request ever reaches the (absent) game server
+    apiDailyStatus: async () => ({ claimedToday: false, streak: 0, nextDay: 1, hasHero: true, canClaim: true,
+      rewards: [2000, 3000, 4000, 6000, 8000, 12000, 20000], jackpotChance: 25, jackpotBlast: 40000 }),
+    reconnect: async () => ({
+      walletAddress: loggedIn ? "0x1111111111111111111111111111111111111111" : null,
+      tokenAddress: loggedIn ? "0x1111111111111111111111111111111111111111" : null,
+      loggedIn, mismatch: false,
+    }),
     sessionJson: () =>
       JSON.stringify({
         hasToken: loggedIn,
@@ -261,7 +270,7 @@ async function main() {
       const stateResults = calls.results.filter((r) => r.method === "apiState");
       assert(stateResults.length >= 2, `A: apiState callbacks fired ${stateResults.length} times for ${stateCalls} invokes`);
       const bad = stateResults.find((r) => !r.ok);
-      assert(!bad, `A: apiState callback not ok: ${JSON.stringify(bad?.env).slice(0, 200)}`);
+      assert(!bad, `A: apiState callback not ok: ${JSON.stringify(bad?.env ?? bad ?? null).slice(0, 300)}\n  all results: ${JSON.stringify(calls.results.map((r) => [r.method, r.ok, r.env?.code ?? "", (r.env?.error ?? "").slice(0, 80)]))}`);
       console.log(`A: ${stateCalls} apiState invokes, ${stateResults.length} ok callbacks`);
 
       // (d) Mine-all button centre (138,104) in the 800×600 layout

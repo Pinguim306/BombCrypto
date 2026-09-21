@@ -7,6 +7,9 @@ extends Node
 signal host_event(ev: Dictionary)
 
 var impl: BackendBase
+## Page link kept next to a MockBackend on web (?mock=1) so the host still
+## gets ready()/nav()/openExplorer(); null when the mock runs without a host.
+var _host: WebBackend = null
 ## True when Mock was picked on a real web build WITHOUT the host asking for
 ## it (window.mb missing) — main.gd shows a loud warning so it never ships silently.
 var mock_fallback_on_web := false
@@ -14,14 +17,19 @@ var mock_fallback_on_web := false
 
 func _ready() -> void:
 	var host_cfg: Dictionary = {}
-	if Config.is_web and not Config.mock_forced and WebBackend.available():
+	if Config.is_web and WebBackend.available():
 		var wb := WebBackend.new()
 		wb.name = "WebBackend"
-		add_child(wb)
-		host_cfg = wb.config()
-		if bool(host_cfg.get("mock", false)):
-			wb.queue_free()          # host asked for demo data (?mock=1)
+		host_cfg = wb.config()   # readable before entering the tree
+		var host_mock := bool(host_cfg.get("mock", false))
+		if host_mock or Config.mock_forced:
+			# demo data (?mock=1): keep the page link for ready()/nav()/openExplorer()
+			# only — host session/visibility events must not fight the mock
+			wb.attach_listener = false
+			_host = wb
+			add_child(wb)
 		else:
+			add_child(wb)
 			impl = wb
 	if impl == null:
 		var mb := MockBackend.new()
@@ -29,10 +37,12 @@ func _ready() -> void:
 		add_child(mb)
 		mb.set_scenario(Config.scenario)
 		impl = mb
-		mock_fallback_on_web = Config.is_web and not Config.mock_forced \
-			and not bool(host_cfg.get("mock", false))
+		mock_fallback_on_web = Config.is_web and _host == null and not Config.mock_forced
 		if mock_fallback_on_web:
 			push_error("window.mb missing on web: falling back to the MOCK backend (demo data)")
+	if Config.is_web:
+		print("Backend: transport=", "web" if impl is WebBackend else "mock",
+			" host_link=", _host != null, " host_mock=", host_cfg.get("mock", false))
 	impl.host_event.connect(func(ev: Dictionary) -> void: host_event.emit(ev))
 
 
@@ -83,10 +93,10 @@ func session() -> Dictionary:
 	return impl.session()
 
 func notify_ready() -> void:
-	impl.notify_ready()
+	(_host if _host != null else impl).notify_ready()
 
 func nav(target: String) -> void:
-	impl.nav(target)
+	(_host if _host != null else impl).nav(target)
 
 func open_explorer(hash: String) -> void:
-	impl.open_explorer(hash)
+	(_host if _host != null else impl).open_explorer(hash)

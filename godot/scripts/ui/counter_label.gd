@@ -8,8 +8,10 @@ var _tw: Tween
 
 
 func _ready() -> void:
-	pivot_offset = size / 2.0
-	resized.connect(func() -> void: pivot_offset = size / 2.0)
+	# left-anchored pivot: a punch grows the number to the right, never over
+	# the pill icon on its left
+	pivot_offset = Vector2(0, size.y / 2.0)
+	resized.connect(func() -> void: pivot_offset = Vector2(0, size.y / 2.0))
 
 
 func set_value(v: float, fmt: Callable, seconds := 0.6, punch := true) -> void:

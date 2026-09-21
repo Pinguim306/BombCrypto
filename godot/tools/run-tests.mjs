@@ -58,13 +58,18 @@ const godot = (argv) => {
   }
 }
 
-// 3. smoke test (optional)
-if (existsSync(join(GODOT_DIR, "tests", "smoke", "smoke_mining.gd"))) {
-  const { status, out, errors } = godot(["-s", "res://tests/smoke/smoke_mining.gd", "--", "--no-fx", "--scenario=default"]);
-  const tail = out.trim().split(/\r?\n/).slice(-15).join("\n");
-  console.log(`\nsmoke:\n${tail}`);
-  if (status !== 0 || errors.length) {
-    console.error("smoke test FAILED");
+// 3. smoke tests — run as SCENES (positional path) so autoloads + MockBackend exist
+const SMOKES = [
+  ["res://tests/smoke/smoke_mining.tscn", ["--", "--no-fx", "--scenario=default"]],
+  ["res://tests/smoke/smoke_fx.tscn", []],
+];
+for (const [scene, extra] of SMOKES) {
+  if (!existsSync(join(GODOT_DIR, scene.replace("res://", "")))) continue;
+  const { status, out, errors } = godot([scene, ...extra]);
+  const tail = out.trim().split(/\r?\n/).slice(-12).join("\n");
+  console.log(`\n${scene}:\n${tail}`);
+  if (status !== 0 || errors.length || !/\bOK\b/.test(out)) {
+    console.error(`smoke FAILED: ${scene}`);
     process.exit(1);
   }
 }

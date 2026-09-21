@@ -1,0 +1,51 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/mining/block_cell.gd" id="1_cell"]
+[ext_resource type="Script" path="res://scripts/mining/hp_bar.gd" id="2_hpbar"]
+[ext_resource type="Texture2D" path="res://assets/sprites/block_0.png" id="3_block"]
+[ext_resource type="Texture2D" path="res://assets/sprites/crack_1.png" id="4_crack"]
+[ext_resource type="Texture2D" path="res://assets/fx/glow_64.png" id="5_glow"]
+[ext_resource type="Texture2D" path="res://assets/fx/px_1.png" id="6_px"]
+[ext_resource type="Texture2D" path="res://assets/sprites/block_dead.png" id="7_dead"]
+[ext_resource type="PackedScene" path="res://resources/particles/debris.tscn" id="8_debris"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_add"]
+blend_mode = 1
+
+[node name="BlockCell" type="Node2D"]
+script = ExtResource("1_cell")
+
+[node name="Pivot" type="Node2D" parent="."]
+position = Vector2(29, 29)
+
+[node name="Body" type="Sprite2D" parent="Pivot"]
+scale = Vector2(0.90625, 0.90625)
+texture = ExtResource("3_block")
+
+[node name="Crack" type="Sprite2D" parent="Pivot"]
+visible = false
+scale = Vector2(0.90625, 0.90625)
+texture = ExtResource("4_crack")
+
+[node name="OreGlow" type="Sprite2D" parent="Pivot"]
+modulate = Color(1, 0.792, 0.157, 0)
+material = SubResource("CanvasItemMaterial_add")
+scale = Vector2(1.1, 1.1)
+texture = ExtResource("5_glow")
+
+[node name="Flash" type="Sprite2D" parent="Pivot"]
+modulate = Color(1, 1, 1, 0)
+scale = Vector2(58, 58)
+texture = ExtResource("6_px")
+
+[node name="Dead" type="Sprite2D" parent="Pivot"]
+visible = false
+scale = Vector2(0.90625, 0.90625)
+texture = ExtResource("7_dead")
+
+[node name="HpBar" type="Node2D" parent="."]
+position = Vector2(0, 52)
+script = ExtResource("2_hpbar")
+
+[node name="Debris" parent="." instance=ExtResource("8_debris")]
+position = Vector2(29, 29)

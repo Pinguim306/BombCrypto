@@ -15,6 +15,7 @@ var _hitstop_until_ms := 0
 var _floats: Array[Label] = []
 var _toast_layer: CanvasLayer
 var _toast: Label = null
+var _toast_tw: Tween = null
 
 
 func _ready() -> void:
@@ -69,14 +70,14 @@ func flash_light(pos: Vector2, color: Color, energy: float, seconds: float) -> v
 	light.global_position = pos
 	light.color = color
 	light.energy = energy * Config.juice_scale()
-	var tw := create_tween()
+	var tw := light.create_tween()   # bound to the light node
 	tw.tween_property(light, "energy", 0.0, seconds).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 
 
 ## Quick scale pop on any Node2D/Control (both expose `scale`).
 func punch_scale(node: CanvasItem, amount := 0.12, seconds := 0.18) -> Tween:
 	var base: Vector2 = node.get("scale")
-	var tw := create_tween()
+	var tw := node.create_tween()   # bound to the node: dies with it
 	tw.tween_property(node, "scale", base * (1.0 + amount * Config.juice_scale()), seconds * 0.35) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(node, "scale", base, seconds * 0.65).set_trans(Tween.TRANS_SINE)
@@ -102,7 +103,7 @@ func float_text(layer: Node2D, pos: Vector2, text: String, color: Color) -> void
 	layer.add_child(l)
 	l.position = pos - Vector2(l.size.x * 0.5, 10.0)
 	_floats.append(l)
-	var tw := create_tween()
+	var tw := l.create_tween()   # bound to the label: freeing it kills the tween
 	tw.set_parallel(true)
 	tw.tween_property(l, "position:y", pos.y - 40.0, 0.85).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_property(l, "modulate:a", 0.0, 0.5).set_delay(0.35)
@@ -114,7 +115,7 @@ func float_text(layer: Node2D, pos: Vector2, text: String, color: Color) -> void
 
 ## Tweens a number and formats it into a Label via `fmt(value: float) -> String`.
 func count_to(label: Label, from: float, to: float, seconds: float, fmt: Callable) -> Tween:
-	var tw := create_tween()
+	var tw := label.create_tween()   # bound to the label
 	tw.tween_method(func(v: float) -> void:
 		if is_instance_valid(label):
 			label.text = str(fmt.call(v)), from, to, seconds) \
@@ -136,6 +137,10 @@ func stagger(nodes: Array, fn: Callable, step := 0.04) -> void:
 
 ## Top-centre banner text ("NEW VEIN DISCOVERED"); a new toast replaces the old one.
 func toast(text: String, seconds := 3.0) -> void:
+	# kill the previous tween BEFORE freeing its label, otherwise its
+	# callback would run against a freed capture
+	if _toast_tw != null and _toast_tw.is_valid():
+		_toast_tw.kill()
 	if is_instance_valid(_toast):
 		_toast.queue_free()
 	var l := Label.new()
@@ -151,7 +156,8 @@ func toast(text: String, seconds := 3.0) -> void:
 	l.modulate.a = 0.0
 	_toast_layer.add_child(l)
 	_toast = l
-	var tw := create_tween()
+	var tw := l.create_tween()   # bound to the label: dies with it
+	_toast_tw = tw
 	tw.tween_property(l, "modulate:a", 1.0, 0.2)
 	tw.tween_property(l, "position:y", 64.0, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_interval(seconds)

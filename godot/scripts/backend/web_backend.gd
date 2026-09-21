@@ -15,6 +15,9 @@ var _cb: JavaScriptObject
 var _listener: JavaScriptObject
 var _pending: Dictionary = {}      # req_id: String -> Pending
 var _seq := 0
+## False when this instance is only a host link for ready()/nav()/openExplorer()
+## next to a MockBackend — host session/visibility events must not reach the mock.
+var attach_listener := true
 
 
 class Pending extends RefCounted:
@@ -25,16 +28,24 @@ class Pending extends RefCounted:
 static func available() -> bool:
 	if not OS.has_feature("web"):
 		return false
+	# eval() hands JS booleans/numbers back as int/float (not bool), and
+	# `int == bool` is an invalid comparison in GDScript — coerce explicitly.
 	var r: Variant = JavaScriptBridge.eval(
-		"typeof window.mb === 'object' && window.mb !== null && window.mb.version === 1", true)
-	return r == true
+		"(typeof window.mb === 'object' && window.mb !== null && window.mb.version === 1) ? 1 : 0", true)
+	return r != null and bool(r)
+
+
+func _init() -> void:
+	# usable before entering the tree, so Backend can read config() first
+	if OS.has_feature("web"):
+		_mb = JavaScriptBridge.get_interface("mb")
+		_cb = JavaScriptBridge.create_callback(_on_result)
+		_listener = JavaScriptBridge.create_callback(_on_host_event)
 
 
 func _ready() -> void:
-	_mb = JavaScriptBridge.get_interface("mb")
-	_cb = JavaScriptBridge.create_callback(_on_result)
-	_listener = JavaScriptBridge.create_callback(_on_host_event)
-	_mb.setListener(_listener)   # the host replays the latest {"type":"session"} event
+	if attach_listener and _mb != null:
+		_mb.setListener(_listener)   # the host replays the latest {"type":"session"} event
 
 
 func _invoke(method: String, args: Dictionary = {}, timeout_ms: int = Config.REQUEST_TIMEOUT_MS) -> Envelope:

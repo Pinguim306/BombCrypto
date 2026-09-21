@@ -57,7 +57,8 @@ const bridgeOpts: BridgeOptions = {
   host: {
     onReady() {
       loader.hidden = true;
-      if (!isLoggedIn()) showOverlay();
+      // demo data (?mock=1) has no wallet session to ask for
+      if (!mock && !isLoggedIn()) showOverlay();
     },
     showLogin: showOverlay,
   },
