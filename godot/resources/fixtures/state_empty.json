@@ -1,0 +1,79 @@
+{
+  "pendingBlast": "0.000000",
+  "mapsCleared": 0,
+  "chainSync": false,
+  "claimRules": {
+    "minBlast": 30000,
+    "cooldownHours": 24
+  },
+  "adventure": {
+    "attemptsToday": 0,
+    "stages": [
+      {
+        "id": 0,
+        "name": "Shallow Cavern",
+        "staminaCost": 8,
+        "minRarity": 0,
+        "rewardBlast": "9.38"
+      },
+      {
+        "id": 1,
+        "name": "Deep Mine",
+        "staminaCost": 14,
+        "minRarity": 1,
+        "rewardBlast": "26.25"
+      },
+      {
+        "id": 2,
+        "name": "Volcanic Core",
+        "staminaCost": 22,
+        "minRarity": 3,
+        "rewardBlast": "67.50"
+      }
+    ]
+  },
+  "blocks": [
+    { "hp": 51, "maxHp": 51 },
+    { "hp": 22, "maxHp": 22 },
+    { "hp": 69, "maxHp": 69 },
+    { "hp": 24, "maxHp": 24 },
+    { "hp": 36, "maxHp": 36 },
+    { "hp": 22, "maxHp": 22 },
+    { "hp": 69, "maxHp": 69 },
+    { "hp": 85, "maxHp": 85 },
+    { "hp": 40, "maxHp": 40 },
+    { "hp": 40, "maxHp": 40 },
+    { "hp": 44, "maxHp": 44 },
+    { "hp": 20, "maxHp": 20 },
+    { "hp": 62, "maxHp": 62 },
+    { "hp": 113, "maxHp": 113 },
+    { "hp": 41, "maxHp": 41 },
+    { "hp": 31, "maxHp": 31 },
+    { "hp": 50, "maxHp": 50 },
+    { "hp": 34, "maxHp": 34 },
+    { "hp": 74, "maxHp": 74 },
+    { "hp": 81, "maxHp": 81 },
+    { "hp": 37, "maxHp": 37 },
+    { "hp": 31, "maxHp": 31 },
+    { "hp": 45, "maxHp": 45 },
+    { "hp": 33, "maxHp": 33 },
+    { "hp": 37, "maxHp": 37 },
+    { "hp": 84, "maxHp": 84 },
+    { "hp": 64, "maxHp": 64 },
+    { "hp": 77, "maxHp": 77 },
+    { "hp": 49, "maxHp": 49 },
+    { "hp": 78, "maxHp": 78 },
+    { "hp": 88, "maxHp": 88 },
+    { "hp": 52, "maxHp": 52 },
+    { "hp": 36, "maxHp": 36 },
+    { "hp": 63, "maxHp": 63 },
+    { "hp": 28, "maxHp": 28 },
+    { "hp": 36, "maxHp": 36 },
+    { "hp": 31, "maxHp": 31 },
+    { "hp": 56, "maxHp": 56 },
+    { "hp": 109, "maxHp": 109 },
+    { "hp": 80, "maxHp": 80 }
+  ],
+  "houses": [],
+  "heroes": []
+}

@@ -1,0 +1,121 @@
+{
+  "pendingBlast": "2310.125000",
+  "mapsCleared": 7,
+  "chainSync": false,
+  "claimRules": {
+    "minBlast": 30000,
+    "cooldownHours": 24
+  },
+  "adventure": {
+    "attemptsToday": 0,
+    "stages": [
+      {
+        "id": 0,
+        "name": "Shallow Cavern",
+        "staminaCost": 8,
+        "minRarity": 0,
+        "rewardBlast": "9.38"
+      },
+      {
+        "id": 1,
+        "name": "Deep Mine",
+        "staminaCost": 14,
+        "minRarity": 1,
+        "rewardBlast": "26.25"
+      },
+      {
+        "id": 2,
+        "name": "Volcanic Core",
+        "staminaCost": 22,
+        "minRarity": 3,
+        "rewardBlast": "67.50"
+      }
+    ]
+  },
+  "blocks": [
+    { "hp": 0, "maxHp": 33 },
+    { "hp": 0, "maxHp": 31 },
+    { "hp": 0, "maxHp": 46 },
+    { "hp": 0, "maxHp": 63 },
+    { "hp": 0, "maxHp": 43 },
+    { "hp": 0, "maxHp": 30 },
+    { "hp": 0, "maxHp": 63 },
+    { "hp": 0, "maxHp": 47 },
+    { "hp": 0, "maxHp": 36 },
+    { "hp": 0, "maxHp": 52 },
+    { "hp": 0, "maxHp": 26 },
+    { "hp": 0, "maxHp": 33 },
+    { "hp": 0, "maxHp": 40 },
+    { "hp": 0, "maxHp": 85 },
+    { "hp": 0, "maxHp": 73 },
+    { "hp": 0, "maxHp": 29 },
+    { "hp": 0, "maxHp": 29 },
+    { "hp": 0, "maxHp": 67 },
+    { "hp": 0, "maxHp": 47 },
+    { "hp": 0, "maxHp": 42 },
+    { "hp": 0, "maxHp": 45 },
+    { "hp": 0, "maxHp": 113 },
+    { "hp": 0, "maxHp": 55 },
+    { "hp": 0, "maxHp": 21 },
+    { "hp": 0, "maxHp": 41 },
+    { "hp": 0, "maxHp": 43 },
+    { "hp": 0, "maxHp": 26 },
+    { "hp": 0, "maxHp": 83 },
+    { "hp": 0, "maxHp": 20 },
+    { "hp": 0, "maxHp": 26 },
+    { "hp": 0, "maxHp": 80 },
+    { "hp": 0, "maxHp": 49 },
+    { "hp": 0, "maxHp": 47 },
+    { "hp": 0, "maxHp": 97 },
+    { "hp": 0, "maxHp": 20 },
+    { "hp": 0, "maxHp": 42 },
+    { "hp": 0, "maxHp": 78 },
+    { "hp": 0, "maxHp": 29 },
+    { "hp": 0, "maxHp": 34 },
+    { "hp": 5, "maxHp": 59 }
+  ],
+  "houses": [
+    {
+      "id": "dev-house",
+      "rarity": 0,
+      "capacity": 2,
+      "regenBoostBps": 2000,
+      "occupants": 1
+    }
+  ],
+  "heroes": [
+    {
+      "id": "chain-12",
+      "rarity": 0,
+      "power": 14,
+      "speed": 17,
+      "stamina": 26,
+      "staminaMax": 30,
+      "mode": "work",
+      "houseId": null,
+      "bombIntervalMs": 3419
+    },
+    {
+      "id": "chain-27",
+      "rarity": 1,
+      "power": 31,
+      "speed": 28,
+      "stamina": 55,
+      "staminaMax": 60,
+      "mode": "work",
+      "houseId": "dev-house",
+      "bombIntervalMs": 3125
+    },
+    {
+      "id": "chain-41",
+      "rarity": 3,
+      "power": 41,
+      "speed": 39,
+      "stamina": 47,
+      "staminaMax": 50,
+      "mode": "work",
+      "houseId": null,
+      "bombIntervalMs": 2878
+    }
+  ]
+}

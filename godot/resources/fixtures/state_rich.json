@@ -1,0 +1,194 @@
+{
+  "pendingBlast": "8421.500000",
+  "mapsCleared": 42,
+  "chainSync": false,
+  "claimRules": {
+    "minBlast": 30000,
+    "cooldownHours": 24
+  },
+  "adventure": {
+    "attemptsToday": 5,
+    "stages": [
+      {
+        "id": 0,
+        "name": "Shallow Cavern",
+        "staminaCost": 8,
+        "minRarity": 0,
+        "rewardBlast": "9.38"
+      },
+      {
+        "id": 1,
+        "name": "Deep Mine",
+        "staminaCost": 14,
+        "minRarity": 1,
+        "rewardBlast": "26.25"
+      },
+      {
+        "id": 2,
+        "name": "Volcanic Core",
+        "staminaCost": 22,
+        "minRarity": 3,
+        "rewardBlast": "67.50"
+      }
+    ]
+  },
+  "blocks": [
+    { "hp": 30, "maxHp": 30 },
+    { "hp": 21, "maxHp": 21 },
+    { "hp": 20, "maxHp": 20 },
+    { "hp": 30, "maxHp": 30 },
+    { "hp": 46, "maxHp": 46 },
+    { "hp": 80, "maxHp": 80 },
+    { "hp": 24, "maxHp": 24 },
+    { "hp": 30, "maxHp": 30 },
+    { "hp": 38, "maxHp": 38 },
+    { "hp": 39, "maxHp": 39 },
+    { "hp": 39, "maxHp": 39 },
+    { "hp": 23, "maxHp": 23 },
+    { "hp": 66, "maxHp": 66 },
+    { "hp": 29, "maxHp": 29 },
+    { "hp": 21, "maxHp": 21 },
+    { "hp": 47, "maxHp": 47 },
+    { "hp": 41, "maxHp": 41 },
+    { "hp": 30, "maxHp": 30 },
+    { "hp": 41, "maxHp": 41 },
+    { "hp": 35, "maxHp": 35 },
+    { "hp": 25, "maxHp": 25 },
+    { "hp": 23, "maxHp": 23 },
+    { "hp": 27, "maxHp": 27 },
+    { "hp": 93, "maxHp": 93 },
+    { "hp": 42, "maxHp": 42 },
+    { "hp": 23, "maxHp": 23 },
+    { "hp": 47, "maxHp": 47 },
+    { "hp": 112, "maxHp": 112 },
+    { "hp": 31, "maxHp": 31 },
+    { "hp": 43, "maxHp": 43 },
+    { "hp": 27, "maxHp": 27 },
+    { "hp": 40, "maxHp": 40 },
+    { "hp": 88, "maxHp": 88 },
+    { "hp": 32, "maxHp": 32 },
+    { "hp": 86, "maxHp": 86 },
+    { "hp": 78, "maxHp": 78 },
+    { "hp": 86, "maxHp": 86 },
+    { "hp": 43, "maxHp": 43 },
+    { "hp": 45, "maxHp": 45 },
+    { "hp": 39, "maxHp": 39 }
+  ],
+  "houses": [
+    {
+      "id": "dev-house",
+      "rarity": 0,
+      "capacity": 2,
+      "regenBoostBps": 2000,
+      "occupants": 2
+    },
+    {
+      "id": "chain-house-3",
+      "rarity": 2,
+      "capacity": 3,
+      "regenBoostBps": 3500,
+      "occupants": 1
+    }
+  ],
+  "heroes": [
+    {
+      "id": "chain-3",
+      "rarity": 0,
+      "power": 12,
+      "speed": 11,
+      "stamina": 25,
+      "staminaMax": 28,
+      "mode": "work",
+      "houseId": "dev-house",
+      "bombIntervalMs": 3604
+    },
+    {
+      "id": "chain-8",
+      "rarity": 0,
+      "power": 18,
+      "speed": 15,
+      "stamina": 9,
+      "staminaMax": 34,
+      "mode": "rest",
+      "houseId": "dev-house",
+      "bombIntervalMs": 3478
+    },
+    {
+      "id": "chain-15",
+      "rarity": 1,
+      "power": 27,
+      "speed": 33,
+      "stamina": 51,
+      "staminaMax": 58,
+      "mode": "work",
+      "houseId": null,
+      "bombIntervalMs": 3008
+    },
+    {
+      "id": "chain-21",
+      "rarity": 1,
+      "power": 34,
+      "speed": 26,
+      "stamina": 0,
+      "staminaMax": 52,
+      "mode": "rest",
+      "houseId": null,
+      "bombIntervalMs": 3175
+    },
+    {
+      "id": "chain-30",
+      "rarity": 2,
+      "power": 45,
+      "speed": 41,
+      "stamina": 70,
+      "staminaMax": 80,
+      "mode": "work",
+      "houseId": null,
+      "bombIntervalMs": 2837
+    },
+    {
+      "id": "chain-34",
+      "rarity": 2,
+      "power": 48,
+      "speed": 44,
+      "stamina": 61,
+      "staminaMax": 86,
+      "mode": "work",
+      "houseId": null,
+      "bombIntervalMs": 2778
+    },
+    {
+      "id": "chain-41",
+      "rarity": 3,
+      "power": 61,
+      "speed": 57,
+      "stamina": 88,
+      "staminaMax": 110,
+      "mode": "work",
+      "houseId": "chain-house-3",
+      "bombIntervalMs": 2548
+    },
+    {
+      "id": "chain-52",
+      "rarity": 4,
+      "power": 76,
+      "speed": 71,
+      "stamina": 120,
+      "staminaMax": 140,
+      "mode": "work",
+      "houseId": null,
+      "bombIntervalMs": 2339
+    },
+    {
+      "id": "chain-77",
+      "rarity": 5,
+      "power": 92,
+      "speed": 88,
+      "stamina": 150,
+      "staminaMax": 170,
+      "mode": "rest",
+      "houseId": null,
+      "bombIntervalMs": 2128
+    }
+  ]
+}
