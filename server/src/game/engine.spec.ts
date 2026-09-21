@@ -74,6 +74,16 @@ describe("engine", () => {
     expect(state.pendingMicroBlast).toBe(damage * REWARD_MICRO_PER_HP);
   });
 
+  it("keeps the partial bomb interval across frequent polls", () => {
+    // Regression: /game/state advances the engine every 2 s (client poll) while
+    // a hero's interval is ~3-4 s. Resetting simulatedTo on every advance()
+    // discarded the remainder, so such a hero never threw while being watched.
+    const state = newMiningState([hero()], 1); // speed 0 → 4000 ms interval
+    for (let i = 1; i <= 4; i++) advance(state, T0 + i * 2000); // 8 s in 2 s steps
+    expect(state.heroes[0].stamina).toBe(48); // two whole intervals → two bombs
+    expect(state.pendingMicroBlast).toBeGreaterThan(0);
+  });
+
   it("advance is idempotent for the same timestamp", () => {
     const state = newMiningState([hero()], 1);
     advance(state, T0 + 5 * BOMB_BASE_INTERVAL_MS);

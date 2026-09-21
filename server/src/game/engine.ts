@@ -121,10 +121,15 @@ function advanceHero(hero: EngineHero, state: MiningState, now: number): number 
   }
 
   if (hero.stamina < 1) {
-    // out of stamina: automatically switches to rest
+    // out of stamina: automatically switches to rest — regen counts from now
     hero.mode = "rest";
+    hero.simulatedTo = now;
   }
-  hero.simulatedTo = now;
+  // While working, simulatedTo stays at the last bomb so the partial interval
+  // carries over to the next advance(). Resetting it to `now` here discarded
+  // that remainder on every /game/state poll (2 s), so a hero whose bomb
+  // interval is longer than the poll gap never threw while the tab was open —
+  // mining only progressed while the client was NOT watching.
   return earned;
 }
 
