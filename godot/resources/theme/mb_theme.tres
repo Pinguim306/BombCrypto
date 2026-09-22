@@ -1,33 +1,33 @@
-[gd_resource type="Theme" load_steps=7 format=3]
+[gd_resource type="Theme" load_steps=6 format=3]
 
-[ext_resource type="FontFile" path="res://assets/fonts/DejaVuSansMono.ttf" id="1_mono"]
-[ext_resource type="FontFile" path="res://assets/fonts/DejaVuSansMono-Bold.ttf" id="2_bold"]
+[ext_resource type="FontFile" path="res://assets/fonts/PixelifySans.ttf" id="1_body"]
+[ext_resource type="FontFile" path="res://assets/fonts/PressStart2P-Regular.ttf" id="2_pixel"]
 [ext_resource type="FontFile" path="res://assets/fonts/DejaVuSans.ttf" id="3_sans"]
 
-[sub_resource type="FontVariation" id="FontVariation_mono"]
-base_font = ExtResource("1_mono")
+[sub_resource type="FontVariation" id="FontVariation_body"]
+base_font = ExtResource("1_body")
 fallbacks = Array[Font]([ExtResource("3_sans")])
+variation_opentype = {
+2003265652: 500
+}
 
-[sub_resource type="FontVariation" id="FontVariation_bold"]
-base_font = ExtResource("2_bold")
-fallbacks = Array[Font]([ExtResource("3_sans")])
+[sub_resource type="FontVariation" id="FontVariation_pixel"]
+base_font = ExtResource("2_pixel")
+fallbacks = Array[Font]([ExtResource("1_body"), ExtResource("3_sans")])
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_none"]
 
 [resource]
-default_font = SubResource("FontVariation_mono")
-default_font_size = 13
+default_font = SubResource("FontVariation_body")
+default_font_size = 14
 BoldLabel/base_type = &"Label"
-BoldLabel/fonts/font = SubResource("FontVariation_bold")
-JuiceButton/base_type = &"Button"
-JuiceButton/fonts/font = SubResource("FontVariation_bold")
-JuiceButton/styles/disabled = SubResource("StyleBoxEmpty_none")
-JuiceButton/styles/focus = SubResource("StyleBoxEmpty_none")
-JuiceButton/styles/hover = SubResource("StyleBoxEmpty_none")
-JuiceButton/styles/hover_pressed = SubResource("StyleBoxEmpty_none")
-JuiceButton/styles/normal = SubResource("StyleBoxEmpty_none")
-JuiceButton/styles/pressed = SubResource("StyleBoxEmpty_none")
+BoldLabel/fonts/font = SubResource("FontVariation_body")
 Label/colors/font_color = Color(0.925, 0.937, 0.945, 1)
+PixelLabel/base_type = &"Label"
+PixelLabel/font_sizes/font_size = 8
+PixelLabel/fonts/font = SubResource("FontVariation_pixel")
+RichTextLabel/fonts/bold_font = SubResource("FontVariation_pixel")
+RichTextLabel/fonts/normal_font = SubResource("FontVariation_body")
 StageCard/base_type = &"Button"
 StageCard/styles/disabled = SubResource("StyleBoxEmpty_none")
 StageCard/styles/focus = SubResource("StyleBoxEmpty_none")
@@ -35,3 +35,6 @@ StageCard/styles/hover = SubResource("StyleBoxEmpty_none")
 StageCard/styles/hover_pressed = SubResource("StyleBoxEmpty_none")
 StageCard/styles/normal = SubResource("StyleBoxEmpty_none")
 StageCard/styles/pressed = SubResource("StyleBoxEmpty_none")
+TexButton/base_type = &"Button"
+TexButton/font_sizes/font_size = 12
+TexButton/fonts/font = SubResource("FontVariation_pixel")

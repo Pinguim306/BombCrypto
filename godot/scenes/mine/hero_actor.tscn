@@ -1,0 +1,47 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/mine/hero_actor.gd" id="1_actor"]
+[ext_resource type="GradientTexture2D" path="res://resources/light/radial_64.tres" id="2_radial"]
+[ext_resource type="Texture2D" path="res://assets/fx/dust_8.png" id="3_dust"]
+
+[node name="HeroActor" type="Node2D"]
+script = ExtResource("1_actor")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+modulate = Color(1, 1, 1, 0.8)
+position = Vector2(0, -1)
+
+[node name="Dust" type="CPUParticles2D" parent="."]
+emitting = false
+amount = 6
+lifetime = 0.4
+texture = ExtResource("3_dust")
+direction = Vector2(0, -1)
+spread = 50.0
+gravity = Vector2(0, -10)
+initial_velocity_min = 6.0
+initial_velocity_max = 16.0
+scale_amount_min = 0.6
+scale_amount_max = 1.2
+color = Color(0.7, 0.66, 0.6, 0.45)
+
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -14)
+
+[node name="Lamp" type="PointLight2D" parent="."]
+enabled = false
+position = Vector2(6, -24)
+color = Color(1, 0.9, 0.62, 1)
+energy = 0.55
+shadow_enabled = false
+texture = ExtResource("2_radial")
+texture_scale = 1.6
+
+[node name="Zzz" type="AnimatedSprite2D" parent="."]
+visible = false
+position = Vector2(12, -38)
+
+[node name="Bolt" type="Sprite2D" parent="."]
+visible = false
+modulate = Color(1, 0.45, 0.4, 1)
+position = Vector2(0, -42)

@@ -1,0 +1,41 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/stage_card.gd" id="1_stage"]
+
+[node name="StageCard" type="Button"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 184.0
+offset_bottom = 52.0
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_type_variation = &"StageCard"
+script = ExtResource("1_stage")
+
+[node name="Text" type="RichTextLabel" parent="."]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 7.0
+offset_right = 176.0
+offset_bottom = 47.0
+mouse_filter = 2
+theme_override_colors/default_color = Color(0.812, 0.847, 0.863, 1)
+theme_override_font_sizes/normal_font_size = 14
+bbcode_enabled = true
+text = "Stage
+0.00 BLAST · 0 stam"
+scroll_active = false
+
+[node name="Frame" type="NinePatchRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -3.0
+offset_top = -3.0
+offset_right = 3.0
+offset_bottom = 3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

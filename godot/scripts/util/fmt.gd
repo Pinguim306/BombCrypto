@@ -3,7 +3,7 @@ class_name Fmt
 ## (client/src/scenes/MiningScene.ts). Glyph substitutions decided in the design:
 ## "⛏" -> [img] pick icon in the Mine-all message (bbcode), "⌂" -> house icon (HeroRow).
 
-const PICK_IMG := "[img=12]res://assets/sprites/pick.png[/img]"
+const PICK_IMG := "[img=12]res://assets/art/ui/icon_pick.png[/img]"
 const MAX_HOUSE_LINES := 6
 const HOUSES_HINT := ["No houses yet.", "Buy one in the Shop, then", "click a hero and Shelter it."]
 

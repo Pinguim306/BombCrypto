@@ -1,0 +1,675 @@
+{
+  "generator": "godot/tools/gen-art.mjs",
+  "files": {
+    "chars/bomb.png": {
+      "w": 24,
+      "h": 24,
+      "frames": 2
+    },
+    "chars/boom.png": {
+      "w": 64,
+      "h": 64,
+      "frames": 6
+    },
+    "chars/campfire.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 4
+    },
+    "chars/chest.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 1
+    },
+    "chars/chest_open.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 1
+    },
+    "chars/coin.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 6
+    },
+    "chars/coin_big.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 1
+    },
+    "chars/hero_0.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 11,
+      "anims": {
+        "idle": [
+          0,
+          1
+        ],
+        "walk": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "throw": [
+          6,
+          7,
+          8
+        ],
+        "sleep": [
+          9,
+          10
+        ]
+      },
+      "fps": {
+        "idle": 2,
+        "walk": 8,
+        "throw": 10,
+        "sleep": 1.5
+      }
+    },
+    "chars/hero_1.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 11,
+      "anims": {
+        "idle": [
+          0,
+          1
+        ],
+        "walk": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "throw": [
+          6,
+          7,
+          8
+        ],
+        "sleep": [
+          9,
+          10
+        ]
+      },
+      "fps": {
+        "idle": 2,
+        "walk": 8,
+        "throw": 10,
+        "sleep": 1.5
+      }
+    },
+    "chars/hero_2.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 11,
+      "anims": {
+        "idle": [
+          0,
+          1
+        ],
+        "walk": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "throw": [
+          6,
+          7,
+          8
+        ],
+        "sleep": [
+          9,
+          10
+        ]
+      },
+      "fps": {
+        "idle": 2,
+        "walk": 8,
+        "throw": 10,
+        "sleep": 1.5
+      }
+    },
+    "chars/hero_3.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 11,
+      "anims": {
+        "idle": [
+          0,
+          1
+        ],
+        "walk": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "throw": [
+          6,
+          7,
+          8
+        ],
+        "sleep": [
+          9,
+          10
+        ]
+      },
+      "fps": {
+        "idle": 2,
+        "walk": 8,
+        "throw": 10,
+        "sleep": 1.5
+      }
+    },
+    "chars/hero_4.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 11,
+      "anims": {
+        "idle": [
+          0,
+          1
+        ],
+        "walk": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "throw": [
+          6,
+          7,
+          8
+        ],
+        "sleep": [
+          9,
+          10
+        ]
+      },
+      "fps": {
+        "idle": 2,
+        "walk": 8,
+        "throw": 10,
+        "sleep": 1.5
+      }
+    },
+    "chars/hero_5.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 11,
+      "anims": {
+        "idle": [
+          0,
+          1
+        ],
+        "walk": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "throw": [
+          6,
+          7,
+          8
+        ],
+        "sleep": [
+          9,
+          10
+        ]
+      },
+      "fps": {
+        "idle": 2,
+        "walk": 8,
+        "throw": 10,
+        "sleep": 1.5
+      }
+    },
+    "chars/hero_shadow.png": {
+      "w": 20,
+      "h": 8,
+      "frames": 1
+    },
+    "chars/portrait_0.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 1
+    },
+    "chars/portrait_1.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 1
+    },
+    "chars/portrait_2.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 1
+    },
+    "chars/portrait_3.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 1
+    },
+    "chars/portrait_4.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 1
+    },
+    "chars/portrait_5.png": {
+      "w": 32,
+      "h": 32,
+      "frames": 1
+    },
+    "chars/smoke_puff.png": {
+      "w": 12,
+      "h": 12,
+      "frames": 1
+    },
+    "chars/torch.png": {
+      "w": 16,
+      "h": 32,
+      "frames": 4
+    },
+    "chars/zzz.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 3
+    },
+    "env/block_0.png": {
+      "w": 48,
+      "h": 48,
+      "frames": 1
+    },
+    "env/block_1.png": {
+      "w": 48,
+      "h": 48,
+      "frames": 1
+    },
+    "env/block_2.png": {
+      "w": 48,
+      "h": 48,
+      "frames": 1
+    },
+    "env/bones.png": {
+      "w": 24,
+      "h": 12,
+      "frames": 1
+    },
+    "env/crack_1.png": {
+      "w": 48,
+      "h": 48,
+      "frames": 1
+    },
+    "env/crack_2.png": {
+      "w": 48,
+      "h": 48,
+      "frames": 1
+    },
+    "env/crater.png": {
+      "w": 48,
+      "h": 48,
+      "frames": 1
+    },
+    "env/crystal_0.png": {
+      "w": 24,
+      "h": 32,
+      "frames": 1
+    },
+    "env/crystal_1.png": {
+      "w": 24,
+      "h": 32,
+      "frames": 1
+    },
+    "env/floor.png": {
+      "w": 192,
+      "h": 48,
+      "frames": 4
+    },
+    "env/floor_crystal.png": {
+      "w": 48,
+      "h": 48,
+      "frames": 1
+    },
+    "env/house.png": {
+      "w": 96,
+      "h": 80,
+      "frames": 1,
+      "extra": {
+        "window": [
+          67,
+          52
+        ],
+        "chimney": [
+          74,
+          2
+        ]
+      }
+    },
+    "env/map_bg.png": {
+      "w": 576,
+      "h": 384,
+      "frames": 1
+    },
+    "env/mushroom.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "env/rock_0.png": {
+      "w": 24,
+      "h": 20,
+      "frames": 1
+    },
+    "env/rock_1.png": {
+      "w": 24,
+      "h": 20,
+      "frames": 1
+    },
+    "env/sign.png": {
+      "w": 32,
+      "h": 24,
+      "frames": 1
+    },
+    "env/stalactite.png": {
+      "w": 16,
+      "h": 24,
+      "frames": 1
+    },
+    "env/wall_band.png": {
+      "w": 576,
+      "h": 28,
+      "frames": 1
+    },
+    "ui/badge.png": {
+      "w": 20,
+      "h": 20,
+      "frames": 1
+    },
+    "ui/bar_frame.png": {
+      "w": 24,
+      "h": 10,
+      "frames": 1,
+      "margins": [
+        3,
+        3,
+        3,
+        3
+      ]
+    },
+    "ui/btn_blue.png": {
+      "w": 48,
+      "h": 40,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        16
+      ]
+    },
+    "ui/btn_blue_down.png": {
+      "w": 48,
+      "h": 40,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        16
+      ]
+    },
+    "ui/btn_gold.png": {
+      "w": 48,
+      "h": 40,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        16
+      ]
+    },
+    "ui/btn_gold_down.png": {
+      "w": 48,
+      "h": 40,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        16
+      ]
+    },
+    "ui/btn_gray.png": {
+      "w": 48,
+      "h": 40,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        16
+      ]
+    },
+    "ui/btn_gray_down.png": {
+      "w": 48,
+      "h": 40,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        16
+      ]
+    },
+    "ui/btn_green.png": {
+      "w": 48,
+      "h": 40,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        16
+      ]
+    },
+    "ui/btn_green_down.png": {
+      "w": 48,
+      "h": 40,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        16
+      ]
+    },
+    "ui/btn_red.png": {
+      "w": 48,
+      "h": 40,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        16
+      ]
+    },
+    "ui/btn_red_down.png": {
+      "w": 48,
+      "h": 40,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        16
+      ]
+    },
+    "ui/btn_teal.png": {
+      "w": 48,
+      "h": 40,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        16
+      ]
+    },
+    "ui/btn_teal_down.png": {
+      "w": 48,
+      "h": 40,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        16
+      ]
+    },
+    "ui/frame_gold.png": {
+      "w": 48,
+      "h": 48,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        12
+      ]
+    },
+    "ui/icon_adventure.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/icon_arrow_l.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/icon_arrow_r.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/icon_bolt.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/icon_bomb.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/icon_close.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/icon_coin.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/icon_gift.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/icon_house.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/icon_lock.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/icon_pick.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/icon_sleep.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/icon_star.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/icon_wallet.png": {
+      "w": 16,
+      "h": 16,
+      "frames": 1
+    },
+    "ui/logo.png": {
+      "w": 288,
+      "h": 64,
+      "frames": 1
+    },
+    "ui/logo_small.png": {
+      "w": 144,
+      "h": 32,
+      "frames": 1
+    },
+    "ui/panel_dark.png": {
+      "w": 48,
+      "h": 48,
+      "frames": 1,
+      "margins": [
+        8,
+        8,
+        8,
+        8
+      ]
+    },
+    "ui/panel_wood.png": {
+      "w": 48,
+      "h": 48,
+      "frames": 1,
+      "margins": [
+        12,
+        12,
+        12,
+        12
+      ]
+    },
+    "ui/plate.png": {
+      "w": 48,
+      "h": 32,
+      "frames": 1,
+      "margins": [
+        10,
+        10,
+        10,
+        10
+      ]
+    },
+    "ui/portrait_frame.png": {
+      "w": 40,
+      "h": 40,
+      "frames": 1
+    },
+    "ui/ribbon.png": {
+      "w": 96,
+      "h": 32,
+      "frames": 1,
+      "margins": [
+        24,
+        8,
+        24,
+        8
+      ]
+    }
+  }
+}

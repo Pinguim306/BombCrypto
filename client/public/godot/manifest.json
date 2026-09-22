@@ -1,10 +1,10 @@
 {
   "engine": "/godot/engine-4.7.2-fc74679e/mb",
-  "pck": "/godot/pck/mb-ea693e05.pck",
+  "pck": "/godot/pck/mb-f480b078.pck",
   "sizes": {
     "/godot/engine-4.7.2-fc74679e/mb.wasm": 39514754,
-    "/godot/pck/mb-ea693e05.pck": 1135128
+    "/godot/pck/mb-f480b078.pck": 1370720
   },
-  "gitSha": "4ec8c09",
-  "builtAt": "2026-09-22T01:05:49.424Z"
+  "gitSha": "0edf541",
+  "builtAt": "2026-09-22T02:37:39.564Z"
 }

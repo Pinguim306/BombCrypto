@@ -101,8 +101,8 @@ func test_stage_card_and_info_line() -> void:
 
 
 func test_status_messages() -> void:
-	T.eq(Fmt.mine_all_msg(1), "1 hero sent to work! [img=12]res://assets/sprites/pick.png[/img]", "one hero")
-	T.eq(Fmt.mine_all_msg(3), "3 heroes sent to work! [img=12]res://assets/sprites/pick.png[/img]", "plural")
+	T.eq(Fmt.mine_all_msg(1), "1 hero sent to work! [img=12]res://assets/art/ui/icon_pick.png[/img]", "one hero")
+	T.eq(Fmt.mine_all_msg(3), "3 heroes sent to work! [img=12]res://assets/art/ui/icon_pick.png[/img]", "plural")
 	T.eq(Fmt.mine_all_msg(0), "everyone is already mining (or out of stamina)", "none")
 	T.eq(Fmt.victory_msg("Deep Mine", 30187500, 57), "victory in Deep Mine! +30.19 BLAST (chance 57%)", "victory")
 	T.eq(Fmt.victory_msg("Shallow Cavern", 9375000, 36), "victory in Shallow Cavern! +9.38 BLAST (chance 36%)", "victory 2")

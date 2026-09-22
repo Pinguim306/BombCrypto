@@ -5,7 +5,7 @@
 [node name="NetBanner" type="Control"]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 800.0
+offset_right = 960.0
 offset_bottom = 22.0
 mouse_filter = 2
 script = ExtResource("1_net")

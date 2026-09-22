@@ -1,19 +1,20 @@
 extends Node
-## Smoke test for the mining screen (design §12 step 4). Run it as a SCENE so
-## the autoloads (Config / GameState / Backend / Juice / Sfx) exist — a `-s`
-## script cannot reference autoload singletons at compile time:
+## Smoke test for the mine screen. Run it as a SCENE so the autoloads
+## (Config / GameState / Backend / Juice / Sfx) exist — a `-s` script cannot
+## reference autoload singletons at compile time:
 ##
 ##   $GODOT --headless --path godot res://tests/smoke/smoke_mining.tscn -- --no-fx --scenario=default
 ##
-## Instantiates mining.tscn, feeds it the default fixture through the same
+## Instantiates mine.tscn, feeds it the default fixture through the same
 ## GameState.state_applied path the game uses, runs ~120 frames and asserts:
-## 40 cells with HpBar widths == 58*hp/maxHp, dead-variant textures per
-## Rules.dead_variant, rows bound to the first heroes, popup open()/close(),
-## and that rendering twice (plus a real diff) is idempotent.
-## Prints "OK smoke" and exits 0, or the failures and exits 1.
+## 40 block tiles at their Layout positions with HpBar widths == 40*hp/maxHp,
+## dead tiles showing crater (+crystal per Rules.dead_variant), one hero actor
+## per hero standing on a walkable tile (sleeping when resting), roster cards
+## bound to the first heroes, popup open()/close(), and that rendering twice
+## (plus a real diff) is idempotent. Prints "OK smoke" and exits 0.
 
 const FIXTURE := "res://resources/fixtures/state_default.json"
-const MINING_SCENE := "res://scenes/mining/mining.tscn"
+const MINE_SCENE := "res://scenes/mine/mine.tscn"
 const EPS := 0.001
 
 var _fails: Array[String] = []
@@ -26,17 +27,17 @@ func _ready() -> void:
 
 func _run() -> void:
 	await get_tree().process_frame
-	var packed: PackedScene = load(MINING_SCENE)
+	var packed: PackedScene = load(MINE_SCENE)
 	if packed == null:
-		_fail("cannot load " + MINING_SCENE)
+		_fail("cannot load " + MINE_SCENE)
 		_finish()
 		return
-	var mining: Mining = packed.instantiate() as Mining
-	if mining == null:
-		_fail("mining.tscn root is not a Mining")
+	var mine: Mine = packed.instantiate() as Mine
+	if mine == null:
+		_fail("mine.tscn root is not a Mine")
 		_finish()
 		return
-	add_child(mining)
+	add_child(mine)
 	await get_tree().process_frame
 
 	var model := _fixture()
@@ -45,14 +46,14 @@ func _run() -> void:
 		return
 	_apply(model, StateDiff.initial(model))
 	await _frames(120)
-	_check_all(mining, model, "first render")
-	_check_popup(mining, model)
+	_check_all(mine, model, "first render")
+	_check_popup(mine, model)
 
 	# rendering the same data again must change nothing
 	var model2 := _fixture()
 	_apply(model2, StateDiff.compute(model, model2))
 	await _frames(10)
-	_check_all(mining, model2, "second render")
+	_check_all(mine, model2, "second render")
 
 	# a real server diff: one block dies, one is damaged, a hero rests
 	var model3 := _fixture()
@@ -61,122 +62,169 @@ func _run() -> void:
 	model3.heroes[0].mode = "rest"
 	_apply(model3, StateDiff.compute(model2, model3))
 	await _frames(10)
-	_check_all(mining, model3, "third render (diff)")
+	_check_all(mine, model3, "third render (diff)")
+
+	# a hero leaves the team: its actor and card go away
+	var model4 := _fixture()
+	model4.blocks[3].hp = 0
+	model4.blocks[4].hp = 5
+	model4.heroes[0].mode = "rest"
+	var gone_id := model4.heroes[model4.heroes.size() - 1].id
+	model4.heroes.remove_at(model4.heroes.size() - 1)
+	_apply(model4, StateDiff.compute(model3, model4))
+	await _frames(10)
+	_check_all(mine, model4, "fourth render (hero removed)")
+	_ok(mine.heroes.actor(gone_id) == null, "removed hero has no actor")
 	_finish()
 
 
 # ---------------------------------------------------------------- checks
 
-func _check_all(mining: Mining, m: StateModel, label: String) -> void:
-	_check_cells(mining, m, label)
-	_check_rows(mining, m, label)
-	_check_hud(mining, m, label)
+func _check_all(mine: Mine, m: StateModel, label: String) -> void:
+	_check_blocks(mine, m, label)
+	_check_actors(mine, m, label)
+	_check_cards(mine, m, label)
+	_check_hud(mine, m, label)
 
 
-func _check_cells(mining: Mining, m: StateModel, label: String) -> void:
-	var grid: BlockGrid = mining.get_node("World/Grid")
-	_eq(grid.get_child_count(), 40, "%s: 40 cells" % label)
-	_eq(grid.cells.size(), 40, "%s: 40 cell refs" % label)
-	for i in mini(40, grid.cells.size()):
-		var c: BlockCell = grid.cells[i]
+func _check_blocks(mine: Mine, m: StateModel, label: String) -> void:
+	var field: BlockField = mine.get_node("World/Map/Actors/Blocks")
+	_eq(field.get_child_count(), 40, "%s: 40 tiles" % label)
+	_eq(field.tiles.size(), 40, "%s: 40 tile refs" % label)
+	for i in mini(40, field.tiles.size()):
+		var t: BlockTile = field.tiles[i]
 		var b: BlockModel = m.blocks[i]
-		_eq(c.name, "Cell%02d" % i, "%s: cell %d name" % [label, i])
-		_eq(c.index, i, "%s: cell %d index" % [label, i])
-		_eq(c.alive, b.alive(), "%s: cell %d alive" % [label, i])
-		var hp_bar: HpBar = c.get_node("HpBar")
+		_eq(t.name, "Block%02d" % i, "%s: tile %d name" % [label, i])
+		_eq(t.index, i, "%s: tile %d index" % [label, i])
+		_eq(t.position, Layout.block_origin(i) + Vector2(0, Layout.TILE), "%s: tile %d position" % [label, i])
+		_eq(t.alive, b.alive(), "%s: tile %d alive" % [label, i])
+		var hp_bar: HpBar = t.get_node("HpBar")
+		var body: Sprite2D = t.get_node("Pivot/Body")
+		var crater: Sprite2D = t.get_node("Crater")
+		var crystal: Sprite2D = t.get_node("Crystal")
 		if b.alive():
 			var expected := "block_%d" % Rules.block_tier(b.max_hp)
-			_eq(c.current_key, expected, "%s: cell %d texture key" % [label, i])
-			_eq(_tex_name(c.get_node("Pivot/Body")), expected, "%s: cell %d Body texture" % [label, i])
-			_ok(c.get_node("Pivot/Body").visible and not c.get_node("Pivot/Dead").visible, "%s: cell %d shows the body" % [label, i])
-			_ok(hp_bar.visible, "%s: cell %d hp bar visible" % [label, i])
-			_approx(hp_bar.fill_width(), 58.0 * float(b.hp) / float(b.max_hp), "%s: cell %d hp width" % [label, i])
-			var crack: Sprite2D = c.get_node("Pivot/Crack")
+			_eq(t.current_key, expected, "%s: tile %d texture key" % [label, i])
+			_eq(_tex_name(body), expected, "%s: tile %d Body texture" % [label, i])
+			_ok(body.visible and not crater.visible and not crystal.visible, "%s: tile %d shows the block" % [label, i])
+			_ok(hp_bar.visible, "%s: tile %d hp bar visible" % [label, i])
+			_approx(hp_bar.fill_width(), 40.0 * float(b.hp) / float(b.max_hp), "%s: tile %d hp width" % [label, i])
+			var crack: Sprite2D = t.get_node("Pivot/Crack")
 			var level := Rules.crack_level(b.hp, b.max_hp)
-			_eq(crack.visible, level > 0, "%s: cell %d crack visible" % [label, i])
+			_eq(crack.visible, level > 0, "%s: tile %d crack visible" % [label, i])
 			if level > 0:
-				_eq(_tex_name(crack), "crack_%d" % level, "%s: cell %d crack texture" % [label, i])
+				_eq(_tex_name(crack), "crack_%d" % level, "%s: tile %d crack texture" % [label, i])
 		else:
-			var expected := Rules.dead_variant(i)
-			_eq(c.current_key, expected, "%s: cell %d dead key" % [label, i])
-			_eq(_tex_name(c.get_node("Pivot/Dead")), expected, "%s: cell %d Dead texture" % [label, i])
-			_ok(c.get_node("Pivot/Dead").visible and not c.get_node("Pivot/Body").visible, "%s: cell %d shows the dead floor" % [label, i])
-			_ok(not hp_bar.visible, "%s: cell %d hp bar hidden" % [label, i])
-	# the deterministic crystal pattern (indices 1, 6, ..., 36)
+			var with_crystal := Rules.dead_variant(i) == "block_dead2"
+			_eq(t.current_key, "dead_crystal" if with_crystal else "dead", "%s: tile %d dead key" % [label, i])
+			_ok(not body.visible and crater.visible, "%s: tile %d shows the crater" % [label, i])
+			_eq(crystal.visible, with_crystal, "%s: tile %d crystal" % [label, i])
+			_ok(not hp_bar.visible, "%s: tile %d hp bar hidden" % [label, i])
 	for i in [1, 6, 11, 16, 21, 26, 31, 36]:
 		_eq(Rules.dead_variant(i), "block_dead2", "dead_variant(%d)" % i)
 
 
-func _check_rows(mining: Mining, m: StateModel, label: String) -> void:
-	var list: HeroList = mining.get_node("Hud/Root/HeroPanel/Rows")
-	_eq(list.rows.size(), 4, "%s: 4 rows" % label)
+func _check_actors(mine: Mine, m: StateModel, label: String) -> void:
+	var actors: HeroActors = mine.get_node("World/Map/Actors/Heroes")
+	var expected := mini(m.heroes.size(), Layout.MAX_ACTORS)
+	_eq(actors.actors.size(), expected, "%s: one actor per hero" % label)
+	var tiles_seen: Dictionary = {}
+	for i in expected:
+		var h := m.heroes[i]
+		var a: HeroActor = actors.actor(h.id)
+		if a == null:
+			_fail("%s: hero %s has no actor" % [label, h.id])
+			continue
+		_eq(a.hero_id, h.id, "%s: actor %d id" % [label, i])
+		_eq(a.rarity, h.rarity, "%s: actor %d rarity" % [label, i])
+		_ok(Layout.in_map(a.tile), "%s: actor %d on the map" % [label, i])
+		_ok(mine.field.is_walkable(a.target_tile), "%s: actor %d spot walkable" % [label, i])
+		_ok(not tiles_seen.has(a.target_tile), "%s: actor %d spot not shared" % [label, i])
+		tiles_seen[a.target_tile] = true
+		var sf := (a.get_node("Sprite") as AnimatedSprite2D).sprite_frames
+		_ok(sf != null and sf.has_animation(&"walk") and sf.has_animation(&"throw"), "%s: actor %d has hero frames" % [label, i])
+		if not h.is_working():
+			_eq(a.state, HeroActor.State.SLEEP, "%s: resting hero %d sleeps" % [label, i])
+			_eq((a.get_node("Sprite") as AnimatedSprite2D).animation, &"sleep", "%s: resting hero %d sleep anim" % [label, i])
+		else:
+			_ok(a.state != HeroActor.State.SLEEP, "%s: working hero %d is awake" % [label, i])
+
+
+func _check_cards(mine: Mine, m: StateModel, label: String) -> void:
+	var list: HeroCards = mine.get_node("Hud/Root/Cards")
+	_eq(list.cards.size(), 4, "%s: 4 cards" % label)
 	var per := Config.PER_PAGE
-	for i in list.rows.size():
-		var row: HeroRow = list.rows[i]
-		_eq(row.name, "Row%d" % i, "%s: row %d name" % [label, i])
+	for i in list.cards.size():
+		var card: HeroCard = list.cards[i]
+		_eq(card.name, "Card%d" % i, "%s: card %d name" % [label, i])
 		if i < mini(per, m.heroes.size()):
 			var h := m.heroes[i]
-			_ok(row.visible, "%s: row %d visible" % [label, i])
-			_eq(row.hero_id, h.id, "%s: row %d hero id" % [label, i])
-			_eq((row.get_node("NameLabel") as Label).text, Fmt.hero_name(h), "%s: row %d name label" % [label, i])
-			_eq((row.get_node("ModeLine/ModeLabel") as Label).text, Fmt.mode_label(h), "%s: row %d mode label" % [label, i])
-			_eq((row.get_node("StaminaLabel") as Label).text, Fmt.stamina_line(h), "%s: row %d stamina label" % [label, i])
-			_approx((row.get_node("StaminaBar") as ColorRect).size.x, 124.0 * h.stamina_ratio(), "%s: row %d stamina width" % [label, i])
-			_eq((row.get_node("ModeLine/HomeIcon") as TextureRect).visible, h.is_housed(), "%s: row %d home icon" % [label, i])
-			# "rest" is a one-shot (0.3 s): current_animation clears when it ends, assigned_animation stays
-			_eq(String((row.get_node("Anim") as AnimationPlayer).assigned_animation), "work" if h.is_working() else "rest", "%s: row %d animation" % [label, i])
+			_ok(card.visible, "%s: card %d visible" % [label, i])
+			_eq(card.hero_id, h.id, "%s: card %d hero id" % [label, i])
+			_eq((card.get_node("NameLabel") as Label).text, Fmt.hero_name(h), "%s: card %d name label" % [label, i])
+			_eq((card.get_node("ModeLine/ModeLabel") as Label).text, Fmt.mode_label(h), "%s: card %d mode label" % [label, i])
+			_eq((card.get_node("StaminaLabel") as Label).text, Fmt.stamina_line(h), "%s: card %d stamina label" % [label, i])
+			_approx((card.get_node("StaminaBar") as ColorRect).size.x, HeroCard.BAR_W * h.stamina_ratio(), "%s: card %d stamina width" % [label, i])
+			_eq((card.get_node("HomeIcon") as TextureRect).visible, h.is_housed(), "%s: card %d home icon" % [label, i])
+			_eq(_tex_name(card.get_node("Frame/Portrait") as TextureRect), "portrait_%d" % h.rarity, "%s: card %d portrait" % [label, i])
 		else:
-			_ok(not row.visible, "%s: row %d hidden" % [label, i])
-	_eq((mining.get_node("Hud/Root/HeroPanel/Pager") as Control).visible, m.heroes.size() > per, "%s: pager visibility" % label)
+			_ok(not card.visible, "%s: card %d hidden" % [label, i])
+	_eq((mine.get_node("Hud/Root/Pager") as Control).visible, m.heroes.size() > per, "%s: pager visibility" % label)
 
 
-func _check_hud(mining: Mining, m: StateModel, label: String) -> void:
-	var pending: Pill = mining.get_node("Hud/Root/PendingPill")
-	_eq(pending.value_label.text, Fmt.pending_pill(m.pending, m.min_blast), "%s: pending pill" % label)
-	var rate: Pill = mining.get_node("Hud/Root/RatePill")
-	_eq(rate.value_label.text, Fmt.rate_pill(Rules.team_rate(m.heroes)), "%s: rate pill" % label)
-	var claim: JuiceButton = mining.get_node("Hud/Root/ClaimButton")
+func _check_hud(mine: Mine, m: StateModel, label: String) -> void:
+	var pending: CounterPlate = mine.get_node("Hud/Root/PendingPlate")
+	_eq(pending.value_label.text, Fmt.blast2(m.pending) + " BLAST", "%s: pending plate" % label)
+	_eq(pending.sub_label.text, "min %s to claim" % Fmt.thousands(m.min_blast), "%s: pending sub" % label)
+	var rate: CounterPlate = mine.get_node("Hud/Root/RatePlate")
+	_eq(rate.value_label.text, Fmt.rate_pill(Rules.team_rate(m.heroes)), "%s: rate plate" % label)
+	var claim: TexButton = mine.get_node("Hud/Root/ClaimButton")
 	var can := Rules.can_claim(m.pending, m.min_blast)
 	_eq(claim.label, "Claim" if can else "Locked", "%s: claim label" % label)
 	_eq(claim.disabled, not can, "%s: claim gate" % label)
-	_eq((mining.get_node("Hud/Root/InfoLine") as Label).text, Fmt.info_line(m.attempts_today, m.min_blast, m.cooldown_hours), "%s: info line" % label)
-	_eq((mining.get_node("Hud/Root/HousesPanel/HousesText") as RichTextLabel).text, Fmt.houses_text(m.houses), "%s: houses text" % label)
+	_eq((mine.get_node("Hud/Root/InfoLine") as Label).text, Fmt.info_line(m.attempts_today, m.min_blast, m.cooldown_hours), "%s: info line" % label)
+	_eq((mine.get_node("Hud/Root/HousesText") as RichTextLabel).text, Fmt.houses_text(m.houses), "%s: houses text" % label)
 	for i in 3:
-		var card: StageCard = mining.get_node("Hud/Root/Stages/Stage%d" % i)
+		var card: StageCard = mine.get_node("Hud/Root/Stages/Stage%d" % i)
 		if i < m.stages.size():
 			_ok(card.visible, "%s: stage %d visible" % [label, i])
 			_eq(card.stage_id, m.stages[i].id, "%s: stage %d id" % [label, i])
 			var sel := m.stages[i].id == GameState.selected_stage
 			_eq(card.is_selected, sel, "%s: stage %d selected" % [label, i])
+			_eq((card.get_node("Frame") as NinePatchRect).visible, sel, "%s: stage %d gold frame" % [label, i])
 			_eq((card.get_node("Text") as RichTextLabel).text, Fmt.stage_card(m.stages[i], sel), "%s: stage %d text" % [label, i])
 		else:
 			_ok(not card.visible, "%s: stage %d hidden" % [label, i])
-	_eq((mining.get_node("Hud/Root/TitleRibbon") as Ribbon).text, "TREASURE MINING", "%s: ribbon" % label)
+	_eq((mine.get_node("Hud/Root/ExpeditionRibbon") as Ribbon).text, "EXPEDITION", "%s: expedition ribbon" % label)
+	_eq((mine.get_node("Hud/Root/HousesRibbon") as Ribbon).text, "HOUSES", "%s: houses ribbon" % label)
+	_ok((mine.get_node("Hud/Root/TopBar") as NinePatchRect).texture != null, "%s: top bar textured" % label)
+	_ok((mine.get_node("World/Map/Floor") as Sprite2D).texture != null, "%s: floor textured" % label)
+	_ok((mine.get_node("World/Map/Actors/Props/House") as Sprite2D).texture != null, "%s: house textured" % label)
 
 
-func _check_popup(mining: Mining, m: StateModel) -> void:
-	var popup: HeroPopup = mining.get_node("PopupLayer/Popup")
+func _check_popup(mine: Mine, m: StateModel) -> void:
+	var popup: HeroPopup = mine.get_node("PopupLayer/Popup")
 	_ok(not popup.visible, "popup hidden initially")
 	if m.heroes.is_empty():
 		return
 	var h := m.heroes[0]
-	mining.open_popup(h.id)
+	mine.open_popup(h.id)
 	_ok(popup.visible and popup.is_open, "popup open() shows it")
 	_eq(popup.hero_id, h.id, "popup captured hero id")
 	_eq((popup.get_node("Stats") as Label).text, Fmt.hero_stats(h), "popup stats")
 	_eq((popup.get_node("StatusLine") as Label).text, Fmt.status_line(h), "popup status line")
 	_eq((popup.get_node("Ribbon") as Ribbon).text, "%s Hero" % Rules.rarity_name(h.rarity), "popup ribbon")
-	_eq((popup.get_node("WorkRestBtn") as JuiceButton).label, "Rest" if h.is_working() else "Work", "popup work/rest label")
-	_eq((popup.get_node("ShelterBtn") as JuiceButton).label, "Leave House" if h.is_housed() else "Shelter", "popup shelter label")
+	_eq((popup.get_node("WorkRestBtn") as TexButton).label, "Rest" if h.is_working() else "Work", "popup work/rest label")
+	_eq((popup.get_node("ShelterBtn") as TexButton).label, "Leave House" if h.is_housed() else "Shelter", "popup shelter label")
+	_ok((popup.get_node("Portrait/Body") as AnimatedSprite2D).sprite_frames != null, "popup portrait animated")
 	popup.close()
 	_ok(not popup.visible and not popup.is_open, "popup close() hides it")
-	# a hero that disappears closes an open popup on rebind
-	mining.open_popup(h.id)
+	mine.open_popup(h.id)
 	var gone := _fixture()
 	gone.heroes.remove_at(0)
 	popup.rebind(gone)
 	_ok(not popup.is_open, "popup closes when its hero is gone")
-	mining.open_popup("no-such-hero")
+	mine.open_popup("no-such-hero")
 	_ok(not popup.visible, "popup ignores unknown hero ids")
 
 
@@ -203,10 +251,11 @@ func _frames(n: int) -> void:
 		await get_tree().process_frame
 
 
-func _tex_name(sprite: Sprite2D) -> String:
-	if sprite == null or sprite.texture == null:
+func _tex_name(item: CanvasItem) -> String:
+	var tex: Texture2D = item.get("texture")
+	if tex == null:
 		return ""
-	return sprite.texture.resource_path.get_file().get_basename()
+	return tex.resource_path.get_file().get_basename()
 
 
 func _ok(cond: bool, msg: String) -> void:

@@ -67,10 +67,6 @@ func test_can_claim() -> void:
 
 
 func test_geometry() -> void:
-	T.eq(Rules.cell_center(0), Vector2(287, 119), "cell 0 centre")
-	T.eq(Rules.cell_center(9), Vector2(351, 183), "cell 9 centre")
-	T.eq(Rules.cell_center(39), Vector2(258 + 7 * 64 + 29, 90 + 4 * 64 + 29), "cell 39 centre")
-	T.eq(Rules.cell_origin(8), Vector2(258, 154), "cell 8 origin")
 	T.eq(Rules.BLOCK_COUNT, 40, "block count")
 
 

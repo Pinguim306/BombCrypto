@@ -6,7 +6,7 @@
   "scripts": {
     "test": "pnpm -r test",
     "build": "pnpm -r build",
-    "godot:sprites": "node godot/tools/gen-sprites.mjs --fx",
+    "godot:art": "node godot/tools/gen-art.mjs",
     "godot:test": "node godot/tools/run-tests.mjs",
     "godot:export": "node godot/tools/export-web.mjs",
     "godot:export:engine": "node godot/tools/export-web.mjs --engine"

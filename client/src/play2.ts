@@ -148,7 +148,7 @@ if (caChip && ca && !/^0x0{40}$/.test(ca)) {
 // ---- canvas sizing ----
 // canvasResizePolicy 0: the page owns the backing-store size. Render at the
 // device pixel ratio so pixel art stays crisp on HiDPI; Godot's stretch mode
-// maps its 800×600 viewport onto whatever size we give it.
+// maps its 960×540 viewport onto whatever size we give it.
 function fit() {
   const w = gameEl.clientWidth;
   const h = gameEl.clientHeight;

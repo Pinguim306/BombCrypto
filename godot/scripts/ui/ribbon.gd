@@ -1,47 +1,58 @@
 @tool
 class_name Ribbon
 extends Control
-## Banner-style title ribbon (ui.ts drawRibbon). The node's position is the
-## ribbon's CENTRE, like the Phaser container; it draws around (0, 0).
+## Red ribbon title banner (ui/ribbon.png, 9-slice) with centred pixel text.
+## The control's rect is the ribbon; `text` is the title.
 
-const BOLD: FontFile = preload("res://assets/fonts/DejaVuSansMono-Bold.ttf")
-const H := 32.0
-const FONT_SIZE := 17
-
-@export var text: String = "RIBBON":
+@export var text: String = "TITLE":
 	set(v):
 		text = v
-		queue_redraw()
-@export var fixed_width: int = 0:
+		if _label != null:
+			_label.text = v
+@export var font_size: int = 8:
 	set(v):
-		fixed_width = v
-		queue_redraw()
+		font_size = v
+		if _label != null:
+			_label.add_theme_font_size_override("font_size", v)
+
+var _np: NinePatchRect
+var _label: Label
 
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
-func width() -> float:
-	if fixed_width > 0:
-		return float(fixed_width)
-	var tw: float = BOLD.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x
-	return maxf(150.0, tw + 56.0)
+func _ready() -> void:
+	_np = get_node_or_null("Patch") as NinePatchRect
+	if _np == null:
+		_np = NinePatchRect.new()
+		_np.name = "Patch"
+		_np.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_np)
+	Sheets.nine_patch(_np, "ui/ribbon.png", 24)
+	_label = get_node_or_null("Text") as Label
+	if _label == null:
+		_label = Label.new()
+		_label.name = "Text"
+		_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_label)
+	_label.theme_type_variation = &"PixelLabel"
+	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_label.add_theme_color_override("font_color", Color("fff3d6"))
+	_label.add_theme_color_override("font_outline_color", Color("5a0f0f"))
+	_label.add_theme_constant_override("outline_size", 3)
+	_label.add_theme_font_size_override("font_size", font_size)
+	_label.text = text
+	resized.connect(_layout)
+	_layout()
 
 
-func _draw() -> void:
-	var w := width()
-	var hw := w / 2.0
-	var hh := H / 2.0
-	# notched banner tails
-	var tail := Color("a05f10")
-	draw_colored_polygon(PackedVector2Array([Vector2(-hw - 14, 0), Vector2(-hw + 4, -hh), Vector2(-hw + 4, hh)]), tail)
-	draw_colored_polygon(PackedVector2Array([Vector2(hw + 14, 0), Vector2(hw - 4, -hh), Vector2(hw - 4, hh)]), tail)
-	# main band with outline + highlight
-	UiDraw.rounded(self, Rect2(-hw - 2, -hh - 2, w + 4, H + 4), Color("0a0e18"), 6)
-	UiDraw.rounded(self, Rect2(-hw, -hh, w, H), Color("e8952f"), 5)
-	UiDraw.rounded(self, Rect2(-hw + 3, -hh + 3, w - 6, 4), Color("ffcf80", 0.9), 2)
-	# label centred on the band (draw_string's position is the baseline)
-	var asc: float = BOLD.get_ascent(FONT_SIZE)
-	var desc: float = BOLD.get_descent(FONT_SIZE)
-	draw_string(BOLD, Vector2(-hw, (asc - desc) / 2.0), text, HORIZONTAL_ALIGNMENT_CENTER, w, FONT_SIZE, Color("221400"))
+func _layout() -> void:
+	if _np == null:
+		return
+	_np.position = Vector2.ZERO
+	_np.size = size
+	_label.position = Vector2(20, -1)
+	_label.size = Vector2(size.x - 40, size.y)

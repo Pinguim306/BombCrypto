@@ -33,7 +33,7 @@ func _run() -> void:
 	mb.latency_ms = 0
 	mb.server.time_scale = 3.0   # bombs every ~1 s of real time per hero; stamina lasts long enough
 	await _wait(0.5)
-	var mining: Mining = get_tree().get_first_node_in_group("mining") as Mining
+	var mining: Mine = get_tree().get_first_node_in_group("mining") as Mine
 	if mining == null or GameState.state == null:
 		_fails.append("mining scene / state missing after boot")
 		_finish()
@@ -42,10 +42,10 @@ func _run() -> void:
 
 	# predictive bombs + hits + deaths (headless frames are not 60 fps: wait wall-clock time)
 	await _wait(6.0)
-	var bombs: Node2D = mining.get_node("Hud/Root/Bombs")
+	var bombs: Node2D = mining.get_node("World/Bombs")
 	var explosions: Node2D = mining.get_node("World/Fx/Explosions")
 	var dead_visual := 0
-	for c: BlockCell in mining.grid.cells:
+	for c: BlockTile in mining.field.tiles:
 		if not c.alive:
 			dead_visual += 1
 	print("fx soak: bombs pooled=%d explosions pooled=%d dead cells=%d pending=%.2f" % [bombs.get_child_count(), explosions.get_child_count(), dead_visual, GameState.state.pending])
@@ -53,6 +53,16 @@ func _run() -> void:
 		_fails.append("no bombs were thrown in predict mode")
 	if explosions.get_child_count() == 0:
 		_fails.append("no explosions played")
+	var walked := 0
+	var thrown := 0
+	for a: HeroActor in mining.heroes.actors.values():
+		if a.state == HeroActor.State.WALK:
+			walked += 1
+		if (a.get_node("Sprite") as AnimatedSprite2D).animation == &"throw":
+			thrown += 1
+	print("fx soak: actors=%d walking=%d throwing=%d" % [mining.heroes.actors.size(), walked, thrown])
+	if mining.heroes.actors.is_empty():
+		_fails.append("no hero actors on the map")
 
 	# popup open / close with tweens, then an awaited action through it
 	var h: HeroModel = GameState.state.heroes[0]
@@ -77,7 +87,7 @@ func _run() -> void:
 	mb.server.set_pending(float(mb.server.min_blast) + 1.0)
 	GameState.refresh_now()
 	await _frames(30)
-	var claim: JuiceButton = mining.get_node("Hud/Root/ClaimButton")
+	var claim: TexButton = mining.get_node("Hud/Root/ClaimButton")
 	if claim.label != "Claim":
 		_fails.append("claim button did not unlock (label %s)" % claim.label)
 	mining._on_badge(true)
@@ -112,9 +122,9 @@ func _run() -> void:
 	mb.set_scenario("rich")
 	GameState.refresh_now()
 	await _frames(60)
-	mining.hero_list._next()
+	mining.cards._next()
 	await _frames(10)
-	mining.hero_list._prev()
+	mining.cards._prev()
 	mb.set_scenario("claimable")
 	GameState.refresh_now()
 	await _frames(30)

@@ -3,13 +3,18 @@ extends Node
 ## GameState, swaps the active screen by phase, and tells the host page when
 ## Godot is up (mb.ready()). F1 toggles the dev panel outside the web build.
 
-const MINING_SCENE_PATH := "res://scenes/mining/mining.tscn"
+const MINING_SCENE_PATH := "res://scenes/mine/mine.tscn"
 const DEBUG_PANEL_PATH := "res://scenes/ui/debug_panel.tscn"
 
 @onready var screens: Node = $Screens
 @onready var waiting: Control = $Screens/Waiting
 @onready var waiting_label: Label = $Screens/Waiting/Label
+@onready var waiting_cave: TextureRect = $Screens/Waiting/Cave
+@onready var waiting_logo: TextureRect = $Screens/Waiting/Logo
+@onready var waiting_hero: AnimatedSprite2D = $Screens/Waiting/Hero
 @onready var loader: CanvasLayer = $Loader
+@onready var loader_logo: TextureRect = $Loader/Logo
+@onready var loader_walker: AnimatedSprite2D = $Loader/Walker
 @onready var overlay: CanvasLayer = $Overlay
 
 var _mining: Node = null
@@ -17,6 +22,7 @@ var _debug_panel: Control = null
 
 
 func _ready() -> void:
+	_dress()
 	Config.apply_host_config(Backend.config())
 	GameState.phase_changed.connect(_on_phase)
 	GameState.state_applied.connect(_on_state_applied)
@@ -26,6 +32,17 @@ func _ready() -> void:
 	GameState.start()
 	_on_phase(GameState.phase, GameState.Phase.BOOT)
 	Backend.notify_ready()   # last: the host hides its loader on this
+
+
+## Title / loader dressing: logo, dimmed cave, an idle hero and a walker.
+func _dress() -> void:
+	waiting_cave.texture = Sheets.texture("env/map_bg.png")
+	waiting_logo.texture = Sheets.texture("ui/logo.png")
+	loader_logo.texture = Sheets.texture("ui/logo.png")
+	waiting_hero.sprite_frames = Sheets.frames("chars/hero_2.png")
+	waiting_hero.play(&"idle")
+	loader_walker.sprite_frames = Sheets.frames("chars/hero_4.png")
+	loader_walker.play(&"walk")
 
 
 func _on_phase(p: int, _prev: int) -> void:

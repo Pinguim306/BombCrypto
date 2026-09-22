@@ -164,7 +164,7 @@ func toast(text: String, seconds := 3.0) -> void:
 	l.add_theme_color_override("font_outline_color", OUTLINE)
 	l.add_theme_constant_override("outline_size", 4)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	l.size = Vector2(800, 30)
+	l.size = Vector2(Layout.VIEW.x, 30)
 	l.position = Vector2(0, 58)
 	l.modulate.a = 0.0
 	_toast_layer.add_child(l)

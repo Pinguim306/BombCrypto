@@ -211,8 +211,8 @@ async function canvasRect(page) {
     return { x: r.x, y: r.y, w: r.width, h: r.height };
   });
 }
-// 800×600 Phaser/Godot design coordinates → page pixels
-const toPage = (rect, x, y) => ({ x: rect.x + (rect.w * x) / 800, y: rect.y + (rect.h * y) / 600 });
+// 960×540 Godot design coordinates → page pixels
+const toPage = (rect, x, y) => ({ x: rect.x + (rect.w * x) / 960, y: rect.y + (rect.h * y) / 540 });
 
 async function canvasShot(page, filePath) {
   const rect = await canvasRect(page);
@@ -273,9 +273,9 @@ async function main() {
       assert(!bad, `A: apiState callback not ok: ${JSON.stringify(bad?.env ?? bad ?? null).slice(0, 300)}\n  all results: ${JSON.stringify(calls.results.map((r) => [r.method, r.ok, r.env?.code ?? "", (r.env?.error ?? "").slice(0, 80)]))}`);
       console.log(`A: ${stateCalls} apiState invokes, ${stateResults.length} ok callbacks`);
 
-      // (d) Mine-all button centre (138,104) in the 800×600 layout
+      // (d) Mine-all button centre (80,452) in the 960×540 layout
       const rect = await canvasRect(page);
-      const p = toPage(rect, 138, 104);
+      const p = toPage(rect, 80, 452);
       await page.mouse.click(p.x, p.y);
       const tClick = Date.now();
       let teamCalls = 0;
@@ -294,21 +294,21 @@ async function main() {
       assert(teamResult && teamResult.ok, "A: apiSetTeamMode callback missing or not ok");
       console.log("A: Mine-all → apiSetTeamMode({mode:'work'}) ok");
 
-      // (e) screenshot + pending pill region must not be flat background
+      // (e) screenshot + pending plate region (top bar, 168..444 x 9..47) must not be flat background
       await page.screenshot({ path: SHOT, fullPage: false });
       const img = await canvasShot(page, SHOT.replace(/(\.png)?$/i, "-canvas.png"));
-      const sx = (x) => Math.round((x / 800) * img.width);
-      const sy = (y) => Math.round((y / 600) * img.height);
+      const sx = (x) => Math.round((x / 960) * img.width);
+      const sy = (y) => Math.round((y / 540) * img.height);
       let nonBg = 0, total = 0;
-      for (let y = sy(52); y < sy(76); y++) {
-        for (let x = sx(258); x < sx(520); x++) {
+      for (let y = sy(12); y < sy(44); y++) {
+        for (let x = sx(176); x < sx(440); x++) {
           const [r, g, b] = px(img, x, y);
           total++;
           if (Math.abs(r - 16) + Math.abs(g - 20) + Math.abs(b - 31) > 40) nonBg++;
         }
       }
-      assert(total > 0 && nonBg / total > 0.05, `A: pending pill region looks like flat background (${nonBg}/${total} px differ)`);
-      console.log(`A: pending pill region ${nonBg}/${total} non-background px; screenshot ${SHOT}`);
+      assert(total > 0 && nonBg / total > 0.05, `A: pending plate region looks like flat background (${nonBg}/${total} px differ)`);
+      console.log(`A: pending plate region ${nonBg}/${total} non-background px; screenshot ${SHOT}`);
 
       assert(errors.length === 0, `A: console errors:\n  ${errors.join("\n  ")}`);
       await context.close();

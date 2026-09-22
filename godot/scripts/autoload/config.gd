@@ -10,12 +10,6 @@ const REQUEST_TIMEOUT_MS := 15000
 const CLAIM_TIMEOUT_MS := 300000
 const DAILY_REFRESH_MS := 300000
 
-const COLS := 8
-const ROWS := 5
-const TILE := 64
-const CELL := 58
-const GRID_X := 258
-const GRID_Y := 90
 const PER_PAGE := 4
 const MAX_HOUSE_LINES := 6
 const DAILY_ATTEMPT_LIMIT := 10                         # adventure.ts DAILY_ATTEMPT_LIMIT

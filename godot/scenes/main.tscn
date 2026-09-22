@@ -17,15 +17,54 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Label" type="Label" parent="Screens/Waiting"]
+[node name="Bg" type="ColorRect" parent="Screens/Waiting"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0.565, 0.643, 0.682, 1)
-theme_override_font_sizes/font_size = 15
+mouse_filter = 2
+color = Color(0.0627, 0.0784, 0.1216, 1)
+
+[node name="Cave" type="TextureRect" parent="Screens/Waiting"]
+modulate = Color(0.45, 0.5, 0.65, 1)
+texture_filter = 1
+layout_mode = 0
+offset_left = 192.0
+offset_top = 96.0
+offset_right = 768.0
+offset_bottom = 480.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Logo" type="TextureRect" parent="Screens/Waiting"]
+texture_filter = 1
+layout_mode = 0
+offset_left = 264.0
+offset_top = 150.0
+offset_right = 696.0
+offset_bottom = 246.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Hero" type="AnimatedSprite2D" parent="Screens/Waiting"]
+texture_filter = 1
+position = Vector2(480, 330)
+scale = Vector2(3, 3)
+
+[node name="Label" type="Label" parent="Screens/Waiting"]
+layout_mode = 0
+offset_left = 160.0
+offset_top = 380.0
+offset_right = 800.0
+offset_bottom = 420.0
+theme_override_colors/font_color = Color(0.81, 0.85, 0.87, 1)
+theme_override_colors/font_outline_color = Color(0.063, 0.078, 0.122, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 18
 text = "connect your wallet above to start mining"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -42,14 +81,28 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.0627, 0.0784, 0.1216, 1)
 
+[node name="Logo" type="TextureRect" parent="Loader"]
+texture_filter = 1
+offset_left = 336.0
+offset_top = 190.0
+offset_right = 624.0
+offset_bottom = 254.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Walker" type="AnimatedSprite2D" parent="Loader"]
+texture_filter = 1
+position = Vector2(480, 300)
+scale = Vector2(2, 2)
+
 [node name="Label" type="Label" parent="Loader"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_left = 160.0
+offset_top = 330.0
+offset_right = 800.0
+offset_bottom = 360.0
 theme_override_colors/font_color = Color(0.565, 0.643, 0.682, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_font_sizes/font_size = 16
 text = "loading the mine…"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -60,7 +113,7 @@ layer = 30
 [node name="NetBanner" type="Control" parent="Overlay"]
 layout_mode = 3
 anchors_preset = 0
-offset_right = 800.0
+offset_right = 960.0
 offset_bottom = 22.0
 mouse_filter = 2
 script = ExtResource("2_net")

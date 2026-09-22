@@ -70,8 +70,8 @@ const sha8 = (buf) => createHash("sha256").update(buf).digest("hex").slice(0, 8)
 // so the immutable cache rule stays correct even for a same-version re-export
 let engineDirName = null;
 
-// 1. sprites + fx (deterministic) and the export folder the editor must ignore
-run(process.execPath, [join(GODOT_DIR, "tools", "gen-sprites.mjs"), "--fx"], "sprites");
+// 1. placeholder art (deterministic) and the export folder the editor must ignore
+run(process.execPath, [join(GODOT_DIR, "tools", "gen-art.mjs")], "art");
 mkdirSync(join(GODOT_DIR, "export"), { recursive: true });
 writeFileSync(join(GODOT_DIR, "export", ".gdignore"), "");
 

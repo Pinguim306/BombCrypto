@@ -5,11 +5,7 @@ class_name Rules
 
 const COLS := 8
 const ROWS := 5
-const TILE := 64
-const CELL := 58
-const GRID_X := 258
-const GRID_Y := 90
-const BLOCK_COUNT := COLS * ROWS            # 40
+const BLOCK_COUNT := COLS * ROWS            # 40 (screen geometry lives in Layout)
 
 const DAILY_ATTEMPT_LIMIT := 10             # adventure.ts:26
 const BOMB_BASE_INTERVAL_MS := 4000         # engine.ts:42
@@ -63,18 +59,6 @@ static func team_rate(heroes: Array[HeroModel]) -> float:
 
 static func can_claim(pending: float, min_blast: int) -> bool:
 	return pending >= float(min_blast)
-
-
-## Centre of grid cell i in Phaser 800x600 coordinates.
-static func cell_center(i: int) -> Vector2:
-	var col := i % COLS
-	var row := i / COLS
-	return Vector2(GRID_X + col * TILE + CELL / 2.0, GRID_Y + row * TILE + CELL / 2.0)
-
-
-## Top-left of grid cell i.
-static func cell_origin(i: int) -> Vector2:
-	return Vector2(GRID_X + (i % COLS) * TILE, GRID_Y + (i / COLS) * TILE)
 
 
 ## Server bomb cadence for a speed value (engine.ts:79), rounded like the DTO.

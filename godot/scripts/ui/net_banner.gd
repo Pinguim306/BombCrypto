@@ -11,7 +11,7 @@ var _until_ms := 0
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	position = Vector2.ZERO
-	size = Vector2(800, 22)
+	size = Vector2(Layout.VIEW.x, 22)
 	_bg = ColorRect.new()
 	_bg.color = Color("b71c1c", 0.85)
 	_bg.size = size

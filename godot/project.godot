@@ -32,8 +32,8 @@ gdscript/warnings/unsafe_property_access=1
 
 [display]
 
-window/size/viewport_width=800
-window/size/viewport_height=600
+window/size/viewport_width=960
+window/size/viewport_height=540
 window/stretch/mode="canvas_items"
 window/stretch/aspect="keep"
 window/stretch/scale_mode="fractional"
@@ -42,10 +42,10 @@ window/dpi/allow_hidpi=true
 [gui]
 
 theme/custom="res://resources/theme/mb_theme.tres"
-theme/default_font_antialiasing=1
-theme/default_font_hinting=1
-theme/default_font_subpixel_positioning=1
-fonts/dynamic_fonts/use_oversampling=true
+theme/default_font_antialiasing=0
+theme/default_font_hinting=2
+theme/default_font_subpixel_positioning=0
+fonts/dynamic_fonts/use_oversampling=false
 common/snap_controls_to_pixels=true
 
 [importer_defaults]
@@ -73,7 +73,7 @@ textures/canvas_textures/default_texture_repeat=0
 2d/shadow_atlas/size=1024
 viewport/hdr_2d=false
 environment/defaults/default_clear_color=Color(0.0627, 0.0784, 0.1216, 1)
-limits/opengl/max_renderable_lights=16
+limits/opengl/max_renderable_lights=24
 limits/opengl/max_lights_per_object=4
 
 [audio]
