@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { requestedScene } from "../nav";
 import { connectWallet, signIn, reconnectSilently, MOBILE_WALLET_ENABLED, type WalletKind } from "../web3/wallet";
 import { hasToken, clearToken, tokenAddress } from "../net/api";
 import { registerPixelArt } from "../art/pixelart";
@@ -65,7 +66,7 @@ export class ConnectScene extends Phaser.Scene {
           clearToken(); // wallet switched accounts: force a fresh login
           this.scene.restart();
         } else {
-          this.scene.start("mining"); // matching account, or wallet locked (view-only)
+          this.scene.start(requestedScene() ?? "mining"); // matching account, or wallet locked (view-only)
         }
       });
       return;
@@ -87,7 +88,7 @@ export class ConnectScene extends Phaser.Scene {
         await connectWallet(kind);
         status.setColor("#90a4ae").setText("sign the login message in your wallet...");
         await signIn();
-        this.scene.start("mining");
+        this.scene.start(requestedScene() ?? "mining");
       } catch (err) {
         status.setColor("#ef9a9a").setText((err as Error).message);
       }

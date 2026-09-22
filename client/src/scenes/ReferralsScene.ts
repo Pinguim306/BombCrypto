@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { backToMine } from "../nav";
 import { formatEther } from "viem";
 import { connectedAddress, signMessage } from "../web3/wallet";
 import { referralStats, claimReferral } from "../web3/gacha";
@@ -44,7 +45,7 @@ export class ReferralsScene extends Phaser.Scene {
 
     drawRibbon(this, 400, 34, "REFERRALS", 220);
     const back = makeButton(this, 740, 34, "Back", { width: 90, height: 34, color: 0x37474f });
-    back.onClick(() => this.scene.start("mining"));
+    back.onClick(() => backToMine(this));
 
     // intro
     this.add.text(400, 82, "Invite friends — earn a share of the ETH they spend on chests.", {

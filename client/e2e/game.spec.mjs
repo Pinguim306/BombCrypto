@@ -2,7 +2,7 @@
 /**
  * Godot host-page smoke test (docs/godot-v2-design.md §12 step 7).
  *
- *   node client/e2e/play2.spec.mjs <baseUrl> <screenshot.png>
+ *   node client/e2e/game.spec.mjs <baseUrl> <screenshot.png>
  *
  * Serve client/dist first (`npx vite preview --port 4173` or
  * `python3 -m http.server`). Uses the sandbox Playwright (PW_CORE env or the
@@ -29,7 +29,7 @@ const CHROMIUM = process.env.PW_CHROMIUM ?? "/opt/pw-browsers/chromium";
 const READY_TIMEOUT_MS = 60_000;
 
 const [baseArg, shotArg] = process.argv.slice(2);
-if (!baseArg || !shotArg) fail("usage: play2.spec.mjs <baseUrl> <screenshot.png>");
+if (!baseArg || !shotArg) fail("usage: game.spec.mjs <baseUrl> <screenshot.png>");
 const BASE = baseArg.replace(/\/$/, "");
 const SHOT = path.resolve(shotArg);
 const SHOT_MOCK = SHOT.replace(/(\.png)?$/i, "-mock.png");
@@ -73,7 +73,7 @@ const FIXTURE = {
 
 /**
  * Injected before any page script. `__mbTestOverrides` supplies the fakes
- * that play2.ts merges over the bridge; the accessor on `window.mb` catches
+ * that game.ts merges over the bridge; the accessor on `window.mb` catches
  * the bridge object at install time so `ready()` and `invoke()` can be
  * recorded while still calling the real implementation.
  */
@@ -247,7 +247,7 @@ async function main() {
     // ---------------- run A: mocked bridge, logged in ----------------
     {
       const { page, context, errors } = await newPage(browser, { loggedIn: true });
-      await page.goto(`${BASE}/play2.html`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded" });
       const readyMs = await waitForReady(page, "A");
       console.log(`A: ready() after ${readyMs} ms`);
 
@@ -317,7 +317,7 @@ async function main() {
     // ---------------- run B: ?mock=1 (MockBackend, no bridge calls) ----------------
     {
       const { page, context, errors } = await newPage(browser, { loggedIn: true });
-      await page.goto(`${BASE}/play2.html?mock=1`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE}/?mock=1`, { waitUntil: "domcontentloaded" });
       const readyMs = await waitForReady(page, "B");
       console.log(`B: ready() after ${readyMs} ms`);
       assert(await page.locator("#loader").isHidden(), "B: #loader still visible after ready()");
@@ -349,7 +349,7 @@ async function main() {
     // ---------------- run C: not logged in → overlay ----------------
     {
       const { page, context } = await newPage(browser, { loggedIn: false });
-      await page.goto(`${BASE}/play2.html`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded" });
       const readyMs = await waitForReady(page, "C");
       console.log(`C: ready() after ${readyMs} ms`);
       assert(await page.locator("#loader").isHidden(), "C: #loader still visible after ready()");

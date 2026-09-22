@@ -12,6 +12,7 @@ import { LeaderboardScene } from "./scenes/LeaderboardScene";
 import { ReferralsScene } from "./scenes/ReferralsScene";
 import { DailyScene } from "./scenes/DailyScene";
 import { TOKEN_ADDRESS, captureReferralFromUrl } from "./config";
+import { GAME_SCENES, goToMine } from "./nav";
 
 // Store a ?ref=0x... referral link (first link wins) before anything else.
 captureReferralFromUrl();
@@ -40,17 +41,21 @@ const game = new Phaser.Game({
   scene: [ConnectScene, MiningScene, ShopScene, MarketScene, HeroesScene, LeaderboardScene, ReferralsScene, DailyScene],
 });
 
-// Site header -> in-game navigation. Ignored until the player logs in.
-const GAME_SCENES = ["mining", "shop", "market", "heroes", "leaderboard", "referrals", "daily"];
+// Site header -> in-game navigation. PLAY is the Godot mine on the main
+// page; the other sections switch scenes here (ignored until logged in).
 let navLock = false; // two nav clicks in one frame would leave two scenes active
 window.addEventListener("mb-nav", (e) => {
   if (navLock) return;
   const target = (e as CustomEvent<string>).detail;
+  if (target === "play") {
+    goToMine();
+    return;
+  }
   const active = game.scene.getScenes(true).map((s) => s.scene.key);
   const current = GAME_SCENES.find((k) => active.includes(k));
   if (!current) return; // still on the connect screen
-  const dest = target === "play" ? "mining" : target;
-  if (GAME_SCENES.includes(dest) && dest !== current) {
+  const dest = target;
+  if ((GAME_SCENES as readonly string[]).includes(dest) && dest !== current) {
     navLock = true;
     setTimeout(() => (navLock = false), 150);
     game.scene.getScene(current).scene.start(dest);

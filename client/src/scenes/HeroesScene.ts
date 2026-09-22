@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { backToMine } from "../nav";
 import { api, GameStateDto, HeroDto } from "../net/api";
 import { registerPixelArt, RARITY_COLORS } from "../art/pixelart";
 import { drawPanel, drawRibbon, makeButton } from "../art/ui";
@@ -25,7 +26,7 @@ export class HeroesScene extends Phaser.Scene {
 
     drawRibbon(this, 400, 34, "MY HEROES", 220);
     const back = makeButton(this, 740, 34, "Back", { width: 90, height: 34, color: 0x37474f });
-    back.onClick(() => this.scene.start("mining"));
+    back.onClick(() => backToMine(this));
 
     this.status = this.add.text(24, 566, "", {
       fontFamily: "monospace", fontSize: "13px", color: "#90a4ae", wordWrap: { width: 750 },

@@ -5,13 +5,15 @@ import { Buffer } from "buffer";
 import { TOKEN_ADDRESS, captureReferralFromUrl } from "./config";
 import { MOBILE_WALLET_ENABLED, type WalletKind } from "./web3/wallet";
 import { createBridge, type BridgeOptions } from "./bridge/mb";
+import { classicUrl } from "./nav";
 
 /*
- * Host page for the Godot v2 client (docs/godot-v2-design.md §10.3). The
- * page owns everything outside the canvas: wallet/SIWE login, the site
- * header, the loader and the `window.mb` bridge Godot talks to. Boot order
- * matters — `window.mb` must exist before the engine script is even injected
- * (Appendix A, ordering guarantees).
+ * Host page of the game (index.html): the Godot mine (docs/godot-v2-design.md
+ * §10.3). The page owns everything outside the canvas: wallet/SIWE login, the
+ * site header, the loader and the `window.mb` bridge Godot talks to. Boot
+ * order matters — `window.mb` must exist before the engine script is even
+ * injected (Appendix A, ordering guarantees). Every other section (shop,
+ * market, heroes, rank, referrals, daily) lives on the classic Phaser page.
  */
 
 // Store a ?ref=0x... referral link (first link wins) before anything else.
@@ -107,11 +109,11 @@ window.addEventListener("mb-disconnect", async () => {
   location.reload();
 });
 
-// Header nav: the bridge already relayed the target to Godot; the Godot page
-// only hosts mining, so every other section still lives on the Phaser page.
+// Header nav: the bridge already relayed the target to Godot; this page only
+// hosts the mine, so every other section opens on the classic page.
 window.addEventListener("mb-nav", (e) => {
   const target = (e as CustomEvent<string>).detail;
-  if (target !== "play") location.href = "/";
+  if (target !== "play") location.href = classicUrl(target);
 });
 
 // Footer network line: name from env, test-asset disclaimer only on testnet.
@@ -275,7 +277,7 @@ async function boot() {
 }
 
 boot().catch((err) => {
-  console.error("[play2] boot failed", err);
+  console.error("[game] boot failed", err);
   if (godotReady) return; // the game is up; whatever failed was not the boot
   loader.hidden = false;
   setLoader(err instanceof Error ? err.message : String(err));

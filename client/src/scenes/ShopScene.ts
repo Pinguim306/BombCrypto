@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { backToMine } from "../nav";
 import { formatEther } from "viem";
 import {
   gachaPrices, buyChest, buyPack, myUnopenedChests, chestStatus, rerollChest, openChestAndReveal,
@@ -41,7 +42,7 @@ export class ShopScene extends Phaser.Scene {
 
     drawRibbon(this, 400, 34, "SHOP", 180);
     const back = makeButton(this, 740, 34, "Back", { width: 90, height: 34, color: 0x37474f });
-    back.onClick(() => this.scene.start("mining"));
+    back.onClick(() => backToMine(this));
 
     this.status = this.add.text(24, 566, "", {
       fontFamily: "monospace", fontSize: "13px", color: "#90a4ae", wordWrap: { width: 750 },

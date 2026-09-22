@@ -124,54 +124,8 @@
         border-radius: 14px;
         box-shadow: 0 0 0 1px rgba(0,0,0,.6), 0 14px 44px rgba(0,0,0,.55), 0 0 60px rgba(232,149,47,.05);
       }
-      #game { width: 100%; aspect-ratio: 16 / 9; position: relative; }
+      #game { width: 100%; aspect-ratio: 4 / 3; }
       #game canvas { border-radius: 8px; }
-
-      /* ---------- Godot canvas + host overlays ---------- */
-      #godot-canvas {
-        width: 100%; height: 100%; display: block;
-        border-radius: 8px; background: #10141f; outline: none;
-      }
-      /* PLAY is z 20; the WalletConnect modal appends to body above everything */
-      #loader, #connect-overlay {
-        position: absolute; inset: 0; z-index: 30;
-        display: grid; place-content: center; justify-items: center; gap: 14px;
-        border-radius: 8px; background: rgba(16,20,31,.94);
-      }
-      /* an id selector outranks the UA [hidden] rule, so restate it */
-      #loader[hidden], #connect-overlay[hidden] { display: none; }
-      #loader .bar {
-        width: min(60vw, 320px); height: 8px; overflow: hidden;
-        background: #263238; border-radius: 4px; border: 1px solid var(--border);
-      }
-      #loader .bar i {
-        display: block; width: 0; height: 100%;
-        background: linear-gradient(90deg, var(--orange), var(--orange-lt));
-        transition: width .15s linear;
-      }
-      #loader-text { color: var(--muted); font-size: 13px; text-align: center; max-width: 80%; }
-      #connect-overlay h2 {
-        margin: 0 0 6px; font-size: 44px; letter-spacing: 2px;
-        color: var(--orange-lt);
-        text-shadow: 0 3px 0 #7a4a00, 0 6px 14px rgba(0,0,0,.6);
-      }
-      #connect-overlay h2 span { color: #4fc3f7; }
-      #connect-overlay button {
-        font-family: inherit; font-size: 16px; font-weight: bold; letter-spacing: .4px;
-        min-width: 220px; padding: 12px 26px; cursor: pointer;
-        border-radius: 8px; border: 2px solid #7a4a00;
-        background: linear-gradient(180deg, #ffb74d, var(--orange)); color: #221400;
-        box-shadow: 0 3px 0 #7a4a00;
-      }
-      #connect-overlay button:active { transform: translateY(2px); box-shadow: 0 1px 0 #7a4a00; }
-      #connect-overlay button:disabled { opacity: .5; cursor: default; }
-      #connect-overlay button[data-kind="walletconnect"] {
-        background: linear-gradient(180deg, #43a047, #2e7d32); color: #e8f5e9;
-        border-color: #1b5e20; box-shadow: 0 3px 0 #1b5e20;
-      }
-      #connect-overlay button[hidden] { display: none; }
-      #connect-status { margin: 0; min-height: 20px; max-width: 80%; text-align: center; font-size: 13px; color: var(--muted); }
-      #connect-status.error { color: #ef9a9a; }
 
       footer {
         text-align: center; color: var(--muted); font-size: 12px;
@@ -234,26 +188,16 @@
     </div>
 
     <main>
-      <div id="frame">
-        <div id="game">
-          <canvas id="godot-canvas" tabindex="0"></canvas>
-          <div id="loader"><div class="bar"><i></i></div><span id="loader-text">loading the mine…</span></div>
-          <div id="connect-overlay" hidden>
-            <h2>MINER<span>BLAST</span></h2>
-            <button data-kind="injected" type="button">Browser Wallet</button>
-            <button data-kind="walletconnect" type="button" hidden>Mobile Wallet</button>
-            <p id="connect-status"></p>
-          </div>
-        </div>
-      </div>
+      <div id="frame"><div id="game"></div></div>
     </main>
 
     <footer>
       <b>MinerBlast</b> — built on <span id="net-name">Robinhood Chain</span><span id="net-disclaimer"></span>
+      · classic client — <a href="/" style="color: var(--orange-lt)">play the new mine</a>
     </footer>
 
     <script>
-      // header -> game navigation (handled in src/play2.ts)
+      // header -> game navigation (handled in src/classic.ts)
       const nav = (t) => window.dispatchEvent(new CustomEvent("mb-nav", { detail: t }));
       document.querySelectorAll("[data-nav]").forEach((b) =>
         b.addEventListener("click", () => nav(b.dataset.nav))
@@ -285,6 +229,6 @@
         }
       });
     </script>
-    <script type="module" src="/src/play2.ts"></script>
+    <script type="module" src="/src/classic.ts"></script>
   </body>
 </html>

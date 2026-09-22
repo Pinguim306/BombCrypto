@@ -107,7 +107,7 @@ export interface MbBridge {
 declare global {
   interface Window {
     mb: MbBridge;
-    /** Playwright hook: merged over `window.mb` right after install (play2.ts). */
+    /** Playwright hook: merged over `window.mb` right after install (game.ts). */
     __mbTestOverrides?: Partial<MbBridge>;
   }
 }
@@ -123,7 +123,7 @@ export interface BridgeHost {
 export interface BridgeOptions {
   mock: boolean;
   networkName: string;
-  /** Mutable on purpose: play2.ts fills it in once the manifest is fetched. */
+  /** Mutable on purpose: game.ts fills it in once the manifest is fetched. */
   buildId: string;
   host: BridgeHost;
 }
@@ -254,7 +254,7 @@ export function createBridge(opts: BridgeOptions): MbBridge {
 
     async disconnect() {
       // Godot hears about it before the page handler tears everything down
-      // and reloads (main.ts semantics, duplicated in play2.ts).
+      // and reloads (classic.ts semantics, duplicated in game.ts).
       emit({ type: "session", loggedIn: false, address: null, reason: "disconnect" });
       window.dispatchEvent(new Event("mb-disconnect"));
       return {};

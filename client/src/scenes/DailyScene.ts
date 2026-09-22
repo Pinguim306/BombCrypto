@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { backToMine } from "../nav";
 import { api, DailyStatusDto } from "../net/api";
 import { registerPixelArt } from "../art/pixelart";
 import { drawPanel, drawRibbon, makeButton, Button } from "../art/ui";
@@ -23,7 +24,7 @@ export class DailyScene extends Phaser.Scene {
 
     drawRibbon(this, 400, 34, "DAILY REWARD", 240);
     const back = makeButton(this, 740, 34, "Back", { width: 90, height: 34, color: 0x37474f });
-    back.onClick(() => this.scene.start("mining"));
+    back.onClick(() => backToMine(this));
 
     this.add.text(400, 80, "Come back every day — the longer your streak, the bigger the reward.", {
       fontFamily: "monospace", fontSize: "13px", color: "#b0bec5",

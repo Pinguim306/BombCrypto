@@ -1,6 +1,6 @@
 // Ambient types for the Godot 4.7.2 web export loader (`/godot/engine-<ver>/mb.js`).
-// The script is injected at runtime by play2.ts — never bundled — so it only
-// exists as a global. Subset of the official Engine API that play2.ts uses.
+// The script is injected at runtime by game.ts — never bundled — so it only
+// exists as a global. Subset of the official Engine API that game.ts uses.
 
 interface GodotConfig {
   /** Base path of the engine files: `${executable}.js` / `.wasm`. */

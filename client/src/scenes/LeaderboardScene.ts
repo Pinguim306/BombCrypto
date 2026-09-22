@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { backToMine } from "../nav";
 import { formatEther } from "viem";
 import { api, MinerRow } from "../net/api";
 import { topReferrers, ReferrerRow } from "../web3/gacha";
@@ -29,7 +30,7 @@ export class LeaderboardScene extends Phaser.Scene {
 
     drawRibbon(this, 400, 34, "LEADERBOARDS", 240);
     const back = makeButton(this, 740, 34, "Back", { width: 90, height: 34, color: 0x37474f });
-    back.onClick(() => this.scene.start("mining"));
+    back.onClick(() => backToMine(this));
 
     // board switch tabs — the pair is centered on the panel (cx=400): two
     // 190px buttons with a 20px gap span 200..600, midpoint 400.

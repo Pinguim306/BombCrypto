@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { backToMine } from "../nav";
 import { formatEther, parseEther, type Address } from "viem";
 import {
   fetchListings,
@@ -33,7 +34,7 @@ export class MarketScene extends Phaser.Scene {
 
     drawRibbon(this, 400, 34, "MARKET", 200);
     makeButton(this, 740, 34, "Back", { width: 90, height: 34, color: 0x37474f })
-      .onClick(() => this.scene.start("mining"));
+      .onClick(() => backToMine(this));
 
     this.status = this.add.text(24, 566, "", {
       fontFamily: "monospace", fontSize: "13px", color: "#90a4ae", wordWrap: { width: 750 },

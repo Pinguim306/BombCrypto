@@ -1,10 +1,12 @@
 # MinerBlast v2 — Godot 4.7 web client (prototype)
 
-The `godot/` folder is a **second client** for the live MinerBlast game, built
-with Godot 4.7.2 and exported to the Web. It runs in parallel with the Phaser
-client that is live on minerblast.fun — nothing in `server/` or `contracts/`
-changes, and the Phaser pages are untouched. The design is in
-[`godot-v2-design.md`](./godot-v2-design.md).
+The `godot/` folder is the **main client** of MinerBlast, built with Godot
+4.7.2 and exported to the Web: it is what `/` serves. The Phaser client lives
+on at `/classic.html` for the sections the Godot page does not host yet
+(shop, market, heroes, rank, referrals, daily) and as a lighter fallback;
+`client/src/nav.ts` routes between the two (`?go=<scene>` deep links, PLAY /
+Back return to the mine). Nothing in `server/` or `contracts/` changes. The
+design is in [`godot-v2-design.md`](./godot-v2-design.md).
 
 Milestone 1 = the **Mine screen** (960×540, 16:9): a 12×8 tile cave map in a
 3/4 view with 20 ore deposits scattered over the floor (each shows two of the
@@ -19,7 +21,7 @@ explosions with light flashes, particles, screen shake, tweened counters.
 ## How it fits together
 
 ```
-client/play2.html + src/play2.ts    host page: wallet / SIWE / REST stay in TypeScript
+client/index.html + src/game.ts      host page: wallet / SIWE / REST stay in TypeScript
         │   window.mb  (client/src/bridge/mb.ts — the only thing Godot talks to)
         ▼
 client/public/godot/                engine (mb.js + mb.wasm) + content pack (mb-<sha>.pck)
@@ -110,8 +112,8 @@ the immutable cache rules in `vercel.json` stay correct across re-exports; only
 `manifest.json` changes per deploy and is served `no-cache`.
 
 Vite serves `client/public/` verbatim, so `pnpm --filter @minerblast/client dev`
-and opening `http://localhost:5173/play2.html` runs the real thing
-(`?mock=1` runs it with demo data, no wallet). `vercel.json` already carries the
+and opening `http://localhost:5173/` runs the real thing
+(`/?mock=1` runs it with demo data, no wallet; `/classic.html` is the Phaser client). `vercel.json` already carries the
 cache rules (`engine-*` and `pck/*` immutable, `manifest.json` no-cache).
 
 **Weight, honestly:** `mb.wasm` is ~39.5 MB raw / ~10 MB gzip (Vercel serves
