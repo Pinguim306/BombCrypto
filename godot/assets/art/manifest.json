@@ -727,11 +727,6 @@
       "frames": 1
     },
     "ui/logo.png": {
-      "w": 288,
-      "h": 64,
-      "frames": 1
-    },
-    "ui/logo_header.png": {
       "w": 206,
       "h": 40,
       "frames": 1
@@ -872,7 +867,6 @@
       "ui/icon_star.png",
       "ui/icon_wallet.png",
       "ui/logo.png",
-      "ui/logo_header.png",
       "ui/logo_small.png",
       "ui/panel_dark.png",
       "ui/panel_wood.png",

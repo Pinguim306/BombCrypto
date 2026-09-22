@@ -579,25 +579,6 @@ function drawLogoText(c, text, font, x0, y0, s, gap) {
   return x - gap;
 }
 
-function bigPick(c, x, y) {
-  // 28×30 pickaxe: wooden handle bottom-left → top-right, steel head across the top-right
-  const b = new Canvas(c.w, c.h);
-  // handle
-  b.polygon([[x + 1, y + 26], [x + 4, y + 29], [x + 21, y + 12], [x + 18, y + 9]], WOOD.base);
-  for (let i = 0; i < 17; i++) b.set(x + 1 + i, y + 26 - i, WOOD.light2);
-  for (let i = 0; i < 17; i++) b.set(x + 4 + i, y + 28 - i, WOOD.seam);
-  // head: thick bar perpendicular to the handle, tapered ends
-  b.polygon([[x + 7, y + 6], [x + 11, y + 1], [x + 15, y + 4], [x + 27, y + 16], [x + 26, y + 22], [x + 23, y + 21], [x + 11, y + 9]], STEEL.base);
-  b.polygon([[x + 8, y + 6], [x + 11, y + 2], [x + 14, y + 4], [x + 24, y + 14], [x + 12, y + 7]], STEEL.light);
-  b.polygon([[x + 13, y + 10], [x + 25, y + 21], [x + 26, y + 17], [x + 15, y + 6]], STEEL.dark);
-  b.set(x + 11, y + 2, 0xffffff); b.set(x + 12, y + 3, 0xffffff);
-  // binding
-  b.fillRect(x + 15, y + 11, 4, 4, WOOD.seam); b.set(x + 16, y + 11, GOLD.base); b.set(x + 17, y + 12, GOLD.dark);
-  b.outline(OUTLINE);
-  const sh = Canvas.from(b); sh.tint(0x2a1a05); c.blit(sh, 2, 3, { alpha: 0.9 });
-  c.blit(b, 0, 0);
-}
-
 function bigBomb(c, x, y) {
   // ~30×34 bomb with a lit fuse (y is the top of the spark; body below)
   const b = new Canvas(c.w, c.h);
@@ -622,24 +603,12 @@ function bigBomb(c, x, y) {
   c.blit(b, 0, 0);
 }
 
-function logo(iconSet) {
-  const c = new Canvas(288, 64);
-  const s = 3, gap = 3;
-  const tw = textWidthPx("MINERBLAST", BIG, s, gap);
-  const x0 = Math.floor((288 - tw) / 2);
-  const y0 = 15;
-  drawLogoText(c, "MINERBLAST", BIG, x0, y0, s, gap);
-  bigPick(c, x0 - 30, 13);
-  bigBomb(c, x0 + tw + 1, 12);
-  // sparkles
-  for (const [x, y] of [[x0 + 8, y0 - 4], [x0 + tw - 10, y0 + 33], [x0 + 60, y0 + 34]]) {
-    c.set(x, y, 0xffffff); c.set(x - 1, y, 0xfff6c8); c.set(x + 1, y, 0xfff6c8); c.set(x, y - 1, 0xfff6c8); c.set(x, y + 1, 0xfff6c8);
-  }
-  return c;
-}
-
-/** Header lockup: the big bomb, a breath of space, then the wordmark alone (no extra accents). */
-function logoHeader() {
+/**
+ * The MinerBlast lockup: the big bomb, a breath of space, then the wordmark
+ * alone (no pick, no second bomb). 206×40 at 1×; the site header shows it at
+ * 2×, the connect overlay at 3× and the Godot title/loader in a 2× box.
+ */
+function logo() {
   const s = 2, gap = 2;
   const tw = textWidthPx("MINERBLAST", BIG, s, gap);
   const bombW = 32, space = 12;
@@ -649,14 +618,15 @@ function logoHeader() {
   return c;
 }
 
+/** Same lockup for the in-game top bar: the 16 px bomb icon, a gap, the small wordmark. */
 function logoSmall(iconSet) {
   const c = new Canvas(144, 32);
   const s = 2, gap = 2;
   const tw = textWidthPx("MINERBLAST", SMALL, s, gap);
-  const x0 = Math.floor((144 - tw) / 2);
-  drawLogoText(c, "MINERBLAST", SMALL, x0, 6, s, gap);
-  c.blit(iconSet.pick, x0 - 15, 6);
-  c.blit(iconSet.bomb, x0 + tw + 1, 6);
+  const bombW = 16, space = 6;
+  const x0 = Math.floor((144 - (bombW + space + tw)) / 2);
+  c.blit(iconSet.bomb, x0, 7);
+  drawLogoText(c, "MINERBLAST", SMALL, x0 + bombW + space, 9, s, gap);
   return c;
 }
 
@@ -687,8 +657,7 @@ export function generateUi(outDir) {
   save("badge.png", badge());
   const ic = icons();
   for (const [name, canvas] of Object.entries(ic)) save(`icon_${name}.png`, canvas);
-  save("logo.png", logo(ic));
+  save("logo.png", logo());
   save("logo_small.png", logoSmall(ic));
-  save("logo_header.png", logoHeader());
   return out;
 }

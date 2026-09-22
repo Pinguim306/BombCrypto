@@ -81,8 +81,8 @@ server blocks are **ore deposits scattered over the floor** (tiles listed in
 | `bar_frame.png` | 24×10, margins 3 | dark bar frame (fills are ColorRects inside) |
 | `badge.png` | 20×20 | red round badge with dark outline |
 | `icon_{pick,coin,bolt,house,bomb,star,lock,gift,adventure,arrow_l,arrow_r,close,sleep,wallet}.png` | 16×16 | flat icons with outline |
-| `logo.png` | 288×64 | "MINERBLAST" chunky gold pixel letters, dark outline, pick + bomb accents |
-| `logo_small.png` | 144×32 | same, for the top bar |
+| `logo.png` | 206×40 | the lockup: big lit bomb (32 px), a 12 px gap, "MINERBLAST" in chunky gold pixel letters with the dark outline; nothing else |
+| `logo_small.png` | 144×32 | same lockup with the 16 px bomb icon and the small wordmark, for the top bar |
 
 ## Generators
 

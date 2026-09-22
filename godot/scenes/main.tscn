@@ -42,10 +42,10 @@ stretch_mode = 5
 [node name="Logo" type="TextureRect" parent="Screens/Waiting"]
 texture_filter = 1
 layout_mode = 0
-offset_left = 264.0
-offset_top = 150.0
-offset_right = 696.0
-offset_bottom = 246.0
+offset_left = 274.0
+offset_top = 158.0
+offset_right = 686.0
+offset_bottom = 238.0
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
@@ -83,10 +83,10 @@ color = Color(0.0627, 0.0784, 0.1216, 1)
 
 [node name="Logo" type="TextureRect" parent="Loader"]
 texture_filter = 1
-offset_left = 336.0
-offset_top = 190.0
-offset_right = 624.0
-offset_bottom = 254.0
+offset_left = 274.0
+offset_top = 176.0
+offset_right = 686.0
+offset_bottom = 256.0
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5

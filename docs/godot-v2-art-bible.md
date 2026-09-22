@@ -130,8 +130,10 @@ the centre is a plain repeatable fill (it gets stretched).
   24×10, `badge.png` 20×20 red round badge.
 * icons 16×16: pick, coin, bolt, house, bomb, star, lock, gift, adventure,
   arrow_l, arrow_r, close, sleep, wallet.
-* `logo.png` 288×64 and `logo_small.png` 144×32 — "MINERBLAST" in chunky gold
-  bevelled letters with the outline, a pick and a bomb as accents.
+* `logo.png` 206×40 and `logo_small.png` 144×32 — the lockup: the bomb on
+  the left, a breath of space, then "MINERBLAST" in chunky gold bevelled
+  letters with the outline. No other accents; the same lockup is used on the
+  site header (2×), the connect screen (3×) and the in-game title.
 
 Fonts are not art deliverables: Press Start 2P (titles, numbers, buttons) and
 Pixelify Sans (body), both OFL, already in `godot/assets/fonts/`.
@@ -166,5 +168,6 @@ another game's art as a reference image.
   proportions, 1px outline, transparent background".
 * UI panel: "48x48 pixel art nine-slice wooden plank panel, dark rim, brass
   corner rivets, seamless centre".
-* Logo: "chunky gold bevelled pixel letters MINERBLAST, dark outline, small
-  pickaxe and round black bomb accents, transparent background, 288x64".
+* Logo: "round black pixel bomb with a lit fuse on the left, then chunky gold
+  bevelled pixel letters MINERBLAST with a dark outline, transparent
+  background, 206x40".
