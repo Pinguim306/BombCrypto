@@ -70,6 +70,7 @@ a { color: var(--gold); }
 
 /* ---------- buttons ---------- */
 .btn {
+  text-decoration: none;
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
   min-height: 48px; padding: 0 14px 6px; cursor: pointer; user-select: none;
   font-family: var(--font-pixel); font-size: 11px; color: #fff; line-height: 1.2;
@@ -145,15 +146,20 @@ p, li { line-height: 1.6; }
 b, strong { color: var(--gold); }
 
 /* ---------- site chrome: header / CA strip / footer (rendered by src/site/chrome.ts) ---------- */
+/* the plank panel is painted by a ::before pseudo-element (a 9-slice with its top and side rims
+   pushed off-screen) so the flex layout of the header itself stays plain and the fill always renders */
+#site-header { overflow: hidden; box-shadow: 0 6px 22px rgba(0,0,0,.5); background: #4a2c17; }
 .site-header {
-  position: relative; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: space-between;
-  padding: 6px 22px 10px; min-height: 80px;
-  border: solid transparent; border-width: 0 0 24px 0; border-image: url(/art/ui/panel_wood.png) 12 fill / 0 0 24px 0 round;
-  image-rendering: pixelated; box-shadow: 0 6px 22px rgba(0,0,0,.5);
+  position: relative; z-index: 0; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; justify-content: space-between;
+  padding: 8px 22px 10px; min-height: 84px;
+}
+.site-header::before {
+  content: ""; position: absolute; inset: -24px -24px 0; z-index: -1; pointer-events: none;
+  border: 24px solid transparent; border-image: url(/art/ui/panel_wood.png) 12 fill / 24px round;
+  image-rendering: pixelated;
 }
 .site-header .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; flex: 0 0 auto; }
-.site-header .logo img { height: 64px; width: auto; image-rendering: pixelated; }
-.site-header .logo .bomb { width: 48px; height: 48px; }
+.site-header .logo img { height: 80px; width: auto; image-rendering: pixelated; }
 .site-header nav { display: flex; align-items: center; gap: 4px; flex: 0 1 auto; justify-content: flex-end; flex-wrap: wrap; }
 .site-header nav a, .site-header nav button {
   font-family: var(--font-body); font-weight: 700; font-size: 17px; letter-spacing: .5px;
@@ -253,7 +259,7 @@ main.stage { display: flex; justify-content: center; padding: 22px 14px 30px; }
 @media (max-width: 640px) {
   html, body { font-size: 16px; }
   .site-header { padding: 6px 12px 10px; gap: 8px; }
-  .site-header .logo img { height: 48px; }
+  .site-header .logo img { height: 40px; }
   .site-header nav a, .site-header nav button { font-size: 15px; padding: 6px 6px; }
   #section-overlay { padding: 6px; }
 }

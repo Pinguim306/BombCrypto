@@ -45,8 +45,7 @@ export function mountChrome(opts: ChromeOptions): void {
   header.innerHTML = `
     <header class="site-header">
       <a class="logo" href="/" aria-label="MinerBlast">
-        <span class="sprite-bomb bomb" aria-hidden="true"></span>
-        <img src="/art/ui/logo_small.png" alt="MinerBlast" width="288" height="64" />
+        <img src="/art/ui/logo_header.png" alt="MinerBlast" />
       </a>
       ${onGame ? `<button class="btn btn-gold btn-play" type="button" data-nav="play">PLAY</button>` : `<a class="btn btn-gold btn-play" href="/">PLAY</a>`}
       <nav>

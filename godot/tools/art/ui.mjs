@@ -638,6 +638,17 @@ function logo(iconSet) {
   return c;
 }
 
+/** Header lockup: the big bomb, a breath of space, then the wordmark alone (no extra accents). */
+function logoHeader() {
+  const s = 2, gap = 2;
+  const tw = textWidthPx("MINERBLAST", BIG, s, gap);
+  const bombW = 32, space = 12;
+  const c = new Canvas(bombW + space + tw + 6, 40);
+  bigBomb(c, 1, 2);
+  drawLogoText(c, "MINERBLAST", BIG, bombW + space, 9, s, gap);
+  return c;
+}
+
 function logoSmall(iconSet) {
   const c = new Canvas(144, 32);
   const s = 2, gap = 2;
@@ -678,5 +689,6 @@ export function generateUi(outDir) {
   for (const [name, canvas] of Object.entries(ic)) save(`icon_${name}.png`, canvas);
   save("logo.png", logo(ic));
   save("logo_small.png", logoSmall(ic));
+  save("logo_header.png", logoHeader());
   return out;
 }
