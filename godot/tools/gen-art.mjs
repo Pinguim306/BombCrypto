@@ -62,6 +62,33 @@ for (const m of MODULES) {
   if (previewDir) writePreview(m, entries, outDir);
 }
 
+// site copies: the HTML chrome (header, docs pages, section overlays) uses the
+// same UI kit and a few sprites via CSS, served from client/public/art
+const SITE = join(ROOT, "client", "public", "art");
+const SITE_FILES = {
+  ui: "*",
+  chars: ["bomb.png", "coin.png", "coin_big.png", "chest.png", "chest_open.png", "campfire.png", "zzz.png",
+    ...[0, 1, 2, 3, 4, 5].flatMap((r) => [`portrait_${r}.png`, `hero_${r}.png`])],
+  env: ["house.png", "ore_0_0.png", "ore_1_0.png", "ore_2_0.png", "crystal_0.png", "sign.png"],
+};
+import { copyFileSync, readdirSync, rmSync } from "node:fs";
+rmSync(SITE, { recursive: true, force: true });
+let copied = 0;
+for (const [sub, list] of Object.entries(SITE_FILES)) {
+  const from = join(OUT, sub);
+  if (!existsSync(from)) continue;
+  const names = list === "*" ? readdirSync(from).filter((f) => f.endsWith(".png")) : list;
+  mkdirSync(join(SITE, sub), { recursive: true });
+  for (const f of names) if (existsSync(join(from, f))) { copyFileSync(join(from, f), join(SITE, sub, f)); copied++; }
+}
+const FONTS = join(ROOT, "client", "public", "fonts");
+mkdirSync(FONTS, { recursive: true });
+for (const f of ["PressStart2P-Regular.ttf", "PixelifySans.ttf", "OFL-PressStart2P.txt", "OFL-PixelifySans.txt"]) {
+  const src = join(ROOT, "godot", "assets", "fonts", f);
+  if (existsSync(src)) copyFileSync(src, join(FONTS, f));
+}
+console.log(`site assets: ${copied} files → ${SITE} (+ fonts → ${FONTS})`);
+
 // stable key order so the manifest diff stays readable
 const sorted = { generator: manifest.generator, files: {}, modules: {} };
 for (const k of Object.keys(manifest.files).sort()) sorted.files[k] = manifest.files[k];

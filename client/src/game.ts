@@ -2,10 +2,11 @@
 import { Buffer } from "buffer";
 (globalThis as any).Buffer ??= Buffer;
 
-import { TOKEN_ADDRESS, captureReferralFromUrl } from "./config";
+import { captureReferralFromUrl } from "./config";
 import { MOBILE_WALLET_ENABLED, type WalletKind } from "./web3/wallet";
 import { createBridge, type BridgeOptions } from "./bridge/mb";
-import { classicUrl } from "./nav";
+import { mountChrome } from "./site/chrome";
+import { closeSection, configureOverlay, isSectionName, openSection } from "./sections/overlay";
 
 /*
  * Host page of the game (index.html): the Godot mine (docs/godot-v2-design.md
@@ -18,6 +19,7 @@ import { classicUrl } from "./nav";
 
 // Store a ?ref=0x... referral link (first link wins) before anything else.
 captureReferralFromUrl();
+mountChrome({ page: "game" });
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
 const gameEl = $<HTMLDivElement>("game")!;
@@ -109,43 +111,19 @@ window.addEventListener("mb-disconnect", async () => {
   location.reload();
 });
 
-// Header nav: the bridge already relayed the target to Godot; this page only
-// hosts the mine, so every other section opens on the classic page.
+// Header nav: the bridge already relayed the target to Godot; PLAY closes any
+// open section, every other section opens as an overlay over the mine.
+configureOverlay({ requestLogin: showOverlay });
 window.addEventListener("mb-nav", (e) => {
   const target = (e as CustomEvent<string>).detail;
-  if (target !== "play") location.href = classicUrl(target);
+  if (target === "play") closeSection();
+  else if (isSectionName(target)) void openSection(target);
 });
+// deep links (`/?go=shop`) open the section once the page is up
+const go = params.get("go") ?? "";
+if (isSectionName(go)) void openSection(go);
 
-// Footer network line: name from env, test-asset disclaimer only on testnet.
-const netNameEl = document.getElementById("net-name");
-if (netNameEl) netNameEl.textContent = netName;
-const disclaimerEl = document.getElementById("net-disclaimer");
-if (disclaimerEl && /testnet/i.test(netName)) {
-  disclaimerEl.textContent = " · rewards and NFTs are test assets with no real value";
-}
-
-// $BLAST contract address chip in the header (set VITE_BLAST_CA at deploy
-// time — e.g. on Vercel — once the launchpad token goes live). `||`, not
-// `??`: a present-but-empty env var must still fall back to the game token.
-const ca = ((import.meta.env.VITE_BLAST_CA as string | undefined) ?? "").trim() || TOKEN_ADDRESS;
-const caChip = document.getElementById("blast-ca");
-if (caChip && ca && !/^0x0{40}$/.test(ca)) {
-  const caText = document.getElementById("blast-ca-text");
-  if (caText) caText.textContent = `${ca.slice(0, 8)}…${ca.slice(-6)}`;
-  caChip.style.display = "";
-  caChip.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(ca);
-      if (caText) {
-        const prev = caText.textContent;
-        caText.textContent = "copied!";
-        setTimeout(() => (caText.textContent = prev), 1200);
-      }
-    } catch {
-      /* clipboard unavailable; the address is still visible */
-    }
-  });
-}
+// (footer network line and the $BLAST contract strip are rendered by site/chrome.ts)
 
 // ---- canvas sizing ----
 // canvasResizePolicy 0: the page owns the backing-store size. Render at the
