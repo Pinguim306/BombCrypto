@@ -27,6 +27,7 @@ const previewDir = argv.includes("--preview") ? argv[argv.indexOf("--preview") +
 const MODULES = [
   { key: "chars", file: "characters.mjs", fn: "generateCharacters", sub: "chars" },
   { key: "env", file: "environment.mjs", fn: "generateEnvironment", sub: "env" },
+  { key: "ore", file: "ore.mjs", fn: "generateOre", sub: "env" },
   { key: "ui", file: "ui.mjs", fn: "generateUi", sub: "ui" },
 ];
 
@@ -35,6 +36,7 @@ const manifestPath = join(OUT, "manifest.json");
 const manifest = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, "utf8")) : { generator: "godot/tools/gen-art.mjs", files: {} };
 manifest.generator = "godot/tools/gen-art.mjs";
 manifest.files ??= {};
+manifest.modules ??= {};   // module key -> files it wrote last time (stale entries are dropped per module)
 
 for (const m of MODULES) {
   if (only && only !== m.key) continue;
@@ -47,20 +49,23 @@ for (const m of MODULES) {
   const outDir = join(OUT, m.sub);
   mkdirSync(outDir, { recursive: true });
   const entries = mod[m.fn](outDir);
-  // drop stale entries of this module, then merge
-  for (const k of Object.keys(manifest.files)) if (k.startsWith(m.sub + "/")) delete manifest.files[k];
-  let n = 0;
+  // drop the entries this module wrote last time, then merge the new ones
+  for (const k of manifest.modules[m.key] ?? []) delete manifest.files[k];
+  const written = [];
   for (const [rel, entry] of Object.entries(entries)) {
     manifest.files[`${m.sub}/${rel}`] = entry;
-    n++;
+    written.push(`${m.sub}/${rel}`);
   }
+  manifest.modules[m.key] = written;
+  const n = written.length;
   console.log(`${m.key}: ${n} files → ${outDir}`);
   if (previewDir) writePreview(m, entries, outDir);
 }
 
 // stable key order so the manifest diff stays readable
-const sorted = { generator: manifest.generator, files: {} };
+const sorted = { generator: manifest.generator, files: {}, modules: {} };
 for (const k of Object.keys(manifest.files).sort()) sorted.files[k] = manifest.files[k];
+for (const k of Object.keys(manifest.modules).sort()) sorted.modules[k] = [...manifest.modules[k]].sort();
 writeFileSync(manifestPath, JSON.stringify(sorted, null, 2) + "\n");
 console.log(`manifest → ${manifestPath} (${Object.keys(sorted.files).length} files)`);
 

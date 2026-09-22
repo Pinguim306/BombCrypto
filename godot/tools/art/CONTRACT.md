@@ -43,18 +43,18 @@ Manifest `anims` for heroes: `{ idle: [0,1], walk: [2,3,4,5], throw: [6,7,8], sl
 
 ## env/ (environment.mjs)
 
-The map is **12×8 tiles of 48 px** (576×384) in a 3/4 top-down view: floor
-tiles with blocks that show a **top face (rows 0–13)** and a **front face
-(rows 14–47)**.
+The map is **12×8 tiles of 48 px** (576×384) in a 3/4 top-down view. The 40
+server blocks are **ore deposits scattered over the floor** (tiles listed in
+`map.mjs` → `MAP_PATTERN`, exported to the manifest as
+`env/map_bg.png` → `extra.ore_tiles`, in server block order).
 
 | file | size | frames | notes |
 |---|---|---|---|
-| `block_{0,1,2}.png` | 48×48 | 1 | ore block: 0 brown stone + gold nuggets · 1 blue-grey ice + cyan crystals · 2 dark basalt + glowing magma cracks. Bevelled edges, top face lighter. |
-| `crack_1.png` / `crack_2.png` | 48×48 | 1 | overlay cracks (dark, 1 px + chips); 2 = heavy |
+| `ore_{tier}_{variant}.png` (ore.mjs) | 48×48 ×3 | 0 intact · 1 cracked · 2 heavily damaged | organic mound sitting on the floor (no square/cube): 0 brown stone + gold nuggets · 1 blue-grey ice + cyan crystal cluster · 2 dark basalt + glowing magma grooves; variant 0/1 differ in silhouette (block index % 2) |
 | `floor.png` | 48×48 ×4 | variants | dark cave floor (navy-brown), pebbles / cracks, low contrast so blocks and heroes pop |
 | `floor_crystal.png` | 48×48 | 1 | floor with a small glowing cyan crystal cluster |
 | `crater.png` | 48×48 | 1 | scorched decal, alpha (dead block floor) |
-| `map_bg.png` | 576×384 | 1 | baked floor (seeded variation) with a **rock border**: outer 12 px of every side is rock wall (top-left lit), margins (cols 0–1, 10–11, rows 0, 6–7) get sparse rocks / mushrooms / bones; the block area (cols 2–9, rows 1–5) stays plain floor. |
+| `map_bg.png` | 576×384 | 1 | baked floor (seeded variation) with a **rock border**: outer 12 px of every side is rock wall (top-left lit); sparse rocks / mushrooms / bones only on tiles that hold no deposit. `extra.ore_tiles` = the 40 deposit tiles. |
 | `wall_band.png` | 576×28 | 1 | rock wall band with stalactites, drawn above the map (y = -28) |
 | `house.png` | 96×80 | 1 | cute cabin: log walls, red tiled roof, chimney top-right, door, warm window. Manifest `extra: { window: [x,y], chimney: [x,y] }` (local px). |
 | `rock_{0,1}.png` | 24×20 | 1 | boulders |
@@ -88,7 +88,9 @@ tiles with blocks that show a **top face (rows 0–13)** and a **front face
 
 * `godot/tools/art/lib.mjs` — canvas, outline, ramp, rng, sheet, 5×7 font.
 * `godot/tools/art/characters.mjs` → `export function generateCharacters(outDir)`
+* `godot/tools/art/map.mjs` — the 12×8 map pattern (deposits, camp, porch, props) + `validate()`
 * `godot/tools/art/environment.mjs` → `export function generateEnvironment(outDir)`
+* `godot/tools/art/ore.mjs` → `export function generateOre(outDir)` (into env/)
 * `godot/tools/art/ui.mjs` → `export function generateUi(outDir)`
 * `godot/tools/gen-art.mjs` runs all three, writes the manifest and, with
   `--preview <dir>`, a 3× contact sheet per module for eyeballing.

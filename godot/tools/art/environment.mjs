@@ -5,6 +5,7 @@
  * front face (rows 14–47), low-contrast floor so sprites pop, rock borders lit
  * from the top-left. Everything is seeded (`rng`) — same input, same bytes.
  */
+import { ORE_TILES, isOre, validate as validateMap } from "./map.mjs";
 import { join } from "node:path";
 import { Canvas, OUTLINE, ramp, mix, shade, rng, sheet, savePng } from "./lib.mjs";
 
@@ -746,7 +747,13 @@ function mapBackground(sprites) {
     [sprites.mushroom, 130, 302], [sprites.rock_0, 250, 330], [sprites.bones, 360, 306], [sprites.crystal_0, 420, 328],
     [sprites.rock_1, 160, 344], [sprites.mushroom, 300, 352], [sprites.rock_0, 40, 340], [sprites.crystal_1, 540, 320],
   ];
-  for (const [spr, x, y] of spots) c.blit(spr, x, y);
+  // skip any decoration whose footprint touches an ore deposit tile (they scatter over the whole floor now)
+  for (const [spr, x, y] of spots) {
+    const c0 = Math.floor(x / T), c1 = Math.floor((x + spr.w - 1) / T), r0 = Math.floor(y / T), r1 = Math.floor((y + spr.h - 1) / T);
+    let blocked = false;
+    for (let ty = r0; ty <= r1 && !blocked; ty++) for (let tx = c0; tx <= c1 && !blocked; tx++) if (isOre(tx, ty)) blocked = true;
+    if (!blocked) c.blit(spr, x, y);
+  }
   return c;
 }
 
@@ -789,15 +796,12 @@ export function generateEnvironment(outDir) {
     crystal_0: crystal(0), crystal_1: crystal(1),
   };
 
-  save("block_0.png", blockStone());
-  save("block_1.png", blockIce());
-  save("block_2.png", blockBasalt());
-  save("crack_1.png", crackOverlay(false));
-  save("crack_2.png", crackOverlay(true));
+  // (the cube blocks + crack overlays were replaced by the scattered ore deposits in ore.mjs)
   save("floor.png", sheet([floorTile(11), floorTile(12, { pebbles: [3, 5] }), floorTile(13, { cracks: 2 }), floorTile(14, { pebbles: [1, 2], cracks: 0 })]), { frames: 4 });
   save("floor_crystal.png", floorCrystalTile());
   save("crater.png", crater());
-  save("map_bg.png", mapBackground(sprites));
+  validateMap();
+  save("map_bg.png", mapBackground(sprites), { extra: { ore_tiles: ORE_TILES } });
   save("wall_band.png", wallBand());
   const h = house();
   save("house.png", h.c, { extra: { window: h.window, chimney: h.chimney } });

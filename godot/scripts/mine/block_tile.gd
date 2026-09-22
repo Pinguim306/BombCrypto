@@ -1,12 +1,16 @@
 class_name BlockTile
 extends Node2D
-## One ore block on the map (48x48, 3/4 view). The node sits at the BOTTOM
-## edge of its tile so the y-sorted Actors layer draws heroes standing below
-## it in front, and heroes above it behind. Renders from a BlockModel; the
-## predictive bomb sim drives `play_hit()` between polls, `apply()` snaps to
-## the server truth on every poll and reconciles silently when they differ.
-## A dead block shows the floor (nothing), a scorched crater and, on the
-## crystal variant, a glowing crystal with its own little light.
+## One ore deposit on the map: an organic mound (env/ore_<tier>_<variant>.png,
+## a 3-frame strip: intact / cracked / heavily damaged) that shows
+## Layout.BLOCKS_PER_DEPOSIT consecutive server blocks — its hp bar and damage
+## frame follow the SUM of their hp, it is alive while any of them is, and it
+## dies (crater, sometimes a crystal) when the last one goes. The node sits at
+## the BOTTOM edge of its tile so the y-sorted Actors layer draws heroes
+## standing below it in front, and heroes above it behind.
+##
+## The predictive bomb sim drives `play_hit(sub, dmg)` between polls (sub =
+## which of the deposit's blocks was hit); `apply()` snaps to the server truth
+## on every poll and reconciles silently when they differ.
 
 signal died(index: int, last_dmg: int)
 
@@ -35,15 +39,17 @@ const HP_BAR_POS := Vector2(4, -8)
 @onready var hp_bar: HpBar = $HpBar
 @onready var debris: CPUParticles2D = $Debris
 
-var index := -1
-var current_key := ""      # "block_1" | "dead" | "dead_crystal"
-var hp := 0                # server hp
-var max_hp := 1
-var predicted_hp := 0      # visual hp (server hp minus predicted bombs)
+var index := -1                # deposit index (0..19)
+var current_key := ""          # "block_<tier>" | "dead" | "dead_crystal"
+var damage_level := 0          # frame of the ore strip currently shown (0..2)
+var hp := 0                    # server hp (sum over the deposit's blocks)
+var max_hp := 1                # sum of max hp
+var block_max: Array[int] = [] # per block, server maxHp
+var predicted: Array[int] = [] # per block, visual hp (server hp minus predicted bombs)
 var tier := 0
-var alive := false         # visual state
+var alive := false             # visual state
 var _crack_level := 0
-var _sim_dead := false     # died from a predicted bomb, not yet confirmed
+var _sim_dead := false         # died from a predicted bomb, not yet confirmed
 var _dead_grace := 0
 var _glow_tw: Tween
 var _hit_tw: Tween
@@ -52,59 +58,94 @@ var _flash_tw: Tween
 var _death_tw: Tween
 var _spawn_tw: Tween
 
-static var _block_tex: Array[Texture2D] = []
-static var _crack_tex: Array[Texture2D] = []
-
 
 func setup(i: int) -> void:
 	index = i
-	position = Layout.block_origin(i) + Vector2(0, Layout.TILE)
+	position = Layout.deposit_origin(i) + Vector2(0, Layout.TILE)
 	crystal.visible = false
 	crater.visible = false
 	crystal_glow.visible = false
-	if _block_tex.is_empty():
-		for t in 3:
-			_block_tex.append(Sheets.texture("env/block_%d.png" % t))
-		_crack_tex.append(Sheets.texture("env/crack_1.png"))
-		_crack_tex.append(Sheets.texture("env/crack_2.png"))
+	crater.texture = Sheets.texture("env/crater.png")
+	crystal.texture = Sheets.texture("env/floor_crystal.png")
+	crack.visible = false   # damage is baked into the ore strip frames
+	block_max.resize(Layout.BLOCKS_PER_DEPOSIT)
+	predicted.resize(Layout.BLOCKS_PER_DEPOSIT)
+	block_max.fill(1)
+	predicted.fill(0)
 
 
-## Renders the server truth. `animate` = not the first render and FX enabled.
-func apply(m: BlockModel, animate: bool) -> void:
+## Visual hp of the deposit (sum of the predicted per-block hp).
+func predicted_hp() -> int:
+	var s := 0
+	for v in predicted:
+		s += v
+	return s
+
+
+## Strip for this deposit: tier picks the ore, the index picks the silhouette variant.
+func _ore_rel(t: int) -> String:
+	return "env/ore_%d_%d.png" % [clampi(t, 0, 2), index % 2]
+
+
+func _set_frame(level: int) -> void:
+	damage_level = clampi(level, 0, 2)
+	var tex := Sheets.frame(_ore_rel(tier), damage_level)
+	body.texture = tex
+	flash.texture = tex
+
+
+## Renders the server truth for the deposit's blocks. `animate` = not the
+## first render and FX enabled.
+func apply(blocks: Array[BlockModel], animate: bool) -> void:
 	var fx := animate and Config.fx_enabled
-	var fresh := m.max_hp != max_hp
-	hp = m.hp
-	max_hp = maxi(1, m.max_hp)
-	var now_alive := m.alive()
+	var sum_hp := 0
+	var sum_max := 0
+	var top_max := 0
+	var fresh := false
+	for k in blocks.size():
+		var m := blocks[k]
+		if k < block_max.size() and m.max_hp != block_max[k]:
+			fresh = true
+		sum_hp += m.hp
+		sum_max += maxi(1, m.max_hp)
+		top_max = maxi(top_max, m.max_hp)
+	hp = sum_hp
+	max_hp = maxi(1, sum_max)
+	var now_alive := sum_hp > 0
 	if now_alive:
 		if not alive and current_key != "":
 			# visual dead, server alive: a predicted death the server has not confirmed yet
 			if _sim_dead and not fresh and fx and _dead_grace < DEAD_GRACE_POLLS:
 				_dead_grace += 1
-				predicted_hp = m.hp
+				_snap_blocks(blocks)
 				return
 			_revive()
-		_set_alive_visuals(m, fx)
+		_set_alive_visuals(blocks, top_max, fx)
 	else:
 		if alive:
 			if fx:
-				play_death(maxi(1, predicted_hp))   # remaining visual hp = the last hit
+				play_death(maxi(1, predicted_hp()))   # remaining visual hp = the last hit
 			else:
 				_set_dead_visuals()
 		else:
 			_set_dead_visuals()
 		_sim_dead = false
 		_dead_grace = 0
-	predicted_hp = m.hp
+	_snap_blocks(blocks)
 
 
-func _set_alive_visuals(m: BlockModel, fx: bool) -> void:
-	var t := Rules.block_tier(m.max_hp)
+func _snap_blocks(blocks: Array[BlockModel]) -> void:
+	for k in mini(blocks.size(), predicted.size()):
+		block_max[k] = maxi(1, blocks[k].max_hp)
+		predicted[k] = blocks[k].hp
+
+
+func _set_alive_visuals(blocks: Array[BlockModel], top_max: int, fx: bool) -> void:
+	var t := Rules.block_tier(top_max)
 	var key := "block_%d" % t
 	if key != current_key:
-		body.texture = _block_tex[t]
-		flash.texture = _block_tex[t]
 		current_key = key
+		_crack_level = -1   # new tier / revived: force the strip frame to load
 	if t != tier or not alive:
 		tier = t
 		_set_tier_fx(t)
@@ -113,9 +154,14 @@ func _set_alive_visuals(m: BlockModel, fx: bool) -> void:
 	crater.visible = false
 	crystal.visible = false
 	crystal_glow.visible = false
-	_set_crack(Rules.crack_level(m.hp, m.max_hp), fx)
+	var sum_hp := 0
+	var sum_max := 0
+	for m in blocks:
+		sum_hp += m.hp
+		sum_max += maxi(1, m.max_hp)
+	_set_crack(Rules.crack_level(sum_hp, sum_max), fx)
 	hp_bar.visible = true
-	hp_bar.set_ratio(m.ratio(), fx)
+	hp_bar.set_ratio(float(sum_hp) / float(maxi(1, sum_max)), fx)
 
 
 func _set_dead_visuals() -> void:
@@ -191,33 +237,34 @@ func _glow_off() -> void:
 	ore_glow.modulate.a = 0.0
 
 
+## Damage stage: swaps the ore strip frame (a brief flash sells the change).
 func _set_crack(level: int, fx: bool) -> void:
-	if level == _crack_level:
-		return
+	var changed := level != _crack_level or damage_level != level or body.texture == null
 	_crack_level = level
-	if level <= 0:
-		crack.visible = false
+	if not changed:
 		return
-	crack.texture = _crack_tex[clampi(level, 1, 2) - 1]
-	crack.visible = true
-	if fx and Config.juice_scale() > 0.0:
-		crack.modulate = Color(1, 1, 1, 0)
-		var tw := create_tween()
-		tw.tween_property(crack, "modulate:a", 1.0, 0.15)
-	else:
-		crack.modulate = Color.WHITE
+	_set_frame(level)
+	if fx and Config.juice_scale() > 0.0 and level > 0:
+		if _flash_tw != null and _flash_tw.is_valid():
+			_flash_tw.kill()
+		flash.modulate.a = 0.5
+		_flash_tw = create_tween()
+		_flash_tw.tween_property(flash, "modulate:a", 0.0, 0.12)
 
 
-## A predicted bomb landed for `dmg`. Returns true when the block just died.
-func play_hit(dmg: int) -> bool:
+## A predicted bomb landed on the deposit's block `sub` for `dmg`. Returns
+## true when the deposit just died (its last block went to 0).
+func play_hit(sub: int, dmg: int) -> bool:
 	if not alive:
 		return false
-	predicted_hp = maxi(0, predicted_hp - dmg)
-	if predicted_hp <= 0:
+	sub = clampi(sub, 0, predicted.size() - 1)
+	predicted[sub] = maxi(0, predicted[sub] - dmg)
+	var left := predicted_hp()
+	if left <= 0:
 		play_death(dmg)
 		return true
-	hp_bar.set_ratio(float(predicted_hp) / float(max_hp), true)
-	_set_crack(Rules.crack_level(predicted_hp, max_hp), true)
+	hp_bar.set_ratio(float(left) / float(max_hp), true)
+	_set_crack(Rules.crack_level(left, max_hp), true)
 	var j := Config.juice_scale()
 	if not Config.fx_enabled or j <= 0.0:
 		return false
@@ -244,14 +291,14 @@ func play_hit(dmg: int) -> bool:
 	return false
 
 
-## Block death: the cube shrinks and tilts away, debris bursts, the crater
-## fades in (and the crystal rises on the crystal variant). Emits `died`.
+## Deposit death: the mound shrinks away, debris bursts, the crater fades in
+## (and the crystal rises on the crystal variant). Emits `died`.
 func play_death(last_dmg: int) -> void:
 	if not alive:
 		return
 	alive = false
 	_sim_dead = true
-	predicted_hp = 0
+	predicted.fill(0)
 	current_key = _dead_key()
 	hp_bar.visible = false
 	crack.visible = false
@@ -293,7 +340,7 @@ func play_death(last_dmg: int) -> void:
 	died.emit(index, last_dmg)
 
 
-## Map regeneration / scene enter: the block pops in after `delay` seconds.
+## Map regeneration / scene enter: the mound pops in after `delay` seconds.
 func play_spawn(delay: float) -> void:
 	if not Config.fx_enabled or Config.juice_scale() <= 0.0:
 		return
@@ -313,16 +360,18 @@ func play_spawn(delay: float) -> void:
 			debris.restart())
 
 
-## Silent catch-up (reconcile): moves the bar/cracks without hit FX.
-func set_predicted_hp(v: int) -> void:
-	predicted_hp = clampi(v, 0, max_hp)
+## Silent catch-up (reconcile): moves the bar/frame without hit FX.
+func set_predicted_hp(sub: int, v: int) -> void:
+	sub = clampi(sub, 0, predicted.size() - 1)
+	predicted[sub] = clampi(v, 0, block_max[sub])
 	if not alive:
 		return
-	hp_bar.set_ratio(float(predicted_hp) / float(max_hp), true)
-	_set_crack(Rules.crack_level(predicted_hp, max_hp), false)
+	var left := predicted_hp()
+	hp_bar.set_ratio(float(left) / float(max_hp), true)
+	_set_crack(Rules.crack_level(left, max_hp), false)
 
 
-## Lights toggled from the dev panel / host config.
+## Lights / glows toggled from the dev panel / host config.
 func apply_config() -> void:
 	crystal_glow.visible = crystal.visible and not alive and Config.fx_enabled
 

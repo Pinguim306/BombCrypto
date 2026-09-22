@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cj1p7tlovwv2s"
-path="res://.godot/imported/crack_1.png-2219897006a90cbf746a1217be13f4f8.ctex"
+uid="uid://ctq5e1uf3xof4"
+path="res://.godot/imported/ore_2_1.png-e75767de488078c183b36a2f5a98c03b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/env/crack_1.png"
-dest_files=["res://.godot/imported/crack_1.png-2219897006a90cbf746a1217be13f4f8.ctex"]
+source_file="res://assets/art/env/ore_2_1.png"
+dest_files=["res://.godot/imported/ore_2_1.png-e75767de488078c183b36a2f5a98c03b.ctex"]
 
 [params]
 

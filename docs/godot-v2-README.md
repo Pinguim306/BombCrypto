@@ -7,8 +7,10 @@ changes, and the Phaser pages are untouched. The design is in
 [`godot-v2-design.md`](./godot-v2-design.md).
 
 Milestone 1 = the **Mine screen** (960×540, 16:9): a 12×8 tile cave map in a
-3/4 view with the 40 ore blocks in the middle, heroes that walk to the ore
-wall and throw bombs (BFS paths, reserved standing tiles), a campfire where
+3/4 view with 20 ore deposits scattered over the floor (each shows two of the
+server's 40 blocks; the layout lives in `godot/tools/art/map.mjs`), heroes
+that walk up to the active vein and throw bombs (BFS paths, reserved
+standing tiles), a campfire where
 resting heroes sleep, a cabin for sheltered ones, torches / campfire / lamp
 lights over a dark ambient, a wood-and-gold HUD (counters, roster cards,
 EXPEDITION and HOUSES panels, status bar) and the game feel layer: bomb arcs,
@@ -78,7 +80,7 @@ GODOT_BIN=<path-to-godot> pnpm godot:test
 2. `tests/test_runner.gd` — unit tests for the models, formatting rules,
    envelope parsing and the mock server;
 3. `tests/smoke/` — instantiates the mine scene with mock data and asserts
-   the layout (block tiles, HP bars, hero actors on walkable tiles, roster
+   the layout (deposits, HP bars, hero actors on walkable tiles, roster
    cards, popup), then soaks the FX layer (bombs, walking, explosions,
    regen, scenario swaps) with the mock server at x3 speed.
 

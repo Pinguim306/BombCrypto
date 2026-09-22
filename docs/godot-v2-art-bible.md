@@ -86,20 +86,22 @@ headgear; `hero_shadow.png` 20×8 soft ellipse.
 
 ## 5. Environment (`env/`)
 
-The map is 12×8 tiles of 48 px in a **3/4 top-down view**: floor tiles, and
-blocks that show a lighter **top face (rows 0–13)** and a **front face
-(rows 14–47)**.
+The map is 12×8 tiles of 48 px in a **3/4 top-down view**. The 40 server
+blocks are **ore deposits scattered over the cave floor** (the pattern lives
+in `godot/tools/art/map.mjs`); heroes walk up to them and throw.
 
-* `block_0/1/2.png` 48×48 — stone+gold, ice+crystal, basalt+magma. Bevelled
-  edges, top face lighter, bottom-right darker, gems clearly readable.
-* `crack_1.png`, `crack_2.png` 48×48 overlays — branching dark cracks with a
-  1 px lighter edge; `crack_2` heavier with chips.
+* `ore_{tier}_{variant}.png` 48×48 ×3 frames — an organic mound sitting on
+  the floor (irregular silhouette, soft ground shadow, never a cube):
+  tier 0 stone + gold nuggets, tier 1 ice + cyan crystal cluster, tier 2
+  basalt + glowing magma grooves; two silhouette variants per tier. Frame 0
+  intact, frame 1 cracked with small chips, frame 2 heavily damaged (bigger
+  bites, gems gone, rubble at the base) but still recognisable.
 * `floor.png` 48×48 ×4 variants (low contrast), `floor_crystal.png` (floor
   with a glowing crystal cluster: shown where a depleted block reveals a
   vein), `crater.png` (scorched decal for depleted blocks).
 * `map_bg.png` 576×384 — the baked floor with a **12 px irregular rock
-  border**, sparse rocks / mushrooms / bones in the margin tiles (cols 0–1,
-  10–11, rows 0, 6–7). The block area (cols 2–9, rows 1–5) stays plain.
+  border** and sparse rocks / mushrooms / bones on tiles that hold no
+  deposit.
 * `wall_band.png` 576×28 — rock wall with stalactites, drawn above the map.
 * `house.png` 96×80 — log cabin, red tiled roof with ridge, chimney top-right
   (smoke particles spawn there), door with knob, warm window (a light sits

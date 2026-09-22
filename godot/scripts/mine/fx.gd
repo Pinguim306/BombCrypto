@@ -83,8 +83,8 @@ func _on_land(cell_index: int, dmg: int) -> void:
 		return
 	var tier := t.tier
 	var pos := Layout.block_center(cell_index)
-	var max_hp := t.max_hp
-	var died := field.hit(cell_index, dmg)       # a death emits tile_died -> _on_tile_died
+	var max_hp := field.block_max_hp(cell_index)
+	var died := field.hit(cell_index, dmg)       # a deposit death emits tile_died -> _on_tile_died
 	_explode(pos, tier, not died)
 	if not died and dmg >= int(ceil(0.2 * float(max_hp))):
 		float_text(pos, "-%d" % dmg, FLOAT_HIT)
@@ -113,12 +113,13 @@ func _coalesced() -> bool:
 	return _land_times.size() > COALESCE_MAX
 
 
+## A deposit (index = deposit) just went to zero.
 func _on_tile_died(index: int, last_dmg: int) -> void:
 	if not Config.fx_enabled:
 		return
-	var t := field.tile(index)
+	var t := field.deposit(index)
 	var tier := t.tier if t != null else 0
-	var pos := Layout.block_center(index)
+	var pos := Layout.deposit_center(index)
 	var ore: Color = Config.ORE[clampi(tier, 0, Config.ORE.size() - 1)]
 	Juice.hitstop(hitstop_seconds)
 	Juice.flash_light(pos, LIGHT_BASE.lerp(ore, 0.4), 3.6, 0.25)

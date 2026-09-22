@@ -7,7 +7,9 @@ extends Node
 ##
 ## Instantiates mine.tscn, feeds it the default fixture through the same
 ## GameState.state_applied path the game uses, runs ~120 frames and asserts:
-## 40 block tiles at their Layout positions with HpBar widths == 40*hp/maxHp,
+## 20 deposits (2 server blocks each) at their scattered Layout positions,
+## damage frame per Rules.crack_level of the summed hp, HpBar widths ==
+## 40*sum(hp)/sum(maxHp),
 ## dead tiles showing crater (+crystal per Rules.dead_variant), one hero actor
 ## per hero standing on a walkable tile (sleeping when resting), roster cards
 ## bound to the first heroes, popup open()/close(), and that rendering twice
@@ -55,10 +57,11 @@ func _run() -> void:
 	await _frames(10)
 	_check_all(mine, model2, "second render")
 
-	# a real server diff: one block dies, one is damaged, a hero rests
+	# a real server diff: one deposit dies (both blocks), one is damaged, a hero rests
 	var model3 := _fixture()
-	model3.blocks[3].hp = 0
-	model3.blocks[4].hp = 5
+	model3.blocks[6].hp = 0
+	model3.blocks[7].hp = 0
+	model3.blocks[8].hp = 5
 	model3.heroes[0].mode = "rest"
 	_apply(model3, StateDiff.compute(model2, model3))
 	await _frames(10)
@@ -66,8 +69,9 @@ func _run() -> void:
 
 	# a hero leaves the team: its actor and card go away
 	var model4 := _fixture()
-	model4.blocks[3].hp = 0
-	model4.blocks[4].hp = 5
+	model4.blocks[6].hp = 0
+	model4.blocks[7].hp = 0
+	model4.blocks[8].hp = 5
 	model4.heroes[0].mode = "rest"
 	var gone_id := model4.heroes[model4.heroes.size() - 1].id
 	model4.heroes.remove_at(model4.heroes.size() - 1)
@@ -89,39 +93,52 @@ func _check_all(mine: Mine, m: StateModel, label: String) -> void:
 
 func _check_blocks(mine: Mine, m: StateModel, label: String) -> void:
 	var field: BlockField = mine.get_node("World/Map/Actors/Blocks")
-	_eq(field.get_child_count(), 40, "%s: 40 tiles" % label)
-	_eq(field.tiles.size(), 40, "%s: 40 tile refs" % label)
-	for i in mini(40, field.tiles.size()):
-		var t: BlockTile = field.tiles[i]
-		var b: BlockModel = m.blocks[i]
-		_eq(t.name, "Block%02d" % i, "%s: tile %d name" % [label, i])
-		_eq(t.index, i, "%s: tile %d index" % [label, i])
-		_eq(t.position, Layout.block_origin(i) + Vector2(0, Layout.TILE), "%s: tile %d position" % [label, i])
-		_eq(t.alive, b.alive(), "%s: tile %d alive" % [label, i])
+	var per := Layout.BLOCKS_PER_DEPOSIT
+	_eq(field.get_child_count(), Layout.DEPOSIT_COUNT, "%s: %d deposits" % [label, Layout.DEPOSIT_COUNT])
+	_eq(field.tiles.size(), Layout.DEPOSIT_COUNT, "%s: deposit refs" % label)
+	for d in mini(Layout.DEPOSIT_COUNT, field.tiles.size()):
+		var t: BlockTile = field.tiles[d]
+		var sum_hp := 0
+		var sum_max := 0
+		var top_max := 0
+		for k in per:
+			var b: BlockModel = m.blocks[d * per + k]
+			sum_hp += b.hp
+			sum_max += b.max_hp
+			top_max = maxi(top_max, b.max_hp)
+		_eq(t.name, "Deposit%02d" % d, "%s: deposit %d name" % [label, d])
+		_eq(t.index, d, "%s: deposit %d index" % [label, d])
+		_eq(t.position, Layout.deposit_origin(d) + Vector2(0, Layout.TILE), "%s: deposit %d position" % [label, d])
+		_eq(t.alive, sum_hp > 0, "%s: deposit %d alive" % [label, d])
+		_eq(t.hp, sum_hp, "%s: deposit %d hp sum" % [label, d])
 		var hp_bar: HpBar = t.get_node("HpBar")
 		var body: Sprite2D = t.get_node("Pivot/Body")
 		var crater: Sprite2D = t.get_node("Crater")
 		var crystal: Sprite2D = t.get_node("Crystal")
-		if b.alive():
-			var expected := "block_%d" % Rules.block_tier(b.max_hp)
-			_eq(t.current_key, expected, "%s: tile %d texture key" % [label, i])
-			_eq(_tex_name(body), expected, "%s: tile %d Body texture" % [label, i])
-			_ok(body.visible and not crater.visible and not crystal.visible, "%s: tile %d shows the block" % [label, i])
-			_ok(hp_bar.visible, "%s: tile %d hp bar visible" % [label, i])
-			_approx(hp_bar.fill_width(), 40.0 * float(b.hp) / float(b.max_hp), "%s: tile %d hp width" % [label, i])
-			var crack: Sprite2D = t.get_node("Pivot/Crack")
-			var level := Rules.crack_level(b.hp, b.max_hp)
-			_eq(crack.visible, level > 0, "%s: tile %d crack visible" % [label, i])
-			if level > 0:
-				_eq(_tex_name(crack), "crack_%d" % level, "%s: tile %d crack texture" % [label, i])
+		if sum_hp > 0:
+			var tier := Rules.block_tier(top_max)
+			_eq(t.current_key, "block_%d" % tier, "%s: deposit %d texture key" % [label, d])
+			var atlas := body.texture as AtlasTexture
+			_ok(atlas != null, "%s: deposit %d body is a strip frame" % [label, d])
+			if atlas != null:
+				_eq(atlas.atlas.resource_path.get_file(), "ore_%d_%d.png" % [tier, d % 2], "%s: deposit %d ore strip" % [label, d])
+				var level := Rules.crack_level(sum_hp, sum_max)
+				_eq(t.damage_level, level, "%s: deposit %d damage level" % [label, d])
+				_eq(atlas.region.position.x, float(level * 48), "%s: deposit %d damage frame" % [label, d])
+			_ok(body.visible and not crater.visible and not crystal.visible, "%s: deposit %d shows the mound" % [label, d])
+			_ok(hp_bar.visible, "%s: deposit %d hp bar visible" % [label, d])
+			_approx(hp_bar.fill_width(), 40.0 * float(sum_hp) / float(sum_max), "%s: deposit %d hp width" % [label, d])
 		else:
-			var with_crystal := Rules.dead_variant(i) == "block_dead2"
-			_eq(t.current_key, "dead_crystal" if with_crystal else "dead", "%s: tile %d dead key" % [label, i])
-			_ok(not body.visible and crater.visible, "%s: tile %d shows the crater" % [label, i])
-			_eq(crystal.visible, with_crystal, "%s: tile %d crystal" % [label, i])
-			_ok(not hp_bar.visible, "%s: tile %d hp bar hidden" % [label, i])
-	for i in [1, 6, 11, 16, 21, 26, 31, 36]:
-		_eq(Rules.dead_variant(i), "block_dead2", "dead_variant(%d)" % i)
+			var with_crystal := Rules.dead_variant(d) == "block_dead2"
+			_eq(t.current_key, "dead_crystal" if with_crystal else "dead", "%s: deposit %d dead key" % [label, d])
+			_ok(not body.visible and crater.visible, "%s: deposit %d shows the crater" % [label, d])
+			_eq(crystal.visible, with_crystal, "%s: deposit %d crystal" % [label, d])
+			_ok(not hp_bar.visible, "%s: deposit %d hp bar hidden" % [label, d])
+	for d in [1, 6, 11, 16]:
+		_eq(Rules.dead_variant(d), "block_dead2", "dead_variant(%d)" % d)
+	# every block index maps to a deposit on a real tile
+	for i in Layout.BLOCK_COUNT:
+		_ok(Layout.in_map(Layout.block_tile(i)), "%s: block %d has a deposit tile" % [label, i])
 
 
 func _check_actors(mine: Mine, m: StateModel, label: String) -> void:
