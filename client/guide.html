@@ -4,68 +4,112 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MinerBlast — How to Play</title>
+  <link rel="icon" type="image/png" href="/art/chars/bomb.png" />
   <link rel="stylesheet" href="/site.css" />
+  <style>
+    /* page-only tweaks; the design system is /site.css */
+    main.doc .sec { margin-top: 34px; }
+    .sec .ribbon { margin: -34px 0 4px 6px; }
+    .sec .ribbon span { white-space: nowrap; }
+    .sec .art { float: right; margin: 0 0 10px 16px; }
+    .sec .heroes-row { display: flex; gap: 4px; float: right; margin: 0 0 10px 16px; }
+    .sec p:first-child, .sec ul:first-child { margin-top: 4px; }
+    @media (max-width: 640px) {
+      .sec .ribbon { margin-left: 0; padding-left: 24px; padding-right: 24px; }
+      .sec .ribbon span { font-size: 8px; }
+      .sec .art { float: none; display: block; margin: 0 auto 8px; }
+      .sec .heroes-row { float: none; justify-content: center; margin: 0 0 8px; }
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <a href="/">MINER<span>BLAST</span></a>
-    <a class="back" href="/">← Back to the game</a>
-  </header>
-  <main>
+  <div id="site-header"></div>
+
+  <main class="doc">
     <h1>How to Play</h1>
     <p class="muted">From zero to mining in five steps.</p>
 
-    <h2>1. Set up your wallet</h2>
-    <div class="card">
-      <p>Install an EVM wallet extension (e.g. MetaMask or Rabby), then add the
-      Robinhood Chain network this deployment runs on:</p>
-      <table>
-        <tr><th>Field</th><th>Value</th></tr>
-        <tr><td>Network name</td><td>%VITE_NETWORK_NAME%</td></tr>
-        <tr><td>RPC URL</td><td><code>%VITE_RPC_URL%</code></td></tr>
-        <tr><td>Chain ID</td><td><code>%VITE_CHAIN_ID%</code></td></tr>
-        <tr><td>Currency symbol</td><td>ETH</td></tr>
-      </table>
-      <p>You need a little ETH on Robinhood Chain for gas and chest purchases.</p>
-    </div>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>1. SET UP YOUR WALLET</span></div>
+      <div class="panel-dark">
+        <p>Install an EVM wallet extension (e.g. MetaMask or Rabby), then add the
+        Robinhood Chain network this deployment runs on:</p>
+        <div style="overflow:auto">
+          <table>
+            <tr><th>Field</th><th>Value</th></tr>
+            <tr><td>Network name</td><td>%VITE_NETWORK_NAME%</td></tr>
+            <tr><td>RPC URL</td><td><code>%VITE_RPC_URL%</code></td></tr>
+            <tr><td>Chain ID</td><td><code>%VITE_CHAIN_ID%</code></td></tr>
+            <tr><td>Currency symbol</td><td>ETH</td></tr>
+          </table>
+        </div>
+        <p>You need a little ETH on Robinhood Chain for gas and chest purchases.</p>
+      </div>
+    </section>
 
-    <h2>2. Connect and sign in</h2>
-    <p>Click <b>Connect wallet</b> on the game screen, approve the connection, then sign
-    the login message (free — it is a signature, not a transaction). The wallet chip in
-    the header shows your address; click it any time to <b>disconnect</b>.</p>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>2. CONNECT AND SIGN IN</span></div>
+      <div class="panel-dark">
+        <span class="icon icon-wallet art" aria-hidden="true"></span>
+        <p>Click <b>Connect wallet</b> on the game screen, approve the connection, then sign
+        the login message (free — it is a signature, not a transaction). The wallet chip in
+        the header shows your address; click it any time to <b>disconnect</b>.</p>
+      </div>
+    </section>
 
-    <h2>3. Get heroes</h2>
-    <p>Open the <b>SHOP</b> and buy a chest (<b>0.005 ETH</b>) or the 10-pack
-    (<b>0.04 ETH</b>, 20% off). After buying, the <b>chest-opening screen</b> appears:
-    wait ~30 seconds while the chest is prepared, press <b>OPEN CHEST</b>, confirm in your
-    wallet and watch the reveal — the rarity colors tell you how lucky you got. New heroes
-    appear on the mining screen within a minute.</p>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>3. GET HEROES</span></div>
+      <div class="panel-dark">
+        <div class="heroes-row" aria-hidden="true">
+          <span class="hero hero-0"></span><span class="hero hero-2"></span><span class="hero hero-4"></span>
+        </div>
+        <p>Open the <b>SHOP</b> and buy a chest (<b>0.005 ETH</b>) or the 10-pack
+        (<b>0.04 ETH</b>, 20% off). After buying, the <b>chest-opening screen</b> appears:
+        wait ~30 seconds while the chest is prepared, press <b>OPEN CHEST</b>, confirm in your
+        wallet and watch the reveal — the rarity colors tell you how lucky you got. New heroes
+        appear on the mining screen within a minute.</p>
+      </div>
+    </section>
 
-    <h2>4. Mine and manage stamina</h2>
-    <ul>
-      <li>Click a hero → <b>Work</b> to start mining. Each bomb breaks ore and earns $BLAST.</li>
-      <li>Stamina drains while mining; at zero the hero rests automatically.</li>
-      <li>Buy a <b>house</b> in the Shop (paid in $BLAST) and use <b>Shelter</b> on a hero to speed up recovery.</li>
-      <li>Try <b>Adventure</b> for bigger one-shot rewards — success scales with hero power, 10 tries per day.</li>
-      <li>See your full roster on the <b>HEROES</b> page in the header.</li>
-    </ul>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>4. MINE AND MANAGE STAMINA</span></div>
+      <div class="panel-dark">
+        <span class="sprite-house art" aria-hidden="true"></span>
+        <ul>
+          <li>Click a hero → <b>Work</b> to start mining. Each bomb breaks ore and earns $BLAST.</li>
+          <li>Stamina drains while mining; at zero the hero rests automatically.</li>
+          <li>Buy a <b>house</b> in the Shop (paid in $BLAST) and use <b>Shelter</b> on a hero to speed up recovery.</li>
+          <li>Try <b>Adventure</b> for bigger one-shot rewards — success scales with hero power, 10 tries per day.</li>
+          <li>See your full roster on the <b>HEROES</b> page in the header.</li>
+        </ul>
+      </div>
+    </section>
 
-    <h2>5. Withdraw your $BLAST</h2>
-    <p>Your earnings accumulate in the pill counter at the top of the mining screen. Once
-    you reach the minimum shown in-game (<b>30,000 $BLAST</b> at launch, with a 24-hour
-    cooldown between withdrawals), the <b>Claim</b> button unlocks: press it, confirm the
-    transaction, and the tokens are transferred to your wallet on-chain.</p>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>5. WITHDRAW YOUR $BLAST</span></div>
+      <div class="panel-dark">
+        <span class="sprite-coin-big art" aria-hidden="true"></span>
+        <p>Your earnings accumulate in the pill counter at the top of the mining screen. Once
+        you reach the minimum shown in-game (<b>30,000 $BLAST</b> at launch, with a 24-hour
+        cooldown between withdrawals), the <b>Claim</b> button unlocks: press it, confirm the
+        transaction, and the tokens are transferred to your wallet on-chain.</p>
+      </div>
+    </section>
 
-    <h2>Tips</h2>
-    <div class="card">
-      <ul>
-        <li>Higher-rarity heroes mine faster, hit harder and have far more stamina.</li>
-        <li>Fusing two same-rarity heroes levels one up (+10% attributes per level).</li>
-        <li>Blocks show cracks as they get close to breaking; harder ore pays more.</li>
-        <li>During beta phases on testnet, all rewards and NFTs are test assets with no real value.</li>
-      </ul>
-    </div>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>TIPS</span></div>
+      <div class="panel-dark">
+        <ul>
+          <li>Higher-rarity heroes mine faster, hit harder and have far more stamina.</li>
+          <li>Fusing two same-rarity heroes levels one up (+10% attributes per level).</li>
+          <li>Blocks show cracks as they get close to breaking; harder ore pays more.</li>
+          <li>During beta phases on testnet, all rewards and NFTs are test assets with no real value.</li>
+        </ul>
+      </div>
+    </section>
   </main>
-  <footer><b>MinerBlast</b> — built on Robinhood Chain</footer>
+
+  <div id="site-footer"></div>
+  <script type="module" src="/src/doc.ts"></script>
 </body>
 </html>

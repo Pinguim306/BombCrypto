@@ -7,6 +7,9 @@
  */
 import { createPublicClient, createWalletClient, custom, http, parseEther, formatEther, type Address } from "viem";
 import { CHAIN_ID, RPC_URL, TOKEN_ADDRESS, VAULT_ADDRESS } from "./config";
+import { mountChrome } from "./site/chrome";
+
+mountChrome({ page: "doc" });
 
 const ERC20 = [
   { type: "function", name: "balanceOf", stateMutability: "view", inputs: [{ type: "address" }], outputs: [{ type: "uint256" }] },

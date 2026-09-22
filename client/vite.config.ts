@@ -5,13 +5,12 @@ export default defineConfig({
   define: { global: "globalThis" }, // node-style deps (siwe) in the browser
   server: { port: 5173 },
   build: {
-    chunkSizeWarningLimit: 1600, // Phaser is a large bundle by nature
+    chunkSizeWarningLimit: 1600, // viem + WalletConnect are large bundles by nature
     rollupOptions: {
       input: {
         // multi-page: doc pages are Vite-processed so %VITE_*% env
         // placeholders resolve per deployment (testnet beta vs mainnet)
-        main: resolve(__dirname, "index.html"),          // the Godot mine (src/game.ts)
-        classic: resolve(__dirname, "classic.html"),     // the Phaser client (src/classic.ts): shop, market, heroes, rank, referrals, daily
+        main: resolve(__dirname, "index.html"),          // the game (src/game.ts): the Godot mine + section overlays
         whitepaper: resolve(__dirname, "whitepaper.html"),
         guide: resolve(__dirname, "guide.html"),
         admin: resolve(__dirname, "admin.html"),

@@ -15,6 +15,11 @@
       "source": "/play2.html",
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/classic.html",
+      "destination": "/",
+      "permanent": true
     }
   ],
   "headers": [

@@ -6,6 +6,9 @@
  */
 import { createPublicClient, createWalletClient, custom, http, type Address } from "viem";
 import { CHAIN_ID, RPC_URL } from "./config";
+import { mountChrome } from "./site/chrome";
+
+mountChrome({ page: "doc" });
 
 const HEROES = "0x10413d00F51672F71AACE3852ad816Ff19552623" as Address;
 const GACHA_V1 = "0xE941C5972d5ECaf4528C26cA3012B095F215618d" as Address;
@@ -32,7 +35,7 @@ function status(msg: string, cls = "") {
 function badge(id: string, ok: boolean, yes = "yes", no = "no") {
   const el = $(id);
   el.textContent = ok ? yes : no;
-  el.className = ok ? "ok-badge" : "bad-badge";
+  el.className = ok ? "ok" : "err"; // site.css colour helpers
 }
 
 async function refresh() {

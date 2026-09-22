@@ -7,6 +7,9 @@ import { formatEther } from "viem";
 import { connectWallet, connectedAddress, reconnectSilently, signMessage } from "./web3/wallet";
 import { referralStats, claimReferral } from "./web3/gacha";
 import { GACHA_ENABLED, SERVER_URL } from "./config";
+import { mountChrome } from "./site/chrome";
+
+mountChrome({ page: "doc" });
 
 const $ = (id: string) => document.getElementById(id)!;
 

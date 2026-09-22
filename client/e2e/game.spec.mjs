@@ -349,7 +349,7 @@ async function main() {
     // ---------------- run C: not logged in → overlay ----------------
     {
       const { page, context } = await newPage(browser, { loggedIn: false });
-      await page.goto(`${BASE}/`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${BASE}/?go=shop`, { waitUntil: "domcontentloaded" });
       const readyMs = await waitForReady(page, "C");
       console.log(`C: ready() after ${readyMs} ms`);
       assert(await page.locator("#loader").isHidden(), "C: #loader still visible after ready()");
@@ -359,6 +359,11 @@ async function main() {
       const stateCalls = calls.invokes.filter((i) => i.method === "apiState").length;
       assert(stateCalls === 0, `C: logged-out client must not poll apiState, got ${stateCalls}`);
       console.log("C: overlay visible when logged out");
+      // (f) the `?go=shop` deep link opened the SHOP section panel with its connect prompt
+      const title = await page.locator("#section-title").textContent().catch(() => "");
+      assert(title === "SHOP", `C: section overlay title "${title}", expected "SHOP"`);
+      assert(await page.locator("#section-login").isVisible(), "C: SHOP section should show the connect prompt when logged out");
+      console.log("C: section overlay opens from the deep link");
       await context.close();
     }
   } finally {

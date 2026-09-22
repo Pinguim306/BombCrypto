@@ -4,84 +4,129 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MinerBlast — Whitepaper</title>
+  <link rel="icon" type="image/png" href="/art/chars/bomb.png" />
   <link rel="stylesheet" href="/site.css" />
+  <style>
+    /* page-only tweaks; the design system is /site.css */
+    main.doc .sec { margin-top: 34px; }
+    .sec .ribbon { margin: -34px 0 4px 6px; }
+    .sec .ribbon span { white-space: nowrap; }
+    .sec .art { float: right; margin: 0 0 10px 16px; }
+    .sec p:first-child, .sec ul:first-child { margin-top: 4px; }
+    .rarities { display: flex; flex-wrap: wrap; gap: 8px 4px; margin: 10px 0; }
+    .rarities .pill { display: inline-flex; align-items: center; gap: 8px; }
+    .rarities .portrait { width: 32px; height: 32px; background-size: 32px 32px; }
+    .roadmap li { margin: 6px 0; }
+    @media (max-width: 640px) {
+      .sec .ribbon { margin-left: 0; padding-left: 24px; padding-right: 24px; }
+      .sec .ribbon span { font-size: 8px; }
+      .sec .art { float: none; display: block; margin: 0 auto 8px; }
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <a href="/">MINER<span>BLAST</span></a>
-    <a class="back" href="/">← Back to the game</a>
-  </header>
-  <main>
+  <div id="site-header"></div>
+
+  <main class="doc">
     <h1>Whitepaper</h1>
     <p class="muted">MinerBlast — an explosive play-to-earn mining game built on Robinhood Chain.</p>
 
-    <h2>1. Overview</h2>
-    <div class="card">
-      <p>MinerBlast is a 2D pixel-art idle mining game. Players collect <b>miner hero NFTs</b>
-      that dig through ore blocks with bombs, earning <b>$BLAST</b> — the game's utility
-      token. All game logic that decides rewards runs on an authoritative server, and every
-      asset (heroes, houses, rewards) settles on-chain on Robinhood Chain.</p>
-    </div>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>1. OVERVIEW</span></div>
+      <div class="panel-dark">
+        <span class="sprite-bomb art" aria-hidden="true"></span>
+        <p>MinerBlast is a 2D pixel-art idle mining game. Players collect <b>miner hero NFTs</b>
+        that dig through ore blocks with bombs, earning <b>$BLAST</b> — the game's utility
+        token. All game logic that decides rewards runs on an authoritative server, and every
+        asset (heroes, houses, rewards) settles on-chain on Robinhood Chain.</p>
+      </div>
+    </section>
 
-    <h2>2. Heroes</h2>
-    <p>Heroes are ERC-721 NFTs with on-chain attributes: <b>Power</b> (mining damage),
-    <b>Speed</b> (bombing rate), <b>Stamina</b> (energy), blast range, bomb count and
-    special abilities. There are six rarity tiers:</p>
-    <p>
-      <span class="pill">Common — 52%</span>
-      <span class="pill">Rare — 26%</span>
-      <span class="pill">Super Rare — 12%</span>
-      <span class="pill">Epic — 6.5%</span>
-      <span class="pill">Legend — 3%</span>
-      <span class="pill">Mythic — 0.5%</span>
-    </p>
-    <p>Heroes come from <b>chests</b> bought in the Shop with ETH. The odds above are
-    published on-chain in the gacha contract. Heroes can be fused (burning a same-rarity
-    sacrifice plus a $BLAST fee) to level up, and traded on the in-game Market.</p>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>2. HEROES</span></div>
+      <div class="panel-dark">
+        <span class="sprite-chest art" aria-hidden="true"></span>
+        <p>Heroes are ERC-721 NFTs with on-chain attributes: <b>Power</b> (mining damage),
+        <b>Speed</b> (bombing rate), <b>Stamina</b> (energy), blast range, bomb count and
+        special abilities. There are six rarity tiers:</p>
+        <div class="rarities">
+          <span class="pill rarity-0"><span class="portrait portrait-0" aria-hidden="true"></span><span class="rarity-name">Common</span> — 52%</span>
+          <span class="pill rarity-1"><span class="portrait portrait-1" aria-hidden="true"></span><span class="rarity-name">Rare</span> — 26%</span>
+          <span class="pill rarity-2"><span class="portrait portrait-2" aria-hidden="true"></span><span class="rarity-name">Super Rare</span> — 12%</span>
+          <span class="pill rarity-3"><span class="portrait portrait-3" aria-hidden="true"></span><span class="rarity-name">Epic</span> — 6.5%</span>
+          <span class="pill rarity-4"><span class="portrait portrait-4" aria-hidden="true"></span><span class="rarity-name">Legend</span> — 3%</span>
+          <span class="pill rarity-5"><span class="portrait portrait-5" aria-hidden="true"></span><span class="rarity-name">Mythic</span> — 0.5%</span>
+        </div>
+        <p>Heroes come from <b>chests</b> bought in the Shop with ETH. The odds above are
+        published on-chain in the gacha contract. Heroes can be fused (burning a same-rarity
+        sacrifice plus a $BLAST fee) to level up, and traded on the in-game Market.</p>
+      </div>
+    </section>
 
-    <h2>3. Game modes</h2>
-    <table>
-      <tr><th>Mode</th><th>Description</th></tr>
-      <tr><td>Treasure Mining</td><td>Idle mode: heroes mine ore blocks automatically, spending stamina and earning $BLAST — even while the game is closed.</td></tr>
-      <tr><td>Adventure</td><td>Send a hero on an expedition (3 stages of rising difficulty). Success chance scales with hero power; up to 10 attempts per day.</td></tr>
-      <tr><td>Houses</td><td>Stamina houses (ERC-721) shelter heroes so they recover energy faster. Bought with $BLAST.</td></tr>
-      <tr><td>Market</td><td>Player-to-player trading of heroes and houses, paid in $BLAST with a 4% fee (half of it burned).</td></tr>
-    </table>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>3. GAME MODES</span></div>
+      <div class="panel-dark">
+        <div style="overflow:auto">
+          <table>
+            <tr><th>Mode</th><th>Description</th></tr>
+            <tr><td>Treasure Mining</td><td>Idle mode: heroes mine ore blocks automatically, spending stamina and earning $BLAST — even while the game is closed.</td></tr>
+            <tr><td>Adventure</td><td>Send a hero on an expedition (3 stages of rising difficulty). Success chance scales with hero power; up to 10 attempts per day.</td></tr>
+            <tr><td>Houses</td><td>Stamina houses (ERC-721) shelter heroes so they recover energy faster. Bought with $BLAST.</td></tr>
+            <tr><td>Market</td><td>Player-to-player trading of heroes and houses, paid in $BLAST with a 4% fee (half of it burned).</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
 
-    <h2>4. The $BLAST token</h2>
-    <div class="card">
-      <ul>
-        <li><b>Fixed supply of 1 billion</b>, issued via the <a href="https://ponsfamily.com/launchpad" target="_blank" rel="noopener">pons</a> launchpad on Robinhood Chain — a plain ERC-20 the game contracts can never mint.</li>
-        <li>The reward vault is <b>pre-funded</b>: the project deposits a share of supply, and creator fees from the token's trading pool (70% of the 1% pool fee) keep topping it up.</li>
-        <li>All in-game burns (gacha share, house purchases, upgrade fees, market fee share) go to the dead address <code>0x…dEaD</code>.</li>
-        <li>Chest revenue in ETH goes to the treasury, which buys $BLAST back to refill the vault.</li>
-      </ul>
-    </div>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>4. THE $BLAST TOKEN</span></div>
+      <div class="panel-dark">
+        <span class="sprite-coin-big art" aria-hidden="true"></span>
+        <ul>
+          <li><b>Fixed supply of 1 billion</b>, issued via the <a href="https://ponsfamily.com/launchpad" target="_blank" rel="noopener">pons</a> launchpad on Robinhood Chain — a plain ERC-20 the game contracts can never mint.</li>
+          <li>The reward vault is <b>pre-funded</b>: the project deposits a share of supply, and creator fees from the token's trading pool (70% of the 1% pool fee) keep topping it up.</li>
+          <li>All in-game burns (gacha share, house purchases, upgrade fees, market fee share) go to the dead address <code>0x…dEaD</code>.</li>
+          <li>Chest revenue in ETH goes to the treasury, which buys $BLAST back to refill the vault.</li>
+        </ul>
+      </div>
+    </section>
 
-    <h2>5. Earning and withdrawing</h2>
-    <p>Rewards accrue in-game and are withdrawn on-chain with a server-signed voucher
-    (EIP-712). Withdrawal rules protect the economy:</p>
-    <table>
-      <tr><th>Rule</th><th>Value at launch</th></tr>
-      <tr><td>Minimum per withdrawal</td><td>30,000 $BLAST</td></tr>
-      <tr><td>Cooldown between withdrawals</td><td>24 hours</td></tr>
-      <tr><td>Global daily payout cap</td><td>Admin-tuned from live economy data</td></tr>
-    </table>
-    <p class="muted">Beta phases on testnet run with reduced limits so testers can
-    exercise the full flow quickly; the in-game HUD always shows the live values.</p>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>5. EARNING AND WITHDRAWING</span></div>
+      <div class="panel-dark">
+        <p>Rewards accrue in-game and are withdrawn on-chain with a server-signed voucher
+        (EIP-712). Withdrawal rules protect the economy:</p>
+        <div style="overflow:auto">
+          <table>
+            <tr><th>Rule</th><th>Value at launch</th></tr>
+            <tr><td>Minimum per withdrawal</td><td>30,000 $BLAST</td></tr>
+            <tr><td>Cooldown between withdrawals</td><td>24 hours</td></tr>
+            <tr><td>Global daily payout cap</td><td>Admin-tuned from live economy data</td></tr>
+          </table>
+        </div>
+        <p class="muted">Beta phases on testnet run with reduced limits so testers can
+        exercise the full flow quickly; the in-game HUD always shows the live values.</p>
+      </div>
+    </section>
 
-    <h2>6. Roadmap</h2>
-    <ul>
-      <li>✅ Private beta on Robinhood Chain Testnet — complete game loop live</li>
-      <li>🔜 $BLAST launch (TGE) on pons + reward-vault funding</li>
-      <li>🔜 External smart-contract audit and Chainlink VRF for the gacha</li>
-      <li>🔜 <b>Public launch on Robinhood Chain Mainnet</b></li>
-      <li>🔮 PVP arena, seasons and world events</li>
-    </ul>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>6. ROADMAP</span></div>
+      <div class="panel-dark">
+        <ul class="roadmap">
+          <li>✅ Private beta on Robinhood Chain Testnet — complete game loop live</li>
+          <li>🔜 $BLAST launch (TGE) on pons + reward-vault funding</li>
+          <li>🔜 External smart-contract audit and Chainlink VRF for the gacha</li>
+          <li>🔜 <b>Public launch on Robinhood Chain Mainnet</b></li>
+          <li>🔮 PVP arena, seasons and world events</li>
+        </ul>
+      </div>
+    </section>
 
-    <p class="muted">Nothing in this document is financial advice. During beta phases on
+    <p class="muted" style="margin-top:26px">Nothing in this document is financial advice. During beta phases on
     testnet, rewards and NFTs are test assets with no monetary value.</p>
   </main>
-  <footer><b>MinerBlast</b> — built on Robinhood Chain</footer>
+
+  <div id="site-footer"></div>
+  <script type="module" src="/src/doc.ts"></script>
 </body>
 </html>

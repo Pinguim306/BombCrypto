@@ -24,6 +24,7 @@
   --font-body: "Pixelify Sans", "Courier New", monospace;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body {
   margin: 0; padding: 0; min-height: 100%;
   font-family: var(--font-body); font-size: 17px; color: var(--text);
@@ -191,6 +192,8 @@ b, strong { color: var(--gold); }
 main.doc { max-width: 900px; margin: 0 auto; padding: 30px 18px 60px; }
 main.doc .panel-wood { margin-top: 18px; }
 main.doc .panel-wood > .panel-dark { display: block; margin: -6px; }
+main.doc .sec .ribbon { margin: -34px 0 4px 6px; }
+@media (max-width: 640px) { main.doc .sec .ribbon { padding: 4px 20px 6px; min-width: 0; } main.doc .sec .ribbon span { font-size: 8px; } }
 
 /* ---------- game page: stage + overlays ---------- */
 main.stage { display: flex; justify-content: center; padding: 22px 14px 30px; }

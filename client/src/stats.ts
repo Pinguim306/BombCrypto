@@ -8,6 +8,9 @@ import {
   RPC_URL, EXPLORER_URL, SERVER_URL,
   VAULT_ADDRESS, TOKEN_ADDRESS, HEROES_ADDRESS, GACHA_ADDRESS, HOUSES_ADDRESS, MARKET_ADDRESS,
 } from "./config";
+import { mountChrome } from "./site/chrome";
+
+mountChrome({ page: "doc" });
 
 const ZERO = "0x0000000000000000000000000000000000000000";
 const $ = (id: string) => document.getElementById(id)!;
@@ -104,7 +107,7 @@ function renderContracts(token: string) {
   const html = rows
     .filter(([, addr]) => addr && addr.toLowerCase() !== ZERO)
     .map(([name, addr]) =>
-      `<a class="contract" href="${EXPLORER_URL}/address/${addr}" target="_blank" rel="noopener">
+      `<a class="contract plate" href="${EXPLORER_URL}/address/${addr}" target="_blank" rel="noopener">
         <span class="name">${name}</span>
         <span class="addr">${addr.slice(0, 8)}…${addr.slice(-6)}</span>
         <span class="go">↗</span>

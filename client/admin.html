@@ -5,46 +5,65 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex" />
   <title>MinerBlast — Vault Admin</title>
+  <link rel="icon" type="image/png" href="/art/chars/bomb.png" />
   <link rel="stylesheet" href="/site.css" />
   <style>
-    .admin-wrap { max-width: 680px; margin: 40px auto; padding: 0 16px; font-family: monospace; }
-    .card { background: #161d2e; border: 2px solid #2a3550; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
-    .card h2 { color: #eceff1; font-size: 16px; margin: 0 0 12px; }
-    .row { display: flex; justify-content: space-between; margin: 6px 0; color: #b0bec5; font-size: 14px; }
-    .row b { color: #ffca28; }
-    input { background: #101624; color: #eceff1; border: 1px solid #2a3550; border-radius: 6px; padding: 10px; width: 100%; box-sizing: border-box; font-family: monospace; font-size: 15px; }
-    button { background: #2e7d32; color: #fff; border: 0; border-radius: 8px; padding: 12px 18px; font-family: monospace; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
-    button.blue { background: #3949ab; }
-    button:disabled { opacity: .45; cursor: default; }
-    #status { color: #90a4ae; font-size: 13px; margin-top: 12px; word-break: break-all; }
-    #status.err { color: #ef9a9a; } #status.ok { color: #a5d6a7; }
-    .muted { color: #78909c; font-size: 12px; }
+    /* page-only tweaks; the design system is /site.css */
+    main.doc { max-width: 720px; }
+    main.doc .sec { margin-top: 34px; }
+    .sec .ribbon { margin: -34px 0 4px 6px; }
+    .sec .ribbon span { white-space: nowrap; }
+    h1 .icon { margin: -6px 6px 0 0; }
+    .stat-row { margin: 4px 0 0; }
+    .stat-row dd { text-align: right; word-break: break-all; }
+    label { display: block; color: var(--muted); font-size: 15px; margin: 4px 0 6px; }
+    input { width: 100%; background: #101624; color: var(--text); border: 2px solid var(--border); border-radius: 6px; padding: 10px 12px;
+      font-family: "Courier New", monospace; font-size: 16px; }
+    input:focus { outline: none; border-color: var(--gold-dk); }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 22px 0 4px; }
+    #status { min-height: 24px; margin-top: 16px; color: var(--muted-lt); font-size: 15px; word-break: break-all; }
+    #status.ok { color: var(--ok); } #status.err { color: var(--err); }
+    @media (max-width: 640px) { .sec .ribbon { margin-left: 0; padding-left: 24px; padding-right: 24px; } .sec .ribbon span { font-size: 8px; } }
   </style>
 </head>
 <body>
-  <div class="admin-wrap">
-    <h1 style="color:#eceff1;font-family:monospace">🔐 Vault Admin</h1>
+  <div id="site-header"></div>
+
+  <main class="doc">
+    <h1><span class="icon icon-lock" aria-hidden="true"></span>Vault Admin</h1>
     <p class="muted">Funding panel for the MinerBlast reward vault. Every action must be
     signed by the owner wallet — this page has no power by itself.</p>
 
-    <div class="card">
-      <h2>Status</h2>
-      <div class="row"><span>Connected wallet</span><b id="acct">—</b></div>
-      <div class="row"><span>Your BLAST balance</span><b id="bal">—</b></div>
-      <div class="row"><span>Vault BLAST balance</span><b id="vault">—</b></div>
-      <div class="row"><span>Current allowance → vault</span><b id="allow">—</b></div>
-      <button id="connect" class="blue">Connect wallet</button>
-    </div>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>STATUS</span></div>
+      <div class="panel-dark">
+        <dl class="stat-row">
+          <dt>Connected wallet</dt><dd><b id="acct">—</b></dd>
+          <dt>Your BLAST balance</dt><dd><b id="bal">—</b></dd>
+          <dt>Vault BLAST balance</dt><dd><b id="vault">—</b></dd>
+          <dt>Current allowance → vault</dt><dd><b id="allow">—</b></dd>
+        </dl>
+        <div class="actions">
+          <button id="connect" class="btn btn-blue" type="button"><span class="icon icon-wallet"></span>Connect wallet</button>
+        </div>
+      </div>
+    </section>
 
-    <div class="card">
-      <h2>Fund the vault</h2>
-      <label class="muted">Amount (BLAST)</label>
-      <input id="amount" value="60000000" inputmode="numeric" />
-      <button id="approve" disabled>1 · Approve</button>
-      <button id="fund" disabled>2 · Fund</button>
-      <div id="status"></div>
-    </div>
-  </div>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>FUND THE VAULT</span></div>
+      <div class="panel-dark">
+        <label for="amount">Amount (BLAST)</label>
+        <input id="amount" value="60000000" inputmode="numeric" />
+        <div class="actions">
+          <button id="approve" class="btn btn-green" type="button" disabled>1 · Approve</button>
+          <button id="fund" class="btn btn-gold" type="button" disabled><span class="icon icon-coin"></span>2 · Fund</button>
+        </div>
+        <div id="status"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer"></div>
   <script type="module" src="/src/admin.ts"></script>
 </body>
 </html>

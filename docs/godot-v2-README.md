@@ -1,12 +1,13 @@
 # MinerBlast v2 — Godot 4.7 web client (prototype)
 
-The `godot/` folder is the **main client** of MinerBlast, built with Godot
-4.7.2 and exported to the Web: it is what `/` serves. The Phaser client lives
-on at `/classic.html` for the sections the Godot page does not host yet
-(shop, market, heroes, rank, referrals, daily) and as a lighter fallback;
-`client/src/nav.ts` routes between the two (`?go=<scene>` deep links, PLAY /
-Back return to the mine). Nothing in `server/` or `contracts/` changes. The
-design is in [`godot-v2-design.md`](./godot-v2-design.md).
+The `godot/` folder is the game client of MinerBlast, built with Godot 4.7.2
+and exported to the Web: it is what `/` serves. The other sections (shop,
+market, heroes, rank, referrals, daily) are HTML overlays on the same page
+(`client/src/sections/*`, opened from the header or with `/?go=<section>`
+deep links) that reuse the TypeScript API / web3 modules and the site design
+system (`client/public/site.css`, built on the same 9-slice art kit as the
+HUD). The Phaser client was retired. Nothing in `server/` or `contracts/`
+changes. The design is in [`godot-v2-design.md`](./godot-v2-design.md).
 
 Milestone 1 = the **Mine screen** (960×540, 16:9): a 12×8 tile cave map in a
 3/4 view with 20 ore deposits scattered over the floor (each shows two of the
@@ -113,7 +114,7 @@ the immutable cache rules in `vercel.json` stay correct across re-exports; only
 
 Vite serves `client/public/` verbatim, so `pnpm --filter @minerblast/client dev`
 and opening `http://localhost:5173/` runs the real thing
-(`/?mock=1` runs it with demo data, no wallet; `/classic.html` is the Phaser client). `vercel.json` already carries the
+(`/?mock=1` runs it with demo data, no wallet). `vercel.json` already carries the
 cache rules (`engine-*` and `pck/*` immutable, `manifest.json` no-cache).
 
 **Weight, honestly:** `mb.wasm` is ~39.5 MB raw / ~10 MB gzip (Vercel serves

@@ -5,73 +5,91 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MinerBlast — Transparency</title>
   <meta name="description" content="Live, on-chain proof of the MinerBlast economy: vault backing, BLAST paid to players, heroes minted and chests opened — all verifiable on Robinhood Chain." />
+  <link rel="icon" type="image/png" href="/art/chars/bomb.png" />
   <link rel="stylesheet" href="/site.css" />
   <style>
-    .hero-note { color: #90a4ae; margin: 0 0 22px; max-width: 720px; }
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-    .card { background: #161d2e; border: 1px solid #2a3550; border-radius: 12px; padding: 22px 18px; text-align: center; }
-    .card.anchor { border-color: #e8952f; background: linear-gradient(180deg, #1e2438, #161d2e); }
-    .card .n { color: #ffca28; font-family: monospace; font-weight: bold; font-size: 30px; line-height: 1.1; word-break: break-word; }
-    .card.anchor .n { color: #ffb74d; font-size: 34px; }
-    .card .sub { color: #66bb6a; font-family: monospace; font-size: 12px; margin-top: 4px; min-height: 14px; }
-    .card .l { color: #90a4ae; font-size: 13px; margin-top: 10px; }
-    .card .tag { display: inline-block; margin-top: 8px; font-size: 10px; color: #4fc3f7; border: 1px solid #29455a; border-radius: 20px; padding: 2px 10px; }
-    h2.sec { color: #eceff1; font-size: 16px; margin: 34px 0 14px; }
-    .contracts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .contract { display: flex; justify-content: space-between; align-items: center; gap: 10px;
-      background: #101624; border: 1px solid #2a3550; border-radius: 8px; padding: 12px 14px;
-      font-family: monospace; color: #b0bec5; text-decoration: none; }
-    .contract:hover { border-color: #3a4a6b; }
-    .contract .name { color: #eceff1; }
-    .contract .addr { color: #607d8b; font-size: 12px; }
-    .contract .go { color: #4fc3f7; }
-    .foot { color: #607d8b; font-size: 12px; margin-top: 22px; font-family: monospace; }
-    .foot #updated { color: #90a4ae; }
-    @media (max-width: 640px) { .grid, .contracts { grid-template-columns: 1fr; } }
+    /* page-only tweaks; the design system is /site.css */
+    main.doc .sec { margin-top: 34px; }
+    .sec .ribbon { margin: -34px 0 4px 6px; }
+    .sec .ribbon span { white-space: nowrap; }
+    .hero-note { max-width: 720px; margin: 0 0 22px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 6px 0 2px; }
+    .tile { text-align: center; padding: 6px 2px 8px; margin: -4px; }
+    .tile .n { font-family: var(--font-pixel); font-size: 22px; color: var(--gold); line-height: 1.2; word-break: break-word; }
+    .tile .sub { color: var(--ok); font-size: 14px; margin-top: 6px; min-height: 18px; }
+    .tile .l { color: var(--muted-lt); font-size: 15px; margin-top: 8px; }
+    .tile .tag { margin-top: 10px; font-size: 13px; color: var(--cyan); }
+    .tile.anchor { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .tile.anchor .n { font-size: 30px; color: var(--orange-lt); }
+    .tile.anchor .sprite-coin { margin-bottom: 4px; }
+    .contracts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin: 6px 0 2px; }
+    .contract { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: -4px;
+      text-decoration: none; color: var(--muted-lt); font-size: 15px; min-width: 0; }
+    .contract:hover { filter: brightness(1.15); }
+    .contract .name { color: var(--text); font-weight: 700; white-space: nowrap; }
+    .contract .addr { color: var(--muted); font-family: "Courier New", monospace; font-size: 13px; margin-left: auto; }
+    .contract .go { color: var(--cyan); }
+    .foot { color: var(--muted); font-size: 14px; margin: 18px 0 0; }
+    .foot #updated { color: var(--muted-lt); }
+    @media (max-width: 640px) {
+      .sec .ribbon { margin-left: 0; padding-left: 24px; padding-right: 24px; }
+      .sec .ribbon span { font-size: 8px; }
+      .grid, .contracts { grid-template-columns: 1fr; }
+      .tile .n { font-size: 18px; } .tile.anchor .n { font-size: 24px; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <a href="/">MINER<span>BLAST</span></a>
-    <a class="back" href="/">← Back to the game</a>
-  </header>
-  <main>
+  <div id="site-header"></div>
+
+  <main class="doc">
     <h1>Transparency</h1>
-    <p class="hero-note">Every number below is read <b>live from Robinhood Chain</b> — no wallet needed, nothing
+    <p class="muted hero-note">Every number below is read <b>live from Robinhood Chain</b> — no wallet needed, nothing
       to take on trust. This is the state of the MinerBlast economy right now.</p>
 
-    <div class="grid">
-      <div class="card anchor">
-        <div class="n" id="vault">—</div>
-        <div class="sub" id="vault-sub">&nbsp;</div>
-        <div class="l">Vault balance (BLAST)</div>
-        <div class="tag">backs every withdrawal · on-chain</div>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>LIVE ECONOMY</span></div>
+      <div class="panel-dark">
+        <div class="grid">
+          <div class="plate tile anchor">
+            <span class="sprite-coin" aria-hidden="true"></span>
+            <div class="n" id="vault">—</div>
+            <div class="sub" id="vault-sub">&nbsp;</div>
+            <div class="l">Vault balance (BLAST)</div>
+            <div class="tag">backs every withdrawal · on-chain</div>
+          </div>
+          <div class="plate tile">
+            <div class="n" id="players">—</div>
+            <div class="sub">&nbsp;</div>
+            <div class="l">Players</div>
+          </div>
+          <div class="plate tile">
+            <div class="n" id="heroes">—</div>
+            <div class="sub">&nbsp;</div>
+            <div class="l">Heroes minted</div>
+            <div class="tag">on-chain</div>
+          </div>
+          <div class="plate tile">
+            <div class="n" id="supply">—</div>
+            <div class="sub">&nbsp;</div>
+            <div class="l">$BLAST total supply</div>
+            <div class="tag">on-chain</div>
+          </div>
+        </div>
       </div>
-      <div class="card">
-        <div class="n" id="players">—</div>
-        <div class="sub">&nbsp;</div>
-        <div class="l">Players</div>
-      </div>
-      <div class="card">
-        <div class="n" id="heroes">—</div>
-        <div class="sub">&nbsp;</div>
-        <div class="l">Heroes minted</div>
-        <div class="tag">on-chain</div>
-      </div>
-      <div class="card">
-        <div class="n" id="supply">—</div>
-        <div class="sub">&nbsp;</div>
-        <div class="l">$BLAST total supply</div>
-        <div class="tag">on-chain</div>
-      </div>
-    </div>
+    </section>
 
-    <h2 class="sec">Contracts — verified on-chain</h2>
-    <div class="contracts" id="contracts"></div>
-
-    <p class="foot">Auto-refreshes every 30s · last updated <span id="updated">—</span>
-      · <span id="stat-status"></span></p>
+    <section class="panel-wood sec">
+      <div class="ribbon"><span>CONTRACTS — VERIFIED ON-CHAIN</span></div>
+      <div class="panel-dark">
+        <div class="contracts" id="contracts"></div>
+        <p class="foot">Auto-refreshes every 30s · last updated <span id="updated">—</span>
+          · <span id="stat-status"></span></p>
+      </div>
+    </section>
   </main>
+
+  <div id="site-footer"></div>
   <script type="module" src="/src/stats.ts"></script>
 </body>
 </html>
