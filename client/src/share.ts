@@ -2,48 +2,33 @@
  * Shareable "I pulled a hero" card. Renders a branded pixel-art card to a
  * canvas and shares it (Web Share API on mobile, Twitter intent + download
  * fallback on desktop). Turns every good chest pull into free marketing.
+ *
+ * The hero is drawn from the art kit PNG (/art/chars/hero_<r>.png, frame 0
+ * of the 11-frame 32x32 strip), the same file the site CSS uses.
  */
-import { RARITY_COLORS } from "./art/pixelart";
 
 const RARITY_NAMES = ["Common", "Rare", "Super Rare", "Epic", "Legendary", "Mythic"];
+const RARITY_COLORS = ["#9e9e9e", "#66bb6a", "#42a5f5", "#ab47bc", "#ffa726", "#ef5350"];
 
-// 16x16 miner hero character map (mirrors art/pixelart.ts HERO_MAP).
-const HERO_MAP = [
-  "......KKK.......", ".....KlLlK......", "....KKKKKKK.....", "...KHHHHHHHK....",
-  "..KHHHHHHHHHK...", "..KHhhhhhhhHK...", ".KHVVVVVVVVVHK..", ".KHVEEKVKEEVHK..",
-  ".KHVVVVVVVVVHK..", "..KHhhhhhhhHK...", "...KHHHHHHHK....", "...KBBBBBBBK....",
-  "..KGBbbbbbBGK...", "..KGBbbbbbBGK...", "...KBB.K.BBK....", "..KGGGK.KGGGK..",
-];
+/** Frame size of the hero strip and the portrait PNGs. */
+const FRAME = 32;
 
-function hex(v: number): string {
-  return "#" + v.toString(16).padStart(6, "0");
-}
-function shade(v: number, f: number): number {
-  const r = Math.min(255, Math.round(((v >> 16) & 0xff) * f));
-  const g = Math.min(255, Math.round(((v >> 8) & 0xff) * f));
-  const b = Math.min(255, Math.round((v & 0xff) * f));
-  return (r << 16) | (g << 8) | b;
-}
-
-function drawHero(ctx: CanvasRenderingContext2D, rarity: number, ox: number, oy: number, px: number) {
-  const c = RARITY_COLORS[rarity] ?? 0xffffff;
-  const pal: Record<string, string> = {
-    K: hex(0x10141f), L: hex(0xffee58), l: hex(0xfff9c4), H: hex(c), h: hex(shade(c, 0.72)),
-    V: hex(0x1d2731), E: hex(0x80deea), B: hex(shade(c, 0.62)), b: hex(shade(c, 0.45)), G: hex(0x37474f),
-  };
-  HERO_MAP.forEach((row, y) => {
-    [...row].forEach((ch, x) => {
-      const col = pal[ch];
-      if (col) {
-        ctx.fillStyle = col;
-        ctx.fillRect(ox + x * px, oy + y * px, px, px);
-      }
-    });
+function loadImage(src: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
   });
 }
 
+/** Frame 0 of the hero strip, falling back to the portrait, then to nothing. */
+async function loadHeroArt(rarity: number): Promise<HTMLImageElement | null> {
+  return (await loadImage(`/art/chars/hero_${rarity}.png`)) ?? loadImage(`/art/chars/portrait_${rarity}.png`);
+}
+
 /** Renders the pull card to a canvas. Returns it (1200x675, 16:9). */
-export function renderHeroCard(rarity: number, heroId: bigint | number): HTMLCanvasElement {
+export async function renderHeroCard(rarity: number, heroId: bigint | number): Promise<HTMLCanvasElement> {
   const W = 1200, H = 675;
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
@@ -68,11 +53,10 @@ export function renderHeroCard(rarity: number, heroId: bigint | number): HTMLCan
   ctx.fillStyle = "#4fc3f7";
   ctx.fillText("BLAST", 60 + w, 46);
 
-  const rc = RARITY_COLORS[rarity] ?? 0xffffff;
-  const color = hex(rc);
+  const color = RARITY_COLORS[rarity] ?? "#ffffff";
 
   // rarity-framed hero, centered-left
-  const px = 14, hw = 16 * px, cx = 300, cy = 300;
+  const px = 7, hw = FRAME * px, cx = 300, cy = 300;
   // glow
   const grad = ctx.createRadialGradient(cx, cy, 20, cx, cy, 190);
   grad.addColorStop(0, `${color}55`); grad.addColorStop(1, "#10141f00");
@@ -80,13 +64,22 @@ export function renderHeroCard(rarity: number, heroId: bigint | number): HTMLCan
   // frame
   ctx.strokeStyle = color; ctx.lineWidth = 6;
   ctx.strokeRect(cx - hw / 2 - 16, cy - hw / 2 - 16, hw + 32, hw + 32);
-  drawHero(ctx, rarity, cx - hw / 2, cy - hw / 2, px);
+  // hero (frame 0 of the strip, pixel-scaled)
+  const art = await loadHeroArt(rarity);
+  if (art) {
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(art, 0, 0, FRAME, FRAME, cx - hw / 2, cy - hw / 2, hw, hw);
+  } else {
+    // art missing: a rarity-coloured silhouette keeps the card readable
+    ctx.fillStyle = `${color}66`;
+    ctx.fillRect(cx - hw / 2 + 24, cy - hw / 2 + 24, hw - 48, hw - 48);
+  }
 
   // rarity headline
   ctx.textAlign = "left";
   ctx.font = "bold 72px monospace";
   ctx.fillStyle = color;
-  ctx.fillText(RARITY_NAMES[rarity].toUpperCase(), 560, 210);
+  ctx.fillText((RARITY_NAMES[rarity] ?? "Hero").toUpperCase(), 560, 210);
   ctx.font = "bold 40px monospace";
   ctx.fillStyle = "#eceff1";
   ctx.fillText(`HERO #${heroId}`, 560, 300);
@@ -113,10 +106,10 @@ const canvasToBlob = (c: HTMLCanvasElement): Promise<Blob> =>
  * otherwise downloads the PNG and opens a pre-filled X/Twitter post.
  */
 export async function shareHeroPull(rarity: number, heroId: bigint | number): Promise<void> {
-  const canvas = renderHeroCard(rarity, heroId);
-  const text = `I just pulled a ${RARITY_NAMES[rarity]} hero on MinerBlast! ⛏️💥 Play & earn at minerblast.fun`;
+  const text = `I just pulled a ${RARITY_NAMES[rarity] ?? ""} hero on MinerBlast! ⛏️💥 Play & earn at minerblast.fun`;
   let blob: Blob | null = null;
   try {
+    const canvas = await renderHeroCard(rarity, heroId);
     blob = await canvasToBlob(canvas);
   } catch {
     /* fall through to intent-only */
