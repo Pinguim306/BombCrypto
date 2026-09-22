@@ -74,13 +74,26 @@ func flash_light(pos: Vector2, color: Color, energy: float, seconds: float) -> v
 	tw.tween_property(light, "energy", 0.0, seconds).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 
 
-## Quick scale pop on any Node2D/Control (both expose `scale`).
+## Quick scale pop on any Node2D/Control (both expose `scale`). Punches on
+## the same node are exclusive and remember the true resting scale, so
+## overlapping punches (two block deaths inside 200 ms) never compound.
 func punch_scale(node: CanvasItem, amount := 0.12, seconds := 0.18) -> Tween:
+	# get_meta() with a null default still errors when the key is absent
+	if node.has_meta("punch_tw"):
+		var prev: Variant = node.get_meta("punch_tw")
+		if prev is Tween and (prev as Tween).is_valid():
+			(prev as Tween).kill()
+			node.set("scale", node.get_meta("punch_base"))   # restore before re-reading
 	var base: Vector2 = node.get("scale")
+	node.set_meta("punch_base", base)
 	var tw := node.create_tween()   # bound to the node: dies with it
+	node.set_meta("punch_tw", tw)
 	tw.tween_property(node, "scale", base * (1.0 + amount * Config.juice_scale()), seconds * 0.35) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(node, "scale", base, seconds * 0.65).set_trans(Tween.TRANS_SINE)
+	tw.tween_callback(func() -> void:
+		if is_instance_valid(node):
+			node.remove_meta("punch_tw"))
 	return tw
 
 

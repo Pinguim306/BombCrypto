@@ -89,7 +89,12 @@ export function runAdventure(
     ? stage.staminaCost
     : Math.ceil(stage.staminaCost * (1 - DEFEAT_STAMINA_REFUND));
   hero.stamina -= staminaSpent;
-  if (hero.stamina < 1) hero.mode = "rest";
+  if (hero.stamina < 1) {
+    // rest regen counts from now — a working hero's simulatedTo still points
+    // at its last bomb (engine.ts keeps the partial interval)
+    hero.mode = "rest";
+    hero.simulatedTo = now;
+  }
 
   // rarity bonus on the reward (same curve as effective power)
   const rewardMicro = success ? Math.round(stage.rewardMicro * (1 + hero.rarity * 0.15)) : 0;

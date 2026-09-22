@@ -10,18 +10,18 @@ var impl: BackendBase
 ## Page link kept next to a MockBackend on web (?mock=1) so the host still
 ## gets ready()/nav()/openExplorer(); null when the mock runs without a host.
 var _host: WebBackend = null
+var _host_cfg: Dictionary = {}   # the page's configJson(), also applied in mock mode
 ## True when Mock was picked on a real web build WITHOUT the host asking for
 ## it (window.mb missing) — main.gd shows a loud warning so it never ships silently.
 var mock_fallback_on_web := false
 
 
 func _ready() -> void:
-	var host_cfg: Dictionary = {}
 	if Config.is_web and WebBackend.available():
 		var wb := WebBackend.new()
 		wb.name = "WebBackend"
-		host_cfg = wb.config()   # readable before entering the tree
-		var host_mock := bool(host_cfg.get("mock", false))
+		_host_cfg = wb.config()   # readable before entering the tree
+		var host_mock := bool(_host_cfg.get("mock", false))
 		if host_mock or Config.mock_forced:
 			# demo data (?mock=1): keep the page link for ready()/nav()/openExplorer()
 			# only — host session/visibility events must not fight the mock
@@ -29,11 +29,15 @@ func _ready() -> void:
 			_host = wb
 			add_child(wb)
 		else:
-			add_child(wb)
 			impl = wb
+			# connect BEFORE entering the tree: _ready() calls setListener and the
+			# host replays its session event synchronously into this connection
+			wb.host_event.connect(_relay)
+			add_child(wb)
 	if impl == null:
 		var mb := MockBackend.new()
 		mb.name = "MockBackend"
+		mb.host_event.connect(_relay)
 		add_child(mb)
 		mb.set_scenario(Config.scenario)
 		impl = mb
@@ -42,8 +46,11 @@ func _ready() -> void:
 			push_error("window.mb missing on web: falling back to the MOCK backend (demo data)")
 	if Config.is_web:
 		print("Backend: transport=", "web" if impl is WebBackend else "mock",
-			" host_link=", _host != null, " host_mock=", host_cfg.get("mock", false))
-	impl.host_event.connect(func(ev: Dictionary) -> void: host_event.emit(ev))
+			" host_link=", _host != null, " host_mock=", _host_cfg.get("mock", false))
+
+
+func _relay(ev: Dictionary) -> void:
+	host_event.emit(ev)
 
 
 func is_mock() -> bool:
@@ -87,7 +94,12 @@ func disconnect_wallet() -> Envelope:
 	return await impl.disconnect_wallet()
 
 func config() -> Dictionary:
-	return impl.config()
+	var c := impl.config()
+	if _host != null:
+		# ?mock=1: the page's flags (reducedMotion, chainId, buildId…) still apply
+		c.merge(_host_cfg, true)
+		c["mock"] = true
+	return c
 
 func session() -> Dictionary:
 	return impl.session()

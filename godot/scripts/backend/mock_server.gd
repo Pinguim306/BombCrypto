@@ -221,10 +221,9 @@ func _advance_hero(h: EngineHero, now: int) -> int:
 	if h.stamina < 1.0:
 		h.mode = "rest"   # out of stamina: automatically switches to rest
 		h.simulated_to = now
-	# DELIBERATE DEVIATION from engine.ts L127 (`hero.simulatedTo = now` after the loop): the
-	# server discards the partial interval on every advance(), so a hero observed more often
-	# than its bombIntervalMs never throws. The mock is advanced every frame and polled every
-	# 2 s, so it keeps the remainder and throws at the exact cadence (design §9 / BombSim).
+	# Mirrors engine.ts advanceHero() since db9fb2e: a working hero keeps
+	# simulated_to at its last bomb, so the partial interval carries over to the
+	# next advance() and the cadence is exact no matter how often it is observed.
 	return earned
 
 

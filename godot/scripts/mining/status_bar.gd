@@ -80,10 +80,17 @@ func set_link(hash: String) -> void:
 	_refresh()
 
 
+## The only bbcode Fmt itself puts in a status message (Mine-all pick icon).
+const PICK_IMG := "[img=12]res://assets/sprites/pick.png[/img]"
+const PICK_IMG_ESCAPED := "[lb]img=12]res://assets/sprites/pick.png[lb]/img]"
+
+
 func _refresh() -> void:
-	var body := _plain
+	# server / wallet strings are untrusted: neutralise any bbcode they carry
+	# ([lb] renders a literal bracket), then restore Fmt's own pick icon
+	var body := _plain.replace("[", "[lb]").replace(PICK_IMG_ESCAPED, PICK_IMG)
 	if _link != "":
-		body = "[url=%s]%s[/url]" % [_link, _plain]
+		body = "[url=%s]%s[/url]" % [_link.replace("[", "").replace("]", ""), body]
 	text = "[color=#%s]%s[/color]" % [_color.to_html(false), body]
 
 

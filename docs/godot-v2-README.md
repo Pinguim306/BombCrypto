@@ -86,10 +86,14 @@ pnpm godot:export             # afterwards: content pack only (fast)
 that keeps WalletConnect's modal working), and writes:
 
 ```
-client/public/godot/engine-4.7.2/mb.{js,wasm,audio.worklet.js,audio.position.worklet.js}
+client/public/godot/engine-4.7.2-<sha8>/mb.{js,wasm,audio.worklet.js,audio.position.worklet.js}
 client/public/godot/pck/mb-<sha8>.pck          (content-hashed; 2 newest kept)
 client/public/godot/manifest.json              {engine, pck, sizes, gitSha, builtAt}
 ```
+
+Both folders are content-addressed (the engine one by the hash of `mb.wasm`), so
+the immutable cache rules in `vercel.json` stay correct across re-exports; only
+`manifest.json` changes per deploy and is served `no-cache`.
 
 Vite serves `client/public/` verbatim, so `pnpm --filter @minerblast/client dev`
 and opening `http://localhost:5173/play2.html` runs the real thing

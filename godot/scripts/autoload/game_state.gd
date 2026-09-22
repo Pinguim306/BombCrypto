@@ -39,6 +39,7 @@ var _failures := 0
 var _hidden := false
 var _online := true
 var _inflight := false
+var _hold_poll := false   # a mutation whose DTO will refresh us is in flight
 var _next_delay_ms: int = Config.POLL_MS
 var _last_daily_ms := 0
 
@@ -115,7 +116,7 @@ func _poll_loop(gen: int) -> void:
 			if gen != _gen:
 				return
 			continue
-		if busy:
+		if _hold_poll:
 			await _sleep(200)   # a mutation is in flight; its DTO refreshes us
 			continue
 		_seq += 1
@@ -141,6 +142,8 @@ func _sleep(ms: int) -> void:
 
 func _handle_poll(env: Envelope, seq: int) -> void:
 	if env.ok:
+		if seq < _applied_seq:
+			return   # superseded by a mutation's fresher DTO — not a failure
 		if _apply(env.data, seq, "poll"):
 			_failures = 0
 			_set_phase(Phase.LIVE)
@@ -155,7 +158,10 @@ func _handle_poll(env: Envelope, seq: int) -> void:
 		return
 	_failures += 1
 	_set_phase(Phase.OFFLINE if _failures >= Config.OFFLINE_AFTER_FAILURES else Phase.DEGRADED)
-	status.emit("error: " + env.error, Kind.ERROR)
+	# KEEP (no shake/sound): the NetBanner carries the retry feedback; _apply
+	# already reported a parse failure
+	if env.code != "parse":
+		status.emit("error: " + env.error, Kind.KEEP)
 	_next_delay_ms = Config.BACKOFF_MS[mini(_failures, Config.BACKOFF_MS.size() - 1)] + randi_range(0, 250)
 	net_changed.emit(_failures, _next_delay_ms)
 
@@ -177,12 +183,26 @@ func _apply(dict: Variant, seq: int, _source: String) -> bool:
 
 
 func _on_session_expired() -> void:
+	_end_session(true)
+	Backend.nav("login")
+
+
+## Leaves the active phases and drops everything scoped to the old session,
+## so a re-login never renders (or fires diff FX against) another wallet's data.
+func _end_session(expired: bool) -> void:
 	_gen += 1
 	selected_stage = 0
 	hero_page = 0
-	_set_phase(Phase.SESSION_EXPIRED)
-	status.emit("error: session expired", Kind.ERROR)
-	Backend.nav("login")
+	state = null
+	last_claim_hash = ""
+	if daily_can_claim:
+		daily_can_claim = false
+		daily_badge_changed.emit(false)
+	if expired:
+		_set_phase(Phase.SESSION_EXPIRED)
+		status.emit("error: session expired", Kind.ERROR)
+	else:
+		_set_phase(Phase.LOGGED_OUT)
 
 
 func _set_phase(p: int) -> void:
@@ -198,11 +218,14 @@ func _set_phase(p: int) -> void:
 # ---------------------------------------------------------------- actions
 
 ## Runs one mutation at a time; applies the DTO it returns (top-level or `.state`).
-func _run(action: String, fn: Callable) -> Envelope:
+## `hold_poll` pauses polling until that DTO lands; claim returns no DTO and may
+## sit in the wallet for minutes, so it keeps the poll loop running.
+func _run(action: String, fn: Callable, hold_poll := true) -> Envelope:
 	if busy:
 		status.emit("please wait…", Kind.NEUTRAL)
 		return Envelope.fail("busy", "busy")
 	busy = true
+	_hold_poll = hold_poll
 	busy_changed.emit(true, action)
 	_seq += 1
 	var seq := _seq
@@ -210,6 +233,7 @@ func _run(action: String, fn: Callable) -> Envelope:
 	if not is_inside_tree():
 		return env
 	busy = false
+	_hold_poll = false
 	busy_changed.emit(false, action)
 	if env.ok and env.data is Dictionary:
 		var d: Dictionary = env.data
@@ -296,7 +320,7 @@ func claim() -> void:
 		return
 	status.emit("issuing voucher...", Kind.NEUTRAL)
 	claim_progress.emit("voucher")
-	var env := await _run("claim", func() -> Envelope: return await Backend.claim(false))
+	var env := await _run("claim", func() -> Envelope: return await Backend.claim(false), false)
 	if env.code == "busy":
 		return
 	if env.ok:
@@ -382,17 +406,20 @@ func _on_host_event(ev: Dictionary) -> void:
 			if bool(ev.get("loggedIn", false)):
 				on_logged_in()
 			else:
-				_gen += 1
-				selected_stage = 0
-				hero_page = 0
-				if str(ev.get("reason", "")) == "expired":
-					_set_phase(Phase.SESSION_EXPIRED)
-				else:
-					_set_phase(Phase.LOGGED_OUT)
+				var reason := str(ev.get("reason", ""))
+				_end_session(reason == "expired")
+				# ask the page for its login UI — except on disconnect, where the
+				# page reloads itself (the host event lands BEFORE the envelope, so
+				# the poll path's own handler never runs for this generation)
+				if reason != "disconnect":
+					Backend.nav("login")
 		"claim":
 			var step := str(ev.get("step", ""))
 			claim_progress.emit(step)
 			if step == "wallet":
 				status.emit("confirm the claim transaction in your wallet...", Kind.NEUTRAL)
+			elif step == "sent" and ev.has("hash"):
+				# keep the hash even if the claim() call itself timed out meanwhile
+				last_claim_hash = str(ev.get("hash", ""))
 		_:
 			pass   # nav / wallet: handled by the host page itself

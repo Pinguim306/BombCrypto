@@ -50,12 +50,14 @@ function setStatus(text: string, error: boolean) {
 }
 
 // ---- bridge (before anything Godot-related) ----
+let godotReady = false; // set by Godot's ready(): the boot watchdog stands down
 const bridgeOpts: BridgeOptions = {
   mock,
   networkName: netName,
   buildId: "", // filled in from the manifest below
   host: {
     onReady() {
+      godotReady = true;
       loader.hidden = true;
       // demo data (?mock=1) has no wallet session to ask for
       if (!mock && !isLoggedIn()) showOverlay();
@@ -184,21 +186,48 @@ function loadScript(src: string): Promise<void> {
   });
 }
 
-async function fetchManifest(): Promise<Manifest | null> {
+type ManifestResult = { manifest: Manifest | null; reason: "ok" | "missing" | "unreachable" };
+
+async function fetchManifest(): Promise<ManifestResult> {
   try {
     // never cached: it is the only mutable file of the deploy (engine + pck are hashed)
     const res = await fetch("/godot/manifest.json", { cache: "no-store" });
-    if (!res.ok) return null;
-    return (await res.json()) as Manifest;
+    if (res.status === 404) return { manifest: null, reason: "missing" };
+    if (!res.ok) return { manifest: null, reason: "unreachable" };
+    return { manifest: (await res.json()) as Manifest, reason: "ok" };
   } catch {
-    return null;
+    return { manifest: null, reason: "unreachable" };
   }
 }
 
+/**
+ * The vendored engine loader never rejects when WebAssembly instantiation
+ * fails after the 39 MB download (it only surfaces as an unhandled rejection),
+ * so race the start against that event and against a boot that stalls once
+ * the download is complete. `ready()` from Godot counts as success.
+ */
+function bootFailure(dl: { doneAt: number }, isReady: () => boolean): Promise<never> {
+  return new Promise<never>((_, reject) => {
+    window.addEventListener("unhandledrejection", (e) => {
+      if (isReady()) return;
+      e.preventDefault();
+      const reason = e.reason instanceof Error ? e.reason : new Error(String(e.reason));
+      reject(/CompileError|RangeError|LinkError/.test(reason.name) ? new Error(START_FAILED) : reason);
+    });
+    const timer = setInterval(() => {
+      if (isReady()) clearInterval(timer);
+      else if (dl.doneAt && Date.now() - dl.doneAt > 60_000) reject(new Error(START_FAILED));
+    }, 1000);
+  });
+}
+const START_FAILED = "the game failed to start — reload the page or try another browser";
+
 async function boot() {
-  const manifest = await fetchManifest();
+  const { manifest, reason } = await fetchManifest();
   if (!manifest || !manifest.engine || !manifest.pck) {
-    setLoader("game build not deployed yet");
+    setLoader(reason === "unreachable"
+      ? "can't reach the game files — check your connection and reload"
+      : "game build not deployed yet");
     return;
   }
   bridgeOpts.buildId = manifest.gitSha ?? "";
@@ -213,6 +242,7 @@ async function boot() {
     return;
   }
 
+  const dl = { doneAt: 0 };
   const engine = new Engine({
     executable: manifest.engine,
     mainPack: manifest.pck,
@@ -225,6 +255,7 @@ async function boot() {
       if (total > 0) {
         loaderBar.style.width = `${Math.min(100, Math.round((current / total) * 100))}%`;
         setLoader(`loading the mine… ${Math.round(current / 1048576)} / ${Math.round(total / 1048576)} MB`);
+        if (current >= total && !dl.doneAt) dl.doneAt = Date.now();
       }
     },
     onPrint: console.log,
@@ -240,11 +271,12 @@ async function boot() {
   // both orders. In mock mode there is no wallet to reconnect.
   const started = engine.startGame();
   if (!mock) void window.mb.reconnect({});
-  await started;
+  await Promise.race([started, bootFailure(dl, () => godotReady)]);
 }
 
 boot().catch((err) => {
   console.error("[play2] boot failed", err);
+  if (godotReady) return; // the game is up; whatever failed was not the boot
   loader.hidden = false;
   setLoader(err instanceof Error ? err.message : String(err));
 });

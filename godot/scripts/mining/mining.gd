@@ -48,6 +48,7 @@ var _can_claim := false
 var _flourish_armed := false
 var _pending_min := 0
 var _pending_shown := 0.0
+var _pending_server := 0.0   # last server truth (jump detection ignores the prediction)
 var _pending_tw: Tween
 var _predict_acc := 0.0
 var _rate_shown := 0.0
@@ -112,6 +113,10 @@ func _process(delta: float) -> void:
 ## Config flags changed (DebugPanel): lights, FX layer.
 func apply_config() -> void:
 	cave_glow.enabled = Config.fancy_lights and Config.fx_enabled
+	# pooled flash lights: keep them out of the light pass entirely on phones
+	for light in flash_lights.get_children():
+		if light is PointLight2D:
+			(light as PointLight2D).enabled = Config.fancy_lights and Config.fx_enabled
 	var hidden := GameState.phase in [GameState.Phase.HIDDEN, GameState.Phase.OFFLINE]
 	fx.set_active(Config.fx_enabled and not hidden)
 	if GameState.state != null and fx.active:
@@ -160,10 +165,14 @@ func _render_pending(s: StateModel, first: bool) -> void:
 	if first or not Config.fx_enabled:
 		_kill(_pending_tw)
 		_pending_shown = s.pending
+		_pending_server = s.pending
 		label.value = s.pending
 		label.text = _fmt_pending(s.pending)
 		return
-	var jump := s.pending - _pending_shown
+	# compare server truth with the previous server truth — never with the
+	# eased/predicted value, or a prediction overshoot reads as a debit
+	var jump := s.pending - _pending_server
+	_pending_server = s.pending
 	_ease_pending(s.pending, pending_ease_seconds)
 	if jump > PENDING_JUMP:
 		Juice.punch_scale(label, 0.12, 0.25)

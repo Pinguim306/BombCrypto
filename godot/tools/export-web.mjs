@@ -64,8 +64,11 @@ const GODOT = findGodot();
 // "4.7.2.stable.official.ed1daf0bf" → "4.7.2" (last line guards against banners)
 const verLine = execFileSync(GODOT, ["--version"], { encoding: "utf8" }).trim().split(/\r?\n/).pop();
 const version = verLine.split(".").slice(0, 3).join(".");
-const engineDirName = `engine-${version}${debug ? "-debug" : ""}`;
-const engineDir = join(PUBLIC, engineDirName);
+const debugSuffix = debug ? "-debug" : "";
+const sha8 = (buf) => createHash("sha256").update(buf).digest("hex").slice(0, 8);
+// engine folder = engine-<version>-<sha8 of mb.wasm>[-debug]: content-addressed,
+// so the immutable cache rule stays correct even for a same-version re-export
+let engineDirName = null;
 
 // 1. sprites + fx (deterministic) and the export folder the editor must ignore
 run(process.execPath, [join(GODOT_DIR, "tools", "gen-sprites.mjs"), "--fx"], "sprites");
@@ -82,22 +85,29 @@ mkdirSync(outDir, { recursive: true });
 if (withEngine) {
   run(GODOT, ["--headless", "--path", GODOT_DIR, debug ? "--export-debug" : "--export-release", "Web",
     join(outDir, "mb.html")], `export engine+pck (${debug ? "debug" : "release"})`);
-  mkdirSync(engineDir, { recursive: true });
-  for (const f of ENGINE_FILES) copyFileSync(join(outDir, f), join(engineDir, f));
+  engineDirName = `engine-${version}-${sha8(readFileSync(join(outDir, "mb.wasm")))}${debugSuffix}`;
+  mkdirSync(join(PUBLIC, engineDirName), { recursive: true });
+  for (const f of ENGINE_FILES) copyFileSync(join(outDir, f), join(PUBLIC, engineDirName, f));
 } else {
   run(GODOT, ["--headless", "--path", GODOT_DIR, "--export-pack", "Web", join(outDir, "mb.pck")], "export pck");
+  // reuse the newest engine folder exported for this Godot version
+  const re = new RegExp(`^engine-${version.replace(/\./g, "\\.")}-[0-9a-f]{8}${debugSuffix}$`);
+  const dirs = existsSync(PUBLIC) ? readdirSync(PUBLIC).filter((d) => re.test(d)) : [];
+  dirs.sort((a, b) => statSync(join(PUBLIC, b)).mtimeMs - statSync(join(PUBLIC, a)).mtimeMs);
+  engineDirName = dirs[0] ?? null;
 }
-if (!existsSync(join(engineDir, "mb.wasm"))) {
-  console.error(`engine files missing at ${engineDir} — run once with --engine`);
+if (!engineDirName || !existsSync(join(PUBLIC, engineDirName, "mb.wasm"))) {
+  console.error(`engine files missing under ${PUBLIC} — run once with --engine`);
   process.exit(1);
 }
+const engineDir = join(PUBLIC, engineDirName);
 
 // 4. content-hashed pck, keep the two newest
 const pck = readFileSync(join(outDir, "mb.pck"));
-const sha8 = createHash("sha256").update(pck).digest("hex").slice(0, 8);
+const pckSha8 = sha8(pck);
 const pckDir = join(PUBLIC, "pck");
 mkdirSync(pckDir, { recursive: true });
-const pckName = `mb-${sha8}.pck`;
+const pckName = `mb-${pckSha8}.pck`;
 writeFileSync(join(pckDir, pckName), pck);
 const older = readdirSync(pckDir)
   .filter((f) => f.endsWith(".pck"))
